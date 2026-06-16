@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "XthM0aQBNqJaLnoEZBqvI"
+uri = "file://artifacts/roseos/src/assets/rose-logo.png"
+type = "image"
+title = "rose flower logo icon"

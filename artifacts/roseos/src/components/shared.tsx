@@ -1,7 +1,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import type { Classification, RiskLevel, ApprovalRoute } from "@/types";
-import { ShieldCheck, FileText, Sparkles, PenLine, Clock, Lock, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, FileText, Sparkles, PenLine, Clock, Lock, CheckCircle2, ArrowUpRight } from "lucide-react";
 
 const CLASS_META: Record<Classification, { label: string; cls: string; icon: React.ElementType }> = {
   "documented-fact": { label: "Documented Fact", cls: "bg-slate-100 text-slate-700 border-slate-200", icon: FileText },
@@ -148,12 +148,14 @@ export function KpiWidget({
   sub,
   icon: Icon,
   gradient,
+  delta,
 }: {
   label: string;
   value: string | number;
   sub: string;
   icon: React.ElementType;
   gradient: string;
+  delta?: string;
 }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
@@ -161,6 +163,12 @@ export function KpiWidget({
         <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm", gradient)}>
           <Icon className="h-5 w-5" />
         </div>
+        {delta && (
+          <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-600">
+            <ArrowUpRight className="h-3 w-3" />
+            {delta}
+          </span>
+        )}
       </div>
       <div className="mt-4">
         <div className="text-3xl font-bold tracking-tight text-slate-900">{value}</div>

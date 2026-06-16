@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { alerts } from "@/data/seed";
 import { canAccessMindMeld } from "@/lib/helpers";
+import roseLogo from "@/assets/rose-logo.png";
 
 import Dashboard from "@/pages/dashboard";
 import DuplicateRadar from "@/pages/duplicate-radar";
@@ -57,14 +58,14 @@ const ROSE_BRAIN_TIPS: Record<string, string[]> = {
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const [location] = useLocation();
-  const { currentRole, setRoseBrainContext } = useAppState();
+  const { currentRole, setRoseBrainContext, setRoseBrainOpen } = useAppState();
   return (
     <>
       <div className="flex items-center gap-3 px-6 py-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-fuchsia-500 text-sm font-bold text-white shadow-sm">R</div>
+        <img src={roseLogo} alt="RoseOS rose logo" className="h-10 w-10 shrink-0 object-contain" />
         <div>
-          <p className="text-sm font-bold uppercase tracking-tight text-slate-800">Rose OS</p>
-          <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">Collab Command</p>
+          <p className="text-sm font-bold tracking-tight text-slate-900">RoseOS</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-rose-400">Collab Command Center</p>
         </div>
       </div>
       <nav className="flex-1 space-y-0.5 px-3 pb-4">
@@ -86,6 +87,21 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           );
         })}
       </nav>
+      <div className="px-3 pb-2">
+        <div className="rounded-2xl bg-gradient-to-br from-rose-500 via-rose-500 to-blue-500 p-4 text-white shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 backdrop-blur"><Brain className="h-4 w-4" /></div>
+            <p className="text-sm font-bold">Need help?</p>
+          </div>
+          <p className="mt-1.5 text-xs leading-relaxed text-white/85">Ask Rose Brain anything about your collaboration intelligence.</p>
+          <button
+            onClick={() => { setRoseBrainOpen(true); onNavigate?.(); }}
+            className="mt-3 w-full rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50"
+          >
+            Chat now
+          </button>
+        </div>
+      </div>
       <div className="border-t border-slate-100 px-4 py-3 text-[11px] text-slate-400">
         Local-first prototype · no live data
       </div>

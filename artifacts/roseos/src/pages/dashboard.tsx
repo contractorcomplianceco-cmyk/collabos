@@ -1,294 +1,253 @@
-import React, { useMemo, useState } from "react";
+import React from "react";
 import { Link } from "wouter";
 import {
-  Copy, Users, Lightbulb, ClipboardCheck, Sparkles, AlertTriangle,
-  Ban, Clock, UserX, GitBranch, TrendingUp, CalendarClock, Brain,
-  ArrowRight, Activity, FileBarChart, Crown,
+  Target, Users, Lightbulb, Search, FileBarChart, Activity, ClipboardCheck,
+  Brain, ArrowRight, Download, TrendingUp, TrendingDown, FolderKanban, Sparkles,
+  Heart, FileText,
 } from "lucide-react";
 import { useAppState } from "@/hooks/use-app-state";
 import {
-  KpiWidget, SectionCard, RiskBadge, StatusChip, ClassificationBadge, Donut,
+  KpiWidget, SectionCard, StatusChip, ClassificationBadge,
 } from "@/components/shared";
 import {
-  projects, blockers, decisions, alerts, marketSignals, reports,
-  duplicateRisks, feedbackItems,
+  projects, companyRecords, reports,
+  duplicateRisks, sentimentSignals, competitors,
 } from "@/data/seed";
 
-const DEPARTMENTS = ["All", "Systems", "Compliance", "Sales", "Marketing", "Strategy", "Leadership"];
+const POPULAR_SEARCHES = ["user onboarding", "qualifier scoring", "automation registry"];
+
+const WHATS_NEW = [
+  { id: "wn-1", title: "Duplicate Radar engine", note: "Smarter overlap detection across ideas & builds.", date: "Jun 13" },
+  { id: "wn-2", title: "Team Pulse 2.0", note: "Sentiment trends by department.", date: "Jun 10" },
+  { id: "wn-3", title: "Solution Finder upgrades", note: "Answers grounded in Company Brain records.", date: "Jun 8" },
+];
+
+function ideaTag(momentum: number) {
+  if (momentum >= 85) return { label: "Hot", tone: "rose" as const };
+  if (momentum >= 70) return { label: "Rising", tone: "amber" as const };
+  return { label: "New", tone: "sky" as const };
+}
+
+function threatTone(threat: string) {
+  if (threat === "high") return "rose" as const;
+  if (threat === "medium") return "amber" as const;
+  if (threat === "watch") return "violet" as const;
+  return "emerald" as const;
+}
 
 export default function Dashboard() {
-  const { ideas, recommendations, mindMeldItems, currentRole } = useAppState();
-  const [dept, setDept] = useState("All");
+  const { ideas, recommendations, currentRole } = useAppState();
 
-  const filteredProjects = useMemo(
-    () => (dept === "All" ? projects : projects.filter((p) => p.department === dept)),
-    [dept],
-  );
+  const greeting =
+    currentRole === "Carmen" ? "Carmen" : currentRole === "Rose" ? "Rose" : currentRole;
 
-  const stale = filteredProjects.filter((p) => p.status === "stale");
-  const unowned = filteredProjects.filter((p) => !p.owner);
-  const activeBuilds = filteredProjects.filter((p) => p.status === "active");
-  const openDecisions = decisions.filter((d) => d.status === "open");
-  const pendingApprovals = recommendations.filter((r) => r.status === "pending");
-  const momentumIdeas = [...ideas].sort((a, b) => b.momentum - a.momentum).slice(0, 4);
-  const pulseScore = 74;
-
-  const greeting = currentRole === "Carmen" ? "Carmen" : "Rose";
+  const topDuplicates = [...duplicateRisks].sort((a, b) => b.similarity - a.similarity).slice(0, 3);
+  const topIdeas = [...ideas].sort((a, b) => b.momentum - a.momentum).slice(0, 3);
+  const topCompetitors = competitors.slice(0, 3);
+  const pendingRecs = recommendations.filter((r) => r.status === "pending");
+  const queuePreview = pendingRecs.slice(0, 4);
+  const topRec = recommendations[0];
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Welcome banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-rose-500 via-rose-500 to-orange-400 p-7 text-white shadow-lg">
-        <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/10" />
-        <div className="absolute -bottom-16 right-24 h-40 w-40 rounded-full bg-white/10" />
-        <div className="relative">
-          <p className="text-sm font-medium text-white/80">Collab Command Center</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight">Welcome back, {greeting}</h1>
-          <p className="mt-2 max-w-xl text-sm text-white/85">
-            Here's what's happening across Rose OS today — duplicate efforts, team support needs,
-            momentum, and the decisions waiting on leadership.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            <Link href="/duplicate-radar" className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-600 shadow-sm transition hover:bg-rose-50">
-              Review duplicates <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link href="/review-queue" className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/25">
-              Approval queue <ArrowRight className="h-4 w-4" />
-            </Link>
+    <div className="space-y-7 p-6">
+      {/* Welcome */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Welcome back, {greeting}</h1>
+        <p className="mt-1 text-sm text-slate-500">Your collaboration intelligence at a glance.</p>
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiWidget label="Active Projects" value={projects.length} sub="across all departments" icon={FolderKanban} gradient="from-rose-500 to-pink-500" delta="+12%" />
+        <KpiWidget label="Solutions Found" value={companyRecords.length} sub="in Company Brain" icon={Search} gradient="from-sky-500 to-blue-500" delta="+18%" />
+        <KpiWidget label="Ideas Generated" value={ideas.length} sub="in the innovation pipeline" icon={Lightbulb} gradient="from-amber-500 to-orange-500" delta="+24%" />
+        <KpiWidget label="Dupes Avoided" value={duplicateRisks.length} sub="overlaps flagged early" icon={Target} gradient="from-emerald-500 to-teal-500" delta="+15%" />
+      </div>
+
+      {/* Module grid */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {/* Duplicate Effort Radar */}
+        <SectionCard
+          title="Duplicate Effort Radar"
+          icon={Target}
+          accent="rose"
+          action={<span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-600">High overlap</span>}
+        >
+          <div className="space-y-2.5">
+            {topDuplicates.map((d) => (
+              <div key={d.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+                <span className="text-sm font-medium text-slate-700">{d.title}</span>
+                <span className="shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-600">{d.similarity}% match</span>
+              </div>
+            ))}
           </div>
-        </div>
-      </div>
+          <Link href="/duplicate-radar" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-rose-500 hover:underline">
+            View all duplicates <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </SectionCard>
 
-      {/* KPI row */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <KpiWidget label="Duplicate Alerts" value={duplicateRisks.length} sub="overlaps detected" icon={Copy} gradient="from-rose-500 to-pink-500" />
-        <KpiWidget label="Team Pulse" value={`${pulseScore}`} sub="supportive score" icon={Users} gradient="from-sky-500 to-blue-500" />
-        <KpiWidget label="Innovation Ideas" value={ideas.length} sub="in the pipeline" icon={Lightbulb} gradient="from-amber-500 to-orange-500" />
-        <KpiWidget label="Approval Queue" value={pendingApprovals.length} sub="awaiting review" icon={ClipboardCheck} gradient="from-violet-500 to-fuchsia-500" />
-        <KpiWidget label="Rose OS Recommends" value={recommendations.length} sub="draft suggestions" icon={Sparkles} gradient="from-emerald-500 to-teal-500" />
-      </div>
+        {/* Team Pulse */}
+        <SectionCard title="Team Pulse" icon={Users} accent="sky" action={<Link href="/team-pulse" className="text-xs font-semibold text-sky-500 hover:underline">View</Link>}>
+          <div className="space-y-3">
+            {sentimentSignals.map((s) => {
+              const pct = Math.round(((s.score + 1) / 2) * 100);
+              const bar = s.score >= 0.6 ? "from-emerald-400 to-teal-500" : s.score >= 0.3 ? "from-amber-400 to-orange-500" : "from-rose-400 to-rose-500";
+              const val = s.score >= 0 ? `+${s.score.toFixed(2)}` : s.score.toFixed(2);
+              return (
+                <div key={s.team}>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-slate-700">{s.team}</span>
+                    <span className="font-semibold text-slate-500">{val}</span>
+                  </div>
+                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                    <div className={`h-full rounded-full bg-gradient-to-r ${bar}`} style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-3 flex items-center gap-3 text-[10px] text-slate-400">
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-400" />Positive</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400" />Neutral</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-rose-400" />Negative</span>
+          </div>
+        </SectionCard>
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Filter by department</span>
-        {DEPARTMENTS.map((d) => (
-          <button
-            key={d}
-            onClick={() => setDept(d)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-              dept === d ? "bg-rose-500 text-white shadow-sm" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
-            }`}
-          >
-            {d}
-          </button>
-        ))}
-      </div>
+        {/* Solution Finder */}
+        <SectionCard title="Solution Finder" icon={Search} accent="violet">
+          <p className="text-sm text-slate-600">Find what&apos;s already been solved before starting new work.</p>
+          <div className="mt-3 flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input readOnly placeholder="Describe what you need..." className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:outline-none" />
+            </div>
+            <Link href="/solution-finder" className="rounded-xl bg-violet-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-violet-600">Search</Link>
+          </div>
+          <p className="mt-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Popular searches</p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {POPULAR_SEARCHES.map((q) => (
+              <Link key={q} href="/solution-finder" className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-600 transition hover:bg-violet-100">{q}</Link>
+            ))}
+          </div>
+        </SectionCard>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Main column */}
-        <div className="space-y-6 lg:col-span-2">
-          <SectionCard title="Duplicate Alerts" icon={Copy} accent="rose" action={<Link href="/duplicate-radar" className="text-xs font-medium text-rose-500 hover:underline">View all</Link>}>
-            <div className="space-y-3">
-              {duplicateRisks.slice(0, 3).map((d) => (
-                <div key={d.id} className="flex items-start justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+        {/* Innovation Lab */}
+        <SectionCard title="Innovation Lab" icon={Lightbulb} accent="amber" action={<Link href="/innovation-lab" className="text-xs font-semibold text-amber-500 hover:underline">View</Link>}>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Top idea clusters</p>
+          <ul className="mt-2 space-y-2.5">
+            {topIdeas.map((i) => {
+              const tag = ideaTag(i.momentum);
+              return (
+                <li key={i.id} className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium text-slate-700">{i.title}</span>
+                  <StatusChip label={tag.label} tone={tag.tone} />
+                </li>
+              );
+            })}
+          </ul>
+          <Link href="/innovation-lab" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-amber-500 hover:underline">
+            View all ideas <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </SectionCard>
+
+        {/* Executive Reports */}
+        <SectionCard title="Executive Reports" icon={FileBarChart} accent="violet" action={<Link href="/executive-reports" className="text-xs font-semibold text-violet-500 hover:underline">All</Link>}>
+          <ul className="space-y-2.5">
+            {reports.map((r) => (
+              <li key={r.id} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 p-2.5">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 shrink-0 text-violet-400" />
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-slate-800">{d.title}</span>
-                      <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-600">{d.similarity}% match</span>
-                    </div>
-                    <p className="mt-1 text-xs text-slate-500">{d.reason}</p>
-                  </div>
-                  <RiskBadge value={d.risk} />
-                </div>
-              ))}
-            </div>
-          </SectionCard>
-
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <SectionCard title="Blockers" icon={Ban} accent="rose">
-              <ul className="space-y-2.5">
-                {blockers.map((b) => (
-                  <li key={b.id} className="flex items-center justify-between gap-2 text-sm">
-                    <span className="text-slate-700">{b.title}</span>
-                    <RiskBadge value={b.risk} />
-                  </li>
-                ))}
-              </ul>
-            </SectionCard>
-
-            <SectionCard title="Stale & Unowned Work" icon={Clock} accent="amber">
-              <ul className="space-y-2.5 text-sm">
-                {stale.map((p) => (
-                  <li key={p.id} className="flex items-center justify-between gap-2">
-                    <span className="text-slate-700">{p.name}</span>
-                    <StatusChip label="stale" tone="amber" />
-                  </li>
-                ))}
-                {unowned.map((p) => (
-                  <li key={`u-${p.id}`} className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-1.5 text-slate-700"><UserX className="h-3.5 w-3.5 text-rose-400" />{p.name}</span>
-                    <StatusChip label="no owner" tone="rose" />
-                  </li>
-                ))}
-                {stale.length === 0 && unowned.length === 0 && <li className="text-slate-400">All work owned and active.</li>}
-              </ul>
-            </SectionCard>
-          </div>
-
-          <SectionCard title="Active Build Items" icon={GitBranch} accent="sky">
-            <div className="space-y-3">
-              {activeBuilds.map((p) => (
-                <div key={p.id} className="rounded-xl border border-slate-100 p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-slate-800">{p.name}</span>
-                    <span className="text-xs font-medium text-slate-500">{p.owner ?? "Unassigned"}</span>
-                  </div>
-                  <div className="mt-2 flex items-center gap-3">
-                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-full rounded-full bg-gradient-to-r from-sky-500 to-blue-500" style={{ width: `${p.progress}%` }} />
-                    </div>
-                    <span className="text-xs font-semibold text-slate-600">{p.progress}%</span>
+                    <p className="text-sm font-medium text-slate-700">{r.title}</p>
+                    <p className="text-[10px] text-slate-400">{r.type} · {r.date}</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </SectionCard>
+                <Link href="/executive-reports" aria-label={`Open ${r.title}`} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-50 hover:text-violet-500"><Download className="h-4 w-4" /></Link>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <SectionCard title="Ideas Gaining Momentum" icon={TrendingUp} accent="amber">
-              <ul className="space-y-3">
-                {momentumIdeas.map((i) => (
-                  <li key={i.id}>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium text-slate-700">{i.title}</span>
-                      <span className="text-xs font-bold text-amber-600">{i.momentum}</span>
-                    </div>
-                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500" style={{ width: `${i.momentum}%` }} />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </SectionCard>
-
-            <SectionCard title="Open Decisions" icon={ClipboardCheck} accent="violet">
-              <ul className="space-y-2.5 text-sm">
-                {openDecisions.map((d) => (
-                  <li key={d.id} className="flex items-center justify-between gap-2">
-                    <span className="text-slate-700">{d.title}</span>
-                    <RiskBadge value={d.risk} />
-                  </li>
-                ))}
-              </ul>
-            </SectionCard>
-          </div>
-
-          <SectionCard title="Support Needs" icon={Users} accent="sky" action={<Link href="/team-pulse" className="text-xs font-medium text-sky-500 hover:underline">Team Pulse</Link>}>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {feedbackItems.slice(0, 4).map((f) => (
-                <div key={f.id} className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
-                  <div className="flex items-center justify-between">
-                    <StatusChip label={f.supportNeed} tone="sky" />
-                    <span className="text-xs text-slate-400">×{f.count}</span>
-                  </div>
-                  <p className="mt-1.5 text-xs text-slate-600">{f.summary}</p>
+        {/* Market Pulse */}
+        <SectionCard title="Market Pulse" icon={Activity} accent="emerald" action={<Link href="/market-pulse" className="text-xs font-semibold text-emerald-500 hover:underline">View</Link>}>
+          <ul className="space-y-2.5">
+            {topCompetitors.map((c) => (
+              <li key={c.id} className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-slate-700">{c.name}</span>
+                <div className="flex items-center gap-2">
+                  <StatusChip label={c.threat} tone={threatTone(c.threat)} />
+                  <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${c.movement >= 0 ? "text-emerald-600" : "text-rose-500"}`}>
+                    {c.movement >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                    {c.movement >= 0 ? `+${c.movement}` : c.movement}%
+                  </span>
                 </div>
-              ))}
-            </div>
-          </SectionCard>
-        </div>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
 
-        {/* Right rail */}
-        <div className="space-y-6">
-          {/* Rose OS Recommends */}
-          <div className="rounded-2xl border border-rose-100 bg-gradient-to-br from-rose-50 to-orange-50 p-5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-rose-600">
-              <Sparkles className="h-4 w-4" /> Rose OS Recommends
-            </h2>
-            <ul className="mt-3 space-y-3">
-              {recommendations.slice(0, 3).map((r) => (
-                <li key={r.id} className="rounded-xl bg-white/70 p-3">
+        {/* Review Queue */}
+        <SectionCard
+          title="Review Queue"
+          icon={ClipboardCheck}
+          accent="rose"
+          action={<Link href="/review-queue" className="text-xs font-semibold text-rose-500 hover:underline">View all ({pendingRecs.length})</Link>}
+        >
+          <ul className="space-y-2.5">
+            {queuePreview.map((r) => (
+              <li key={r.id} className="rounded-xl border border-slate-100 p-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-slate-400">{r.source}</span>
                   <ClassificationBadge value={r.classification} />
-                  <p className="mt-2 text-sm text-slate-700">{r.recommendation}</p>
-                </li>
-              ))}
-            </ul>
-            <Link href="/review-queue" className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-600">
-              Open Review Queue <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
+                </div>
+                <p className="mt-1 text-sm text-slate-700">{r.recommendation}</p>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
 
-          {/* Mind Meld preview */}
-          <div className="overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-sm">
-            <div className="bg-gradient-to-r from-violet-600 to-fuchsia-500 p-4 text-white">
-              <div className="flex items-center justify-between">
-                <h2 className="flex items-center gap-2 text-sm font-semibold"><Brain className="h-4 w-4" /> Mind Meld Room</h2>
-                <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-medium">Rose &amp; Carmen</span>
-              </div>
-              <p className="mt-1 text-xs text-white/85">Private alignment space</p>
-            </div>
-            <div className="p-4">
-              <div className="flex items-center justify-center">
-                <Donut value={mindMeldItems[0]?.alignmentScore ?? 80} label="aligned" accent="#a855f7" size={96} />
-              </div>
-              <div className="mt-3 space-y-2">
-                {mindMeldItems.slice(0, 2).map((m) => (
-                  <div key={m.id} className="flex items-center justify-between rounded-lg bg-violet-50/60 px-3 py-2 text-xs">
-                    <span className="font-medium text-slate-700">{m.title}</span>
-                    <StatusChip label={m.alignment} tone="violet" />
-                  </div>
-                ))}
-              </div>
-              <Link href="/mind-meld" className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-violet-200 px-4 py-2 text-sm font-semibold text-violet-600 transition hover:bg-violet-50">
-                Enter the room <ArrowRight className="h-4 w-4" />
-              </Link>
+        {/* AI Recommendation */}
+        <div className="flex flex-col rounded-2xl border border-rose-100 bg-gradient-to-br from-rose-50 to-blue-50 p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-blue-500 text-white shadow-sm"><Brain className="h-5 w-5" /></div>
+            <div>
+              <h2 className="text-sm font-bold text-slate-800">AI Recommendation</h2>
+              <p className="text-[11px] text-slate-500">Rose Brain has insights</p>
             </div>
           </div>
-
-          <SectionCard title="Recommended Leadership Actions" icon={Crown} accent="rose">
-            <ul className="space-y-2.5 text-sm text-slate-700">
-              <li className="flex gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />Assign an owner to Document Collection.</li>
-              <li className="flex gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />Resolve Services Hub pricing decision.</li>
-              <li className="flex gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />Re-engage stale Marketing Command Center.</li>
-            </ul>
-          </SectionCard>
-
-          <SectionCard title="Market Signals" icon={Activity} accent="emerald" action={<Link href="/market-pulse" className="text-xs font-medium text-emerald-500 hover:underline">View</Link>}>
-            <ul className="space-y-2.5">
-              {marketSignals.slice(0, 3).map((m) => (
-                <li key={m.id} className="text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-slate-700">{m.source}</span>
-                    <RiskBadge value={m.risk} />
-                  </div>
-                  <p className="text-xs text-slate-500">{m.summary}</p>
-                </li>
-              ))}
-            </ul>
-          </SectionCard>
-
-          <SectionCard title="Latest Reports" icon={FileBarChart} accent="violet" action={<Link href="/executive-reports" className="text-xs font-medium text-violet-500 hover:underline">All reports</Link>}>
-            <ul className="space-y-2 text-sm">
-              {reports.map((r) => (
-                <li key={r.id} className="flex items-center justify-between gap-2">
-                  <span className="text-slate-700">{r.title}</span>
-                  <span className="text-xs text-slate-400">{r.date}</span>
-                </li>
-              ))}
-            </ul>
-          </SectionCard>
-
-          <SectionCard title="Upcoming Deadlines" icon={CalendarClock} accent="orange">
-            <ul className="space-y-2 text-sm">
-              {projects.filter((p) => p.deadline).sort((a, b) => (a.deadline! > b.deadline! ? 1 : -1)).slice(0, 4).map((p) => (
-                <li key={p.id} className="flex items-center justify-between gap-2">
-                  <span className="text-slate-700">{p.name}</span>
-                  <span className="text-xs font-medium text-orange-500">{p.deadline}</span>
-                </li>
-              ))}
-            </ul>
-          </SectionCard>
+          {topRec && (
+            <div className="mt-3 rounded-xl bg-white/70 p-3">
+              <ClassificationBadge value={topRec.classification} />
+              <p className="mt-2 text-sm text-slate-700">{topRec.recommendation}</p>
+            </div>
+          )}
+          <Link href="/review-queue" className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90" style={{ marginTop: topRec ? undefined : "0.75rem" }}>
+            View recommendation <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
+
+        {/* What's New */}
+        <SectionCard title="What's New" icon={Sparkles} accent="emerald">
+          <ul className="space-y-3">
+            {WHATS_NEW.map((w) => (
+              <li key={w.id} className="flex items-start gap-2.5">
+                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-slate-700">{w.title}</span>
+                    <span className="text-[10px] text-slate-400">{w.date}</span>
+                  </div>
+                  <p className="text-xs text-slate-500">{w.note}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-center gap-1.5 border-t border-slate-100 pt-5 text-xs text-slate-400">
+        RoseOS Collab Command Center · Built with <Heart className="h-3.5 w-3.5 text-rose-400" /> for collaboration
       </div>
     </div>
   );

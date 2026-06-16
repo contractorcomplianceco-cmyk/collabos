@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import {
   Brain, Lock, ShieldCheck, Languages, Grid3x3, MessageCircleQuestion,
   Combine, BadgeCheck, Timer, Activity, ArrowRightLeft, Send, History,
-  Sparkles, AlertTriangle, Radio, TrendingUp, Target, FileText,
+  Sparkles, AlertTriangle, Radio, TrendingUp, Target, FileText, Heart,
 } from "lucide-react";
 import { SectionCard, StatusChip, RiskBadge, Donut, LockedState } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
@@ -141,6 +141,189 @@ export default function MindMeldRoom() {
             </button>
           ))}
         </div>
+      ) : view === "room" ? (
+        <div className="space-y-6">
+          {/* Item selector */}
+          <div className="flex flex-wrap gap-2">
+            {mindMeldItems.map((m) => (
+              <button key={m.id} onClick={() => setSelectedId(m.id)} className={`rounded-xl px-3 py-1.5 text-xs font-medium transition ${selectedId === m.id ? "bg-violet-100 text-violet-700 ring-1 ring-violet-200" : "bg-white text-slate-500 ring-1 ring-slate-200 hover:bg-slate-50"}`}>
+                {m.title}
+              </button>
+            ))}
+          </div>
+
+          {selected && (
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
+              {/* Mind Meld Room panel */}
+              <div className="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm xl:col-span-3">
+                {/* Panel header */}
+                <div className="flex flex-col items-center gap-1 border-b border-violet-100 bg-gradient-to-r from-rose-50 via-violet-50 to-sky-50 px-6 py-5 text-center">
+                  <div className="flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-violet-500" />
+                    <h2 className="text-base font-bold uppercase tracking-wide text-violet-700">Mind Meld Room</h2>
+                    <Heart className="h-4 w-4 text-rose-400" />
+                  </div>
+                  <p className="text-xs text-slate-500">Private space for Rose &amp; Carmen only · {selected.title}</p>
+                </div>
+
+                {/* Three columns */}
+                <div className="grid grid-cols-1 gap-5 p-5 lg:grid-cols-3">
+                  {/* ROSE VIEW */}
+                  <div className="flex flex-col rounded-2xl border border-rose-100 bg-rose-50/40 p-5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-500 text-xs font-bold text-white">RA</div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-800">Rose View</p>
+                          <p className="text-[11px] text-slate-500">Founder · vision</p>
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-600"><span className="h-1.5 w-1.5 rounded-full bg-rose-500" />Active</span>
+                    </div>
+                    <p className="mt-4 text-[10px] font-semibold uppercase tracking-wide text-rose-400">Top Thought</p>
+                    <p className="mt-1 text-sm text-slate-700">{selected.roseThoughts}</p>
+                    <p className="mt-4 text-[10px] font-semibold uppercase tracking-wide text-rose-400">Focus Areas</p>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">{selected.focusAreas.map((f) => <StatusChip key={f} label={f} tone="rose" />)}</div>
+                    {currentRole === "Rose" && (
+                      <div className="mt-3">
+                        <textarea value={roseDraft} onChange={(e) => setRoseDraft(e.target.value)} placeholder="Add or refine your thought..." className="h-16 w-full rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-rose-200" />
+                        <button onClick={() => { if (!roseDraft.trim()) return; addMindMeldThought(selected.id, "Rose", roseDraft); setRoseDraft(""); toast({ title: "Thought added to Rose View" }); }} className="mt-2 rounded-lg bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-600">Save thought</button>
+                      </div>
+                    )}
+                    <button onClick={() => { carmenfy(selected.id, handoffNote); setHandoffNote(""); toast({ title: "Ready to Carmenfy", description: "Routed to Carmen for systems review. No official decision created." }); }} className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 mt-4">
+                      <Send className="h-4 w-4" /> Ready to Carmenfy
+                    </button>
+                  </div>
+
+                  {/* CENTER */}
+                  <div className="flex flex-col gap-5">
+                    <div className="rounded-2xl border border-violet-100 bg-violet-50/40 p-5 text-center">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-400">Alignment Meter</p>
+                      <div className="mt-2 flex justify-center"><Donut value={selected.alignmentScore} label="aligned" accent="#a855f7" /></div>
+                      <p className="mt-2 text-sm font-bold text-slate-800">{selected.alignment === "strong" ? "High Alignment" : selected.alignment === "partial" ? "Partial Alignment" : "Needs Clarity"}</p>
+                      <p className="text-xs text-slate-500">{selected.alignment === "strong" ? "Synergy is strong" : selected.alignment === "partial" ? "Closing the gap" : "Clarify before deciding"}</p>
+                    </div>
+
+                    <div>
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-violet-400">Mind Meld Functions</p>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        {FUNCTIONS.map((f) => {
+                          const Icon = f.icon;
+                          return (
+                            <button key={f.key} onClick={() => setActiveFn(activeFn === f.key ? null : f.key)} className={`rounded-xl border p-2.5 text-left transition ${activeFn === f.key ? "border-violet-300 bg-violet-50" : "border-slate-100 hover:border-violet-200 hover:bg-slate-50"}`}>
+                              <Icon className="h-4 w-4 text-violet-500" />
+                              <p className="mt-1.5 text-[11px] font-semibold leading-tight text-slate-800">{f.name}</p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {activeFn && <FunctionOutput fnKey={activeFn} item={selected} />}
+                    </div>
+
+                    <div>
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-violet-400">Thought Layers</p>
+                      <div className="flex flex-wrap gap-1.5">{LAYERS.map((l) => <span key={l} className={`rounded-full px-2.5 py-1 text-xs font-medium ${LAYER_TONE[l]}`}>{l}</span>)}</div>
+                    </div>
+
+                    <div>
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-violet-400">Live Mind Feed</p>
+                      <ul className="space-y-2">
+                        {mindFeed.map((e) => (
+                          <li key={e.id} className="flex items-center gap-2 text-xs">
+                            <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
+                            <span className="text-slate-700"><span className="font-semibold">{e.actor}</span> {e.action}</span>
+                            <span className="ml-auto text-slate-300">{e.timestamp}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* CARMEN VIEW */}
+                  <div className="flex flex-col rounded-2xl border border-sky-100 bg-sky-50/40 p-5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500 text-xs font-bold text-white">CV</div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-800">Carmen View</p>
+                          <p className="text-[11px] text-slate-500">Systems · execution</p>
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-600"><span className="h-1.5 w-1.5 rounded-full bg-sky-500" />Active</span>
+                    </div>
+                    <p className="mt-4 text-[10px] font-semibold uppercase tracking-wide text-sky-400">Top Perspective</p>
+                    <p className="mt-1 text-sm text-slate-700">{selected.carmenThoughts}</p>
+                    <p className="mt-4 text-[10px] font-semibold uppercase tracking-wide text-sky-400">Thought Layers</p>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">{selected.layers.map((l) => <span key={l} className={`rounded-full px-2 py-0.5 text-xs font-medium ${LAYER_TONE[l]}`}>{l}</span>)}</div>
+                    {currentRole === "Carmen" && (
+                      <div className="mt-3">
+                        <textarea value={carmenDraft} onChange={(e) => setCarmenDraft(e.target.value)} placeholder="Add or refine your perspective..." className="h-16 w-full rounded-lg border border-sky-200 bg-white px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-sky-200" />
+                        <button onClick={() => { if (!carmenDraft.trim()) return; addMindMeldThought(selected.id, "Carmen", carmenDraft); setCarmenDraft(""); toast({ title: "Perspective added to Carmen View" }); }} className="mt-2 rounded-lg bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-600">Save perspective</button>
+                      </div>
+                    )}
+                    <button onClick={() => { rosify(selected.id, handoffNote); setHandoffNote(""); toast({ title: "Ready to Rosify", description: "Routed to Rose for direction review. No official decision created." }); }} className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 mt-4">
+                      <Send className="h-4 w-4" /> Ready to Rosify
+                    </button>
+                  </div>
+                </div>
+
+                {/* Synthesis */}
+                <div className="border-t border-violet-100 bg-gradient-to-br from-violet-50/60 to-fuchsia-50/60 p-5">
+                  <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-violet-600"><Sparkles className="h-3.5 w-3.5" /> Rose OS Synthesis</p>
+                  <p className="mt-2 text-sm text-slate-700">{selected.synthesis}</p>
+                  <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Open questions</p>
+                      <ul className="mt-1 space-y-1">{selected.openQuestions.map((q) => <li key={q} className="flex items-start gap-1.5 text-sm text-slate-700"><MessageCircleQuestion className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-400" />{q}</li>)}</ul>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Optional handoff note</p>
+                      <input value={handoffNote} onChange={(e) => setHandoffNote(e.target.value)} placeholder="Add a note before Carmenfy / Rosify..." className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-200" />
+                      <p className="mt-1.5 text-[11px] text-slate-400">Handoffs create a private item for the other person. They never auto-create official company decisions.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right rail */}
+              <div className="space-y-6">
+                <SectionCard title="Decision Heatmap" icon={Grid3x3} accent="rose">
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {Array.from({ length: 30 }).map((_, i) => {
+                      const intensity = (Math.sin(i * 1.7) + 1) / 2;
+                      const bg = intensity > 0.66 ? "bg-rose-400" : intensity > 0.33 ? "bg-amber-300" : "bg-emerald-200";
+                      return <div key={i} className={`h-6 rounded-md ${bg}`} style={{ opacity: 0.5 + intensity * 0.5 }} />;
+                    })}
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400"><span>Aligned</span><span>Needs clarity</span></div>
+                </SectionCard>
+
+                <SectionCard title="Handoff History" icon={History} accent="violet">
+                  <ul className="space-y-3">
+                    {handoffs.map((h) => (
+                      <li key={h.id} className="flex items-start gap-2.5">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600"><ArrowRightLeft className="h-4 w-4" /></div>
+                        <div>
+                          <p className="text-xs font-semibold text-slate-800">{h.from} → {h.to}</p>
+                          <p className="text-[11px] text-slate-500">{h.layer} layer · {h.timestamp}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </SectionCard>
+
+                <div className="rounded-2xl border border-violet-100 bg-violet-50/50 p-4">
+                  <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-violet-600"><Lock className="h-3.5 w-3.5" /> Private Room Status</p>
+                  <ul className="mt-2 space-y-1 text-xs text-slate-600">
+                    <li className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Rose &amp; Carmen present</li>
+                    <li className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> End-to-end private</li>
+                    <li className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> {mindMeldItems.length} active threads</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Left & center */}
@@ -157,8 +340,8 @@ export default function MindMeldRoom() {
             {selected && (
               <>
                 {/* Two-column Rose / Carmen */}
-                {(view === "room" || view === "rose") && (
-                  <div className={`grid grid-cols-1 gap-4 ${view === "room" ? "md:grid-cols-2" : ""}`}>
+                {view === "rose" && (
+                  <div className="grid grid-cols-1 gap-4">
                     {(
                       <div className="rounded-2xl border border-rose-100 bg-rose-50/40 p-5">
                         <div className="mb-3 flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500 text-xs font-bold text-white">RA</div><div><p className="text-sm font-bold text-slate-800">Rose View</p><p className="text-[11px] text-slate-500">Founder · vision &amp; direction</p></div></div>
@@ -168,19 +351,6 @@ export default function MindMeldRoom() {
                           <div className="mt-3">
                             <textarea value={roseDraft} onChange={(e) => setRoseDraft(e.target.value)} placeholder="Add or refine your thought..." className="h-16 w-full rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-rose-200" />
                             <button onClick={() => { if (!roseDraft.trim()) return; addMindMeldThought(selected.id, "Rose", roseDraft); setRoseDraft(""); toast({ title: "Thought added to Rose View" }); }} className="mt-2 rounded-lg bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-600">Save thought</button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {view === "room" && (
-                      <div className="rounded-2xl border border-sky-100 bg-sky-50/40 p-5">
-                        <div className="mb-3 flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500 text-xs font-bold text-white">CV</div><div><p className="text-sm font-bold text-slate-800">Carmen View</p><p className="text-[11px] text-slate-500">Systems · execution &amp; precision</p></div></div>
-                        <p className="text-sm text-slate-700">{selected.carmenThoughts}</p>
-                        <div className="mt-3 flex flex-wrap gap-1.5">{selected.layers.map((l) => <span key={l} className={`rounded-full px-2 py-0.5 text-xs font-medium ${LAYER_TONE[l]}`}>{l}</span>)}</div>
-                        {currentRole === "Carmen" && (
-                          <div className="mt-3">
-                            <textarea value={carmenDraft} onChange={(e) => setCarmenDraft(e.target.value)} placeholder="Add or refine your perspective..." className="h-16 w-full rounded-lg border border-sky-200 bg-white px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-sky-200" />
-                            <button onClick={() => { if (!carmenDraft.trim()) return; addMindMeldThought(selected.id, "Carmen", carmenDraft); setCarmenDraft(""); toast({ title: "Perspective added to Carmen View" }); }} className="mt-2 rounded-lg bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-600">Save perspective</button>
                           </div>
                         )}
                       </div>

@@ -1,0 +1,1 @@
+- [RoseOS asset imports](asset-imports.md) — import images via `@/assets/...` (resolves in both vite + tsc); avoid `@assets` for typechecked code.
