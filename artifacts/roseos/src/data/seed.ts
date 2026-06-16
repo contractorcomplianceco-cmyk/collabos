@@ -1,0 +1,337 @@
+import type {
+  Person,
+  Department,
+  Project,
+  Task,
+  Idea,
+  BuildItem,
+  Requirement,
+  Decision,
+  Automation,
+  SOP,
+  CompanyRecord,
+  FeedbackItem,
+  Blocker,
+  SentimentSignal,
+  DuplicateRisk,
+  Alert,
+  Report,
+  MarketSignal,
+  Competitor,
+  MockupRequest,
+  MindMeldItem,
+  Handoff,
+  MindFeedEntry,
+  Recommendation,
+  IntegrationStatus,
+  AppSettings,
+} from "@/types";
+
+export const people: Person[] = [
+  { id: "p-rose", name: "Rose Almeida", role: "Rose", title: "Founder & CEO", department: "Leadership", initials: "RA", color: "rose" },
+  { id: "p-carmen", name: "Carmen Vega", role: "Carmen", title: "Head of Systems", department: "Systems", initials: "CV", color: "sky" },
+  { id: "p-alex", name: "Alex Morgan", role: "Department Lead", title: "Chief Strategy Officer", department: "Strategy", initials: "AM", color: "violet" },
+  { id: "p-jordan", name: "Jordan Lee", role: "Department Lead", title: "Marketing Lead", department: "Marketing", initials: "JL", color: "amber" },
+  { id: "p-sam", name: "Sam Rivera", role: "Team Member", title: "Automation Engineer", department: "Systems", initials: "SR", color: "emerald" },
+  { id: "p-priya", name: "Priya Nair", role: "Team Member", title: "CRM Architect", department: "Systems", initials: "PN", color: "sky" },
+  { id: "p-dee", name: "Dee Okafor", role: "Department Lead", title: "Compliance Lead", department: "Compliance", initials: "DO", color: "rose" },
+  { id: "p-tomas", name: "Tomas Beck", role: "Team Member", title: "Sales Enablement", department: "Sales", initials: "TB", color: "violet" },
+];
+
+export const departments: Department[] = [
+  { id: "d-lead", name: "Leadership", lead: "Rose Almeida", headcount: 2, color: "rose" },
+  { id: "d-sys", name: "Systems", lead: "Carmen Vega", headcount: 6, color: "sky" },
+  { id: "d-mkt", name: "Marketing", lead: "Jordan Lee", headcount: 4, color: "amber" },
+  { id: "d-sales", name: "Sales", lead: "Tomas Beck", headcount: 5, color: "violet" },
+  { id: "d-comp", name: "Compliance", lead: "Dee Okafor", headcount: 3, color: "emerald" },
+  { id: "d-strat", name: "Strategy", lead: "Alex Morgan", headcount: 2, color: "violet" },
+];
+
+export const projects: Project[] = [
+  { id: "pr-1", name: "Command Center Build", description: "Core Rose OS work and project dashboard module.", department: "Systems", owner: "Carmen Vega", status: "active", risk: "medium", progress: 72, source: "Replit Builds", classification: "documented-fact", lastActivity: "2026-06-15", deadline: "2026-07-01", tags: ["build", "core"] },
+  { id: "pr-2", name: "Business Services Hub", description: "Unified intake and services portal for CCA clients.", department: "Compliance", owner: "Dee Okafor", status: "at-risk", risk: "high", progress: 48, source: "Company Brain", classification: "documented-fact", lastActivity: "2026-06-14", deadline: "2026-06-28", tags: ["services", "client"] },
+  { id: "pr-3", name: "QualifierConnect", description: "Lead qualification and routing automation across CRM.", department: "Sales", owner: "Tomas Beck", status: "active", risk: "low", progress: 64, source: "Zoho", classification: "documented-fact", lastActivity: "2026-06-16", deadline: "2026-07-10", tags: ["crm", "automation"] },
+  { id: "pr-4", name: "Document Collection", description: "Automated compliance document collection workflow.", department: "Compliance", owner: null, status: "blocked", risk: "high", progress: 30, source: "WorkDrive", classification: "documented-fact", lastActivity: "2026-06-09", deadline: "2026-06-25", tags: ["compliance", "automation"] },
+  { id: "pr-5", name: "CRM Architecture", description: "Re-architecture of CRM modules and data model.", department: "Systems", owner: "Priya Nair", status: "active", risk: "medium", progress: 55, source: "Zoho", classification: "documented-fact", lastActivity: "2026-06-15", deadline: "2026-07-20", tags: ["crm", "architecture"] },
+  { id: "pr-6", name: "Marketing Command Center", description: "Campaign planning and content intelligence workspace.", department: "Marketing", owner: "Jordan Lee", status: "stale", risk: "medium", progress: 40, source: "Company Brain", classification: "documented-fact", lastActivity: "2026-05-30", deadline: "2026-07-05", tags: ["marketing", "content"] },
+  { id: "pr-7", name: "Automation Registry", description: "Central registry of all CAG and Zoho automations.", department: "Systems", owner: "Sam Rivera", status: "active", risk: "low", progress: 80, source: "CAG", classification: "documented-fact", lastActivity: "2026-06-16", deadline: null, tags: ["registry", "automation"] },
+  { id: "pr-8", name: "Sales Asset Library", description: "Reusable proposal and pricing asset library.", department: "Sales", owner: null, status: "stale", risk: "medium", progress: 22, source: "Company Brain", classification: "documented-fact", lastActivity: "2026-05-22", deadline: "2026-07-15", tags: ["sales", "assets"] },
+];
+
+export const tasks: Task[] = [
+  { id: "t-1", title: "Wire duplicate detection helper", projectId: "pr-1", owner: "Carmen Vega", status: "in-progress", due: "2026-06-20" },
+  { id: "t-2", title: "Draft client intake SOP", projectId: "pr-2", owner: "Dee Okafor", status: "review", due: "2026-06-22" },
+  { id: "t-3", title: "Map qualifier scoring rules", projectId: "pr-3", owner: "Tomas Beck", status: "in-progress", due: "2026-06-24" },
+  { id: "t-4", title: "Assign document collection owner", projectId: "pr-4", owner: null, status: "todo", due: "2026-06-18" },
+  { id: "t-5", title: "CRM module consolidation review", projectId: "pr-5", owner: "Priya Nair", status: "in-progress", due: "2026-06-26" },
+];
+
+export const ideas: Idea[] = [
+  { id: "i-1", title: "Collab OS vNext", description: "Merge Command Center insights with Rose Brain memory for proactive nudges.", submittedBy: "Rose Almeida", status: "needs-rose-review", momentum: 92, cluster: "Platform", benefits: ["Proactive leadership signals", "Less manual review"], risks: ["Scope creep"], dependencies: ["Command Center Build"], approvalRoute: "both", createdAt: "2026-06-12" },
+  { id: "i-2", title: "Personalization Engine", description: "Per-client personalization layer across services hub.", submittedBy: "Jordan Lee", status: "needs-research", momentum: 78, cluster: "Growth", benefits: ["Higher conversion"], risks: ["Data privacy"], dependencies: ["Business Services Hub"], approvalRoute: "carmen", createdAt: "2026-06-10" },
+  { id: "i-3", title: "Content Magic", description: "AI-assisted content drafting tied to Company Brain records.", submittedBy: "Jordan Lee", status: "draft-idea", momentum: 61, cluster: "Growth", benefits: ["Faster content"], risks: ["Brand drift"], dependencies: [], approvalRoute: "rose", createdAt: "2026-06-11" },
+  { id: "i-4", title: "AI Co-Pilot for Proposals", description: "Draft proposals from CRM + asset library.", submittedBy: "Tomas Beck", status: "related-to-existing", momentum: 70, cluster: "Sales", benefits: ["Faster proposals"], risks: ["Pricing accuracy"], dependencies: ["Sales Asset Library", "QualifierConnect"], approvalRoute: "rose", createdAt: "2026-06-08" },
+  { id: "i-5", title: "Smart Contract Manager", description: "Lifecycle tracking for compliance contracts.", submittedBy: "Dee Okafor", status: "needs-carmen-review", momentum: 66, cluster: "Compliance", benefits: ["Risk reduction"], risks: ["Integration effort"], dependencies: ["Document Collection"], approvalRoute: "carmen", createdAt: "2026-06-09" },
+  { id: "i-6", title: "Customer 360 Dashboard", description: "Single client view across CRM, services, and compliance.", submittedBy: "Priya Nair", status: "approved-for-build", momentum: 85, cluster: "Platform", benefits: ["Unified client view"], risks: ["Data joins"], dependencies: ["CRM Architecture"], approvalRoute: "both", createdAt: "2026-06-05" },
+];
+
+export const buildItems: BuildItem[] = [
+  { id: "b-1", name: "Duplicate Radar engine", projectId: "pr-1", readiness: 70, status: "in-build", owner: "Carmen Vega", source: "Replit Builds" },
+  { id: "b-2", name: "Customer 360 data layer", projectId: "pr-5", readiness: 45, status: "scoping", owner: "Priya Nair", source: "Zoho" },
+  { id: "b-3", name: "Qualifier scoring API", projectId: "pr-3", readiness: 80, status: "ready", owner: "Tomas Beck", source: "Zoho" },
+  { id: "b-4", name: "Document intake bot", projectId: "pr-4", readiness: 25, status: "blocked", owner: null, source: "CAG" },
+];
+
+export const requirements: Requirement[] = [
+  { id: "r-1", title: "Role-based visibility rules", area: "Platform", status: "approved", owner: "Carmen Vega" },
+  { id: "r-2", title: "Client intake field mapping", area: "Services", status: "draft", owner: "Dee Okafor" },
+  { id: "r-3", title: "Qualifier scoring thresholds", area: "Sales", status: "draft", owner: "Tomas Beck" },
+  { id: "r-4", title: "Audit log retention", area: "Compliance", status: "approved", owner: "Dee Okafor" },
+];
+
+export const decisions: Decision[] = [
+  { id: "dec-1", title: "Public launch domain for Collab Command Center", context: "Choose primary domain ahead of internal launch.", status: "open", owner: "Rose Almeida", approvalRoute: "rose", risk: "high" },
+  { id: "dec-2", title: "CRM consolidation approach", context: "Merge or keep parallel Zoho modules.", status: "open", owner: "Carmen Vega", approvalRoute: "carmen", risk: "medium" },
+  { id: "dec-3", title: "Pricing model for Business Services Hub", context: "Tiered vs usage-based pricing.", status: "open", owner: "Rose Almeida", approvalRoute: "both", risk: "high" },
+  { id: "dec-4", title: "Automation registry ownership", context: "Who owns the registry long-term.", status: "deferred", owner: "Sam Rivera", approvalRoute: "carmen", risk: "low" },
+];
+
+export const automations: Automation[] = [
+  { id: "a-1", name: "Lead routing flow", system: "Zoho CRM", status: "live", owner: "Sam Rivera", description: "Routes inbound leads to qualifier." },
+  { id: "a-2", name: "Document reminder cadence", system: "CAG", status: "draft", owner: "Dee Okafor", description: "Reminds clients of missing docs." },
+  { id: "a-3", name: "Proposal draft trigger", system: "Zoho CRM", status: "proposed", owner: "Tomas Beck", description: "Drafts proposal on stage change." },
+  { id: "a-4", name: "Sentiment digest", system: "Company Brain", status: "live", owner: "Carmen Vega", description: "Weekly team pulse digest." },
+];
+
+export const sops: SOP[] = [
+  { id: "s-1", title: "Client onboarding", area: "Services", status: "needs-update", owner: "Dee Okafor" },
+  { id: "s-2", title: "Lead qualification", area: "Sales", status: "current", owner: "Tomas Beck" },
+  { id: "s-3", title: "Document collection", area: "Compliance", status: "missing", owner: null },
+  { id: "s-4", title: "Automation change control", area: "Systems", status: "current", owner: "Carmen Vega" },
+];
+
+export const companyRecords: CompanyRecord[] = [
+  { id: "cr-1", title: "Client onboarding standard", type: "SOP", summary: "Approved onboarding sequence for CCA clients including intake, KYC, and welcome cadence.", source: "Company Brain", classification: "approved-decision", keywords: ["onboarding", "client", "intake", "kyc"] },
+  { id: "cr-2", title: "Qualifier scoring model", type: "Decision", summary: "Documented qualifier scoring thresholds and routing rules for QualifierConnect.", source: "Company Brain", classification: "approved-decision", keywords: ["qualifier", "scoring", "leads", "routing", "stuck"] },
+  { id: "cr-3", title: "CRM data ownership map", type: "Record", summary: "Defines which team owns each CRM module and field in Zoho.", source: "Company Brain", classification: "documented-fact", keywords: ["crm", "owner", "zoho", "data"] },
+  { id: "cr-4", title: "Document collection policy", type: "Policy", summary: "Compliance policy for collecting and storing client documents in WorkDrive.", source: "Company Brain", classification: "approved-decision", keywords: ["document", "collection", "compliance", "workdrive"] },
+  { id: "cr-5", title: "Automation change control", type: "SOP", summary: "Process for proposing, reviewing, and approving automation changes in CAG and Zoho.", source: "Company Brain", classification: "approved-decision", keywords: ["automation", "change", "control", "review", "deploy"] },
+  { id: "cr-6", title: "Brand voice guide", type: "Guide", summary: "Approved Rose OS brand voice and tone for client-facing content.", source: "Company Brain", classification: "approved-decision", keywords: ["brand", "voice", "content", "marketing", "tone"] },
+];
+
+export const feedbackItems: FeedbackItem[] = [
+  { id: "f-1", type: "missing-docs", summary: "No SOP for the new document collection flow.", submittedBy: "Sam Rivera", department: "Systems", privacy: "internal", supportNeed: "Documentation", approvalRoute: "carmen", count: 4 },
+  { id: "f-2", type: "tool-friction", summary: "Zoho stage changes are confusing for new sales reps.", submittedBy: "Tomas Beck", department: "Sales", privacy: "internal", supportNeed: "Training", approvalRoute: "carmen", count: 6 },
+  { id: "f-3", type: "workload", summary: "Compliance team stretched ahead of services hub deadline.", submittedBy: "Dee Okafor", department: "Compliance", privacy: "leadership-only", supportNeed: "Leadership support", approvalRoute: "rose", count: 3 },
+  { id: "f-4", type: "repeated-question", summary: "Where do approved decisions live vs draft ideas?", submittedBy: "Jordan Lee", department: "Marketing", privacy: "internal", supportNeed: "Clarity", approvalRoute: "carmen", count: 5 },
+  { id: "f-5", type: "training-need", summary: "Team wants a walkthrough of the automation registry.", submittedBy: "Priya Nair", department: "Systems", privacy: "internal", supportNeed: "Training", approvalRoute: "carmen", count: 2 },
+];
+
+export const blockers: Blocker[] = [
+  { id: "bl-1", title: "Document Collection has no owner", projectId: "pr-4", owner: null, risk: "high", age: 7 },
+  { id: "bl-2", title: "Pricing decision blocking Services Hub", projectId: "pr-2", owner: "Rose Almeida", risk: "high", age: 5 },
+  { id: "bl-3", title: "CRM module conflict unresolved", projectId: "pr-5", owner: "Priya Nair", risk: "medium", age: 3 },
+];
+
+export const sentimentSignals: SentimentSignal[] = [
+  { team: "Product", score: 0.85, trend: "up", theme: "Strong momentum on build" },
+  { team: "Engineering", score: 0.62, trend: "flat", theme: "Steady but watching workload" },
+  { team: "Design", score: 0.75, trend: "up", theme: "Energized by new direction" },
+  { team: "Ops", score: 0.15, trend: "down", theme: "Needs documentation support" },
+  { team: "Sales", score: 0.43, trend: "flat", theme: "Tooling friction in Zoho" },
+];
+
+export const duplicateRisks: DuplicateRisk[] = [
+  { id: "dr-1", title: "AI Content Generator vs Content Magic", similarity: 95, overlappingItems: ["Content Magic", "Marketing Command Center"], reason: "Both draft content from Company Brain records using AI.", sourceRecords: ["Brand voice guide", "Marketing Command Center"], affectedOwners: ["Jordan Lee"], risk: "high", recommendation: "Merge into one content intelligence module.", approvalRoute: "rose", category: "ideas" },
+  { id: "dr-2", title: "Client Onboarding Redesign overlap", similarity: 83, overlappingItems: ["Business Services Hub", "Client onboarding SOP"], reason: "Two parallel onboarding redesigns in Services and Compliance.", sourceRecords: ["Client onboarding standard"], affectedOwners: ["Dee Okafor"], risk: "high", recommendation: "Align both onto one onboarding standard.", approvalRoute: "both", category: "projects" },
+  { id: "dr-3", title: "AI-Powered Analytics duplication", similarity: 76, overlappingItems: ["Customer 360 Dashboard", "Command Center Build"], reason: "Two analytics surfaces planned over the same CRM data.", sourceRecords: ["CRM data ownership map"], affectedOwners: ["Priya Nair", "Carmen Vega"], risk: "medium", recommendation: "Share one analytics data layer.", approvalRoute: "carmen", category: "build-items" },
+  { id: "dr-4", title: "Invoice Automation overlap", similarity: 68, overlappingItems: ["Lead routing flow", "Proposal draft trigger"], reason: "Similar Zoho triggers proposed in two automations.", sourceRecords: ["Automation change control"], affectedOwners: ["Sam Rivera", "Tomas Beck"], risk: "medium", recommendation: "Consolidate Zoho trigger logic.", approvalRoute: "carmen", category: "automations" },
+];
+
+export const alerts: Alert[] = [
+  { id: "al-1", type: "duplicate", message: "High overlap detected between Content Magic and AI Content Generator.", risk: "high", source: "Duplicate Radar", createdAt: "2026-06-16" },
+  { id: "al-2", type: "missing-owner", message: "Document Collection has no assigned owner for 7 days.", risk: "high", source: "Collab Dashboard", createdAt: "2026-06-15" },
+  { id: "al-3", type: "blocker", message: "Pricing decision is blocking Business Services Hub.", risk: "high", source: "Decisions", createdAt: "2026-06-15" },
+  { id: "al-4", type: "stale", message: "Marketing Command Center has been inactive for 17 days.", risk: "medium", source: "Collab Dashboard", createdAt: "2026-06-16" },
+  { id: "al-5", type: "overlap", message: "Two analytics surfaces planned over the same CRM data.", risk: "medium", source: "Duplicate Radar", createdAt: "2026-06-14" },
+  { id: "al-6", type: "risk", message: "Compliance workload elevated ahead of deadline.", risk: "medium", source: "Team Pulse", createdAt: "2026-06-14" },
+  { id: "al-7", type: "stale", message: "Sales Asset Library unowned and stale for 25 days.", risk: "medium", source: "Collab Dashboard", createdAt: "2026-06-13" },
+  { id: "al-8", type: "duplicate", message: "Invoice automation overlaps existing Zoho triggers.", risk: "medium", source: "Duplicate Radar", createdAt: "2026-06-13" },
+];
+
+export const reports: Report[] = [
+  {
+    id: "rep-1",
+    type: "Project Health Report",
+    title: "Q2 Strategic Overview",
+    date: "2026-05-12",
+    summary: "Overall portfolio is healthy with two high-risk projects needing leadership attention.",
+    findings: ["8 active projects, 2 at-risk", "Document Collection blocked on ownership", "Services Hub blocked on pricing decision"],
+    sourceData: ["Projects registry", "Blockers", "Decisions"],
+    risks: ["Two high-risk projects near deadline", "Unowned compliance work"],
+    recommendations: ["Assign Document Collection owner", "Resolve pricing decision this week"],
+    decisionsNeeded: ["Pricing model for Services Hub"],
+    owners: ["Rose Almeida", "Carmen Vega"],
+    nextSteps: ["Leadership review Friday", "Re-baseline timelines"],
+  },
+  {
+    id: "rep-2",
+    type: "Growth Opportunity Report",
+    title: "Innovation Pipeline",
+    date: "2026-05-10",
+    summary: "Six ideas in pipeline; three cluster into a stronger platform opportunity.",
+    findings: ["Collab OS vNext gaining momentum", "Customer 360 approved for build", "Content ideas overlap"],
+    sourceData: ["Innovation Lab", "Duplicate Radar"],
+    risks: ["Content idea duplication"],
+    recommendations: ["Merge content ideas", "Sequence platform ideas"],
+    decisionsNeeded: ["Prioritize Collab OS vNext"],
+    owners: ["Rose Almeida"],
+    nextSteps: ["Research personalization engine"],
+  },
+  {
+    id: "rep-3",
+    type: "Market Pulse Report",
+    title: "Market Positioning",
+    date: "2026-05-09",
+    summary: "Competitors are shifting toward AI-assisted compliance services.",
+    findings: ["Acme Corp launched AI intake", "Nexus Labs adjusted pricing"],
+    sourceData: ["Market Pulse (sample data)"],
+    risks: ["Pricing pressure"],
+    recommendations: ["Evaluate AI intake response"],
+    decisionsNeeded: ["Pricing response"],
+    owners: ["Rose Almeida"],
+    nextSteps: ["Brief leadership on positioning"],
+  },
+];
+
+export const marketSignals: MarketSignal[] = [
+  { id: "ms-1", source: "Acme Corp blog", dateFound: "2026-06-12", signalType: "new-product", summary: "Acme Corp announced an AI-powered client intake assistant.", opportunity: "Differentiate on compliance depth.", risk: "high", recommendedResponse: "Accelerate Business Services Hub intake.", reviewOwner: "rose" },
+  { id: "ms-2", source: "Nexus Labs pricing page", dateFound: "2026-06-10", signalType: "pricing", summary: "Nexus Labs moved to usage-based pricing.", opportunity: "Test tiered + usage hybrid.", risk: "medium", recommendedResponse: "Model pricing scenarios.", reviewOwner: "rose" },
+  { id: "ms-3", source: "Globex careers page", dateFound: "2026-06-08", signalType: "job-posting", summary: "Globex hiring automation engineers for compliance.", opportunity: "Expand automation registry lead.", risk: "low", recommendedResponse: "Highlight automation maturity.", reviewOwner: "carmen" },
+  { id: "ms-4", source: "Industry report", dateFound: "2026-06-05", signalType: "trend", summary: "Compliance buyers prioritizing unified client views.", opportunity: "Lead with Customer 360.", risk: "low", recommendedResponse: "Promote Customer 360 build.", reviewOwner: "rose" },
+  { id: "ms-5", source: "Public filing", dateFound: "2026-06-03", signalType: "compliance-opportunity", summary: "New compliance reporting requirement taking effect.", opportunity: "Offer ready-made reporting templates.", risk: "medium", recommendedResponse: "Scope compliance reporting feature.", reviewOwner: "both" },
+];
+
+export const competitors: Competitor[] = [
+  { id: "c-1", name: "Acme Corp", threat: "high", trend: "up", newsCount: 8, movement: 12, series: [20, 24, 22, 28, 32, 30, 36] },
+  { id: "c-2", name: "Nexus Labs", threat: "medium", trend: "up", newsCount: 5, movement: 5, series: [18, 19, 21, 20, 23, 24, 26] },
+  { id: "c-3", name: "Globex Inc", threat: "low", trend: "down", newsCount: 2, movement: -3, series: [30, 28, 27, 26, 24, 23, 22] },
+  { id: "c-4", name: "Emerging Entrant", threat: "watch", trend: "flat", newsCount: 1, movement: 1, series: [10, 11, 10, 12, 11, 12, 12] },
+];
+
+export const mockupRequests: MockupRequest[] = [
+  { id: "mr-1", ideaName: "Customer 360 Dashboard", targetUser: "Account managers", purpose: "Single client view across systems", mustHaveFeatures: "Timeline, documents, CRM stage, compliance status", brandSystem: "Rose OS", screenType: "Dashboard", desiredOutput: "Build prompt + layout brief" },
+];
+
+export const mindMeldItems: MindMeldItem[] = [
+  {
+    id: "mm-1",
+    title: "Collab OS vNext direction",
+    source: "Innovation Lab",
+    owner: "Rose",
+    status: "ready-to-carmenfy",
+    roseThoughts: "Scale the impact without losing the soul. Keep it human, brilliant, and unapologetically different.",
+    carmenThoughts: "Operationalize the vision with precision. Build the machine that makes the magic repeatable.",
+    synthesis: "Rose OS sees strong synergy: the vision is bold and the systems path is clear. Protect the magic in the details while defining a repeatable playbook.",
+    openQuestions: ["What is the smallest lovable v1?", "Which signals do we automate first?", "Where do we draw the privacy line?"],
+    alignment: "strong",
+    alignmentScore: 86,
+    risk: "medium",
+    privacy: "leadership-only",
+    nextHandoff: "carmen",
+    finalOutcome: null,
+    layers: ["Vision", "Strategy", "Execution"],
+    focusAreas: ["Brand Soul", "Experience", "Community"],
+    sensitive: true,
+    history: [
+      { id: "h-1", timestamp: "2026-06-14 09:58", actor: "Rose", action: "Added vision thought" },
+      { id: "h-2", timestamp: "2026-06-15 10:24", actor: "Rose OS", action: "Generated private synthesis" },
+    ],
+  },
+  {
+    id: "mm-2",
+    title: "CRM consolidation playbook",
+    source: "CRM Architecture",
+    owner: "Carmen",
+    status: "ready-to-rosify",
+    roseThoughts: "Make sure we don't lose the client relationship nuance when we consolidate.",
+    carmenThoughts: "Let's define the playbook for consistent execution. We can automate this handoff workflow.",
+    synthesis: "Rose OS recommends consolidating modules with a relationship-preserving migration. Needs founder sign-off on client-facing implications.",
+    openQuestions: ["Do we migrate in one cut or phased?", "What client comms are needed?"],
+    alignment: "partial",
+    alignmentScore: 64,
+    risk: "medium",
+    privacy: "private",
+    nextHandoff: "rose",
+    finalOutcome: null,
+    layers: ["Strategy", "Execution"],
+    focusAreas: ["Systems", "Efficiency", "Scale"],
+    sensitive: false,
+    history: [
+      { id: "h-3", timestamp: "2026-06-13 14:10", actor: "Carmen", action: "Added systems note" },
+    ],
+  },
+  {
+    id: "mm-3",
+    title: "Public launch positioning",
+    source: "Decisions",
+    owner: "Rose",
+    status: "with-carmen",
+    roseThoughts: "I want the launch to feel like a movement, not a product drop.",
+    carmenThoughts: "We need the infrastructure to handle the attention before we make noise.",
+    synthesis: "Rose OS flags exciting vision with operational readiness gaps. Confirm infrastructure readiness before public positioning.",
+    openQuestions: ["Are we infra-ready for launch volume?"],
+    alignment: "needs-clarity",
+    alignmentScore: 41,
+    risk: "high",
+    privacy: "leadership-only",
+    nextHandoff: "carmen",
+    finalOutcome: null,
+    layers: ["Vision", "Impact"],
+    focusAreas: ["Launch", "Brand Soul"],
+    sensitive: true,
+    history: [
+      { id: "h-4", timestamp: "2026-06-12 16:30", actor: "Rose", action: "Pressed Ready to Carmenfy" },
+    ],
+  },
+];
+
+export const handoffs: Handoff[] = [
+  { id: "ho-1", itemId: "mm-2", itemTitle: "CRM consolidation playbook", from: "Carmen", to: "Rose", layer: "Strategy", timestamp: "10:24 AM", note: "Systems plan ready for founder review." },
+  { id: "ho-2", itemId: "mm-1", itemTitle: "Collab OS vNext direction", from: "Rose", to: "Carmen", layer: "Vision", timestamp: "9:58 AM", note: "Vision framed, ready to operationalize." },
+  { id: "ho-3", itemId: "mm-3", itemTitle: "Public launch positioning", from: "Carmen", to: "Rose", layer: "Execution", timestamp: "Yesterday", note: "Infra readiness questions raised." },
+];
+
+export const mindFeed: MindFeedEntry[] = [
+  { id: "mf-1", actor: "Rose", action: "shared a thought", layer: "Vision", timestamp: "2m ago" },
+  { id: "mf-2", actor: "Carmen", action: "added a perspective", layer: "Strategy", timestamp: "1m ago" },
+  { id: "mf-3", actor: "Rose OS", action: "updated the alignment meter", layer: "Impact", timestamp: "just now" },
+];
+
+export const recommendations: Recommendation[] = [
+  { id: "rc-1", source: "Duplicate Radar", category: "duplicate", recommendation: "Merge Content Magic and AI Content Generator into one module.", classification: "ai-recommendation", risk: "high", requiredApprover: "rose", status: "pending", history: [{ id: "rh-1", timestamp: "2026-06-16 09:00", actor: "Rose OS", action: "Recommendation created" }] },
+  { id: "rc-2", source: "Team Pulse", category: "team-pulse", recommendation: "Add a document collection SOP and a short training.", classification: "ai-recommendation", risk: "medium", requiredApprover: "carmen", status: "pending", history: [{ id: "rh-2", timestamp: "2026-06-16 09:05", actor: "Rose OS", action: "Recommendation created" }] },
+  { id: "rc-3", source: "Decisions", category: "final-decision", recommendation: "Approve tiered + usage hybrid pricing for Services Hub.", classification: "pending-approval", risk: "high", requiredApprover: "both", status: "pending", history: [{ id: "rh-3", timestamp: "2026-06-15 17:00", actor: "Rose OS", action: "Routed for decision" }] },
+  { id: "rc-4", source: "Automation Registry", category: "automation", recommendation: "Consolidate overlapping Zoho triggers.", classification: "ai-recommendation", risk: "medium", requiredApprover: "carmen", status: "pending", history: [{ id: "rh-4", timestamp: "2026-06-15 12:00", actor: "Rose OS", action: "Recommendation created" }] },
+  { id: "rc-5", source: "Market Pulse", category: "market", recommendation: "Accelerate intake feature in response to Acme Corp.", classification: "ai-recommendation", risk: "high", requiredApprover: "rose", status: "pending", history: [{ id: "rh-5", timestamp: "2026-06-14 11:00", actor: "Rose OS", action: "Recommendation created" }] },
+  { id: "rc-6", source: "Mind Meld Room", category: "mind-meld-handoff", recommendation: "Promote CRM consolidation playbook to proposed company record.", classification: "sensitive", risk: "medium", requiredApprover: "both", status: "pending", history: [{ id: "rh-6", timestamp: "2026-06-13 15:00", actor: "Carmen", action: "Sent to review" }] },
+];
+
+export const integrations: IntegrationStatus[] = [
+  { name: "Company Brain", status: "Simulated / local", state: "simulated" },
+  { name: "Zoho", status: "Not connected / future", state: "future" },
+  { name: "WorkDrive", status: "Not connected / future", state: "future" },
+  { name: "Supabase", status: "Planned", state: "planned" },
+  { name: "Email alerts", status: "Disabled", state: "disabled" },
+  { name: "Market monitoring", status: "Sample data only", state: "sample" },
+];
+
+export const defaultSettings: AppSettings = {
+  duplicateSensitivity: 75,
+  alertThreshold: 3,
+  reportCadence: "weekly",
+  competitors: ["Acme Corp", "Nexus Labs", "Globex Inc", "Emerging Entrant"],
+  marketKeywords: ["AI intake", "compliance reporting", "usage pricing", "client 360"],
+  mindMeldPrivate: true,
+  emailAlerts: false,
+};

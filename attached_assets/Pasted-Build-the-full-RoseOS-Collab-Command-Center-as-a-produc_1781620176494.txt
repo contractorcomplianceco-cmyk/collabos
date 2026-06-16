@@ -1,0 +1,661 @@
+Build the full RoseOS Collab Command Center as a production-grade internal operating system module fully integrated into Rose OS.
+
+IMPORTANT VISUAL INSTRUCTION:
+Use the attached mockups exactly as the design direction.
+
+Attached visual references:
+1. Overall Collab Command Center mockup
+2. Mind Meld Room mockup
+
+Do not reinterpret these into a generic admin dashboard.
+Do not simplify the interface into plain cards.
+Do not change the core layout, energy, color direction, or product feel.
+Match the mockups closely: sidebar structure, colorful intelligence widgets, polished executive UI, fun status chips, bright but refined workspace, RoseOS Collab Command Center naming, and the private Mind Meld Room concept.
+
+The app should feel like the mockups became a real working product.
+
+PRODUCT NAMING
+
+Use the following naming consistently:
+
+- Rose OS = full company operating system and AI assistant experience
+- Command Center = work and project dashboard inside Rose OS
+- Rose Brain = AI knowledge assistant and memory feature inside Rose OS
+- Company Brain = approved company records and institutional memory
+- RoseOS Collab Command Center = the collaboration intelligence system inside Rose OS
+- Mind Meld Room = private Rose/Carmen collaboration room inside the Collab Command Center
+
+PRIMARY GOAL
+
+Build a highly intuitive, cutting-edge collaboration intelligence system that helps leadership and the team:
+
+1. See what everyone is working on.
+2. Compare workstreams against each other.
+3. Detect duplicate efforts.
+4. Create detailed reports.
+5. Send alerts for overlap, risk, blockers, missing owners, and duplicate work.
+6. Surface insights and growth-minded ideas.
+7. Listen for team feedback, blockers, sentiment, and support needs.
+8. Suggest solutions for in-the-moment issues.
+9. Combine related ideas into stronger larger systems.
+10. Generate mockup/design concepts and build prompts.
+11. Monitor competitors and market movement using public-source information.
+12. Keep everything grounded in Company Brain records and human approval.
+
+CORE PRODUCT STRUCTURE
+
+Create these main areas in the left sidebar:
+
+1. Collab Dashboard
+2. Duplicate Radar
+3. Team Pulse
+4. Solution Finder
+5. Innovation Lab
+6. Mockup Studio
+7. Executive Reports
+8. Market Pulse
+9. Mind Meld Room
+10. Review Queue
+11. Settings / Sources / Permissions
+
+DESIGN REQUIREMENTS
+
+The UI should match the attached mockups exactly in spirit and structure.
+
+Design style:
+- clean white and soft neutral workspace
+- deep navy / charcoal text
+- refined rose and coral accents
+- electric blue highlights
+- mint, lilac, sky, and soft green status chips
+- colorful intelligence widgets
+- fun but professional energy
+- polished high-end SaaS product feel
+- executive operating-system quality
+- no yellow-heavy Rose Brain branding
+- no dark-heavy theme
+- no cartoon people
+- no marketing landing page
+- first screen must be the actual usable Command Center
+
+Layout:
+- left sidebar navigation
+- top global search
+- alert icon/count
+- role selector
+- Rose Brain assistant button/panel
+- main intelligence dashboard
+- responsive desktop, tablet, and mobile behavior
+
+Use icons from lucide-react.
+
+Avoid:
+- generic admin dashboard
+- plain white table-only layout
+- giant marketing hero
+- nested cards
+- dead buttons
+- fake controls that do nothing
+- negative letter spacing
+- one-note purple/blue-only palette
+
+DATA MODEL
+
+Create a local-first prototype data model that can later migrate to Supabase.
+
+Include typed data structures for:
+
+- people
+- roles
+- departments
+- projects
+- tasks
+- ideas
+- build items
+- requirements
+- decisions
+- automations
+- SOPs
+- company records
+- feedback items
+- blockers
+- sentiment signals
+- duplicate risks
+- alerts
+- reports
+- market signals
+- competitor records
+- mockup requests
+- generated concepts
+- Mind Meld items
+- recommendations
+- approvals
+- audit logs
+
+Use realistic sample data connected to Rose OS, CCA, CAG, compliance operations, CRM, Zoho, automations, Replit builds, Company Brain, and internal team workflows.
+
+PERMISSION ROLES
+
+Include at least:
+
+- Rose / Leadership
+- Carmen / Systems Review
+- Admin
+- Department Lead
+- Team Member
+- Viewer
+
+Approval rules:
+- Rose reviews company direction, client-facing content, pricing/proposals, sensitive work, public launch/domain decisions, and final decisions.
+- Carmen reviews systems, process, Zoho, CRM, AI, automation, data, and build-related changes.
+- Some high-risk recommendations require both Rose and Carmen.
+- Team members can submit updates, feedback, blockers, and ideas, but cannot approve system changes.
+- AI recommendations are never automatically approved.
+
+SAFETY RULES
+
+Clearly separate:
+
+- documented fact
+- user-submitted update
+- AI recommendation
+- draft idea
+- pending approval
+- approved company decision
+- sensitive/private item
+
+Do not allow AI recommendations to become official decisions without approval.
+
+Do not make team sentiment punitive. Team Pulse should identify where people need help, training, documentation, clarity, better tools, or leadership support.
+
+Do not connect live external systems yet. For now, simulate integrations and show “recommend-only / pending approval” states.
+
+Do not send real emails.
+Do not write to Zoho.
+Do not write to WorkDrive.
+Do not publish anything externally.
+Do not scrape competitors live.
+Use sample public-source market data only.
+
+MODULE DETAILS
+
+1. COLLAB DASHBOARD
+
+Build the main homepage dashboard matching the overall mockup.
+
+Show:
+
+- current company activity
+- duplicate effort alerts
+- emerging blockers
+- stale work
+- unowned work
+- open decisions
+- active build items
+- ideas gaining momentum
+- team support needs
+- upcoming deadlines
+- recommended leadership actions
+- market/competitor signals
+- latest reports
+- Rose OS recommendation panel
+
+Include filters:
+- department
+- owner
+- status
+- risk level
+- review owner
+- source
+- date range
+
+2. DUPLICATE RADAR
+
+Build duplicate-effort detection.
+
+Compare:
+- projects
+- requirements
+- build items
+- automations
+- SOPs
+- forms
+- CRM modules
+- dashboards
+- ideas
+- company records
+- market opportunities
+
+Show duplicate-risk cards with:
+- similarity score
+- overlapping items
+- reason for match
+- source records
+- affected owners
+- risk level
+- recommendation
+- approval route
+
+Include a New Request Checker where a user types a new idea/project/request and the system checks for overlaps before creating new work.
+
+3. TEAM PULSE
+
+Build a team feedback and sentiment area.
+
+Include:
+- help requests
+- blockers
+- repeated questions
+- confusion points
+- workload concerns
+- missing documentation
+- training needs
+- tool friction
+- morale/sentiment themes
+
+Show:
+- pulse summary
+- top support needs
+- repeated issues
+- recommended SOP updates
+- recommended training
+- recommended leadership follow-up
+- private/sensitive flag
+- approval routing
+
+Team Pulse must be supportive, not punitive.
+
+4. SOLUTION FINDER
+
+Build an in-the-moment help section.
+
+Input examples:
+- “I’m stuck on…”
+- “How do I…”
+- “Who owns…”
+- “Where is…”
+- “What should I do next?”
+
+Search mock Company Brain records, SOPs, decisions, projects, requirements, and prior solutions.
+
+Return:
+- likely answer
+- confidence level
+- source records
+- related projects
+- owner/contact
+- suggested next steps
+- escalation path
+- missing documentation warning if unsupported
+
+If no source exists, show:
+“I cannot find documentation supporting that conclusion in the uploaded company files.”
+
+5. INNOVATION LAB
+
+Build an idea-combination and opportunity engine.
+
+Users can submit ideas. The system should:
+- cluster related ideas
+- compare against current company projects
+- identify bigger structures
+- suggest growth opportunities
+- identify operational improvements
+- recommend product/service concepts
+- show benefits, risks, dependencies, and approval path
+
+Statuses:
+- draft idea
+- related to existing work
+- needs research
+- needs Carmen review
+- needs Rose review
+- approved for build planning
+- parked
+
+6. MOCKUP STUDIO
+
+Build a mockup/design concept section.
+
+Inputs:
+- idea name
+- target user
+- purpose
+- must-have features
+- brand/system
+- screen type
+- desired output
+
+Outputs:
+- screen summary
+- layout description
+- key UI sections
+- data needed
+- user workflow
+- risks
+- next build prompt
+
+Buttons:
+- Generate Concept
+- Create Build Prompt
+- Send to Review
+- Link to Existing Project
+
+For now, generate structured textual mockup briefs and visual placeholder panels. Do not call live image generation APIs.
+
+7. EXECUTIVE REPORTS
+
+Build a reporting center.
+
+Report types:
+- Project Health Report
+- Duplicate Work Report
+- Team Support Needs Report
+- Open Decisions Report
+- Missing Documentation Report
+- Automation Opportunity Report
+- Build Readiness Report
+- Market Pulse Report
+- Growth Opportunity Report
+- Mind Meld Alignment Report
+
+Each report includes:
+- executive summary
+- key findings
+- source data
+- risks
+- recommendations
+- decisions needed
+- owners
+- next steps
+- export/download mock action
+
+8. MARKET PULSE
+
+Build a market-monitoring dashboard using sample public-source data.
+
+Track:
+- competitors
+- new products/services
+- positioning changes
+- public content changes
+- public pricing signals
+- job postings
+- market trends
+- technology shifts
+- compliance-industry opportunities
+
+Each signal includes:
+- source name
+- date found
+- signal type
+- summary
+- opportunity
+- risk
+- recommended response
+- review owner
+
+Label this as public-source market monitoring.
+
+9. MIND MELD ROOM
+
+Build the Mind Meld Room to match the attached Mind Meld mockup as closely as possible.
+
+This is a private Rose/Carmen collaboration space.
+
+Purpose:
+Rose and Carmen can review each other’s work, see Rose OS feedback, add thoughts, and hand work back and forth.
+
+Core workflow:
+- Rose can review Carmen’s work, systems plans, build notes, CRM/automation ideas, process structures, and implementation reports.
+- Carmen can review Rose’s ideas, company direction, product concepts, client-facing thoughts, strategy notes, and build requests.
+- Rose OS generates a private synthesis for each item.
+- Rose can press “Ready to Carmenfy.”
+- Carmen can press “Ready to Rosify.”
+
+Button behavior:
+- “Ready to Carmenfy” routes the item to Carmen for systems, process, CRM, automation, architecture, or build-readiness review.
+- “Ready to Rosify” routes the item to Rose for founder vision, company direction, public positioning, client-facing implications, or final decision review.
+- These actions update local state and create a private handoff item.
+- They do not create official company decisions.
+
+Mind Meld views:
+- Rose View
+- Carmen View
+- Shared Mind Board
+- Report Exchange
+- Thought Layers
+- Handoff History
+- Private Decision Notes
+
+Each Mind Meld item includes:
+- title
+- source
+- owner
+- current status
+- Rose thoughts
+- Carmen thoughts
+- Rose OS synthesis
+- open questions
+- alignment status
+- risk level
+- privacy level
+- next handoff
+- final outcome
+- audit/history timeline
+
+Innovative Mind Meld functions:
+
+1. Alignment Meter
+Shows where Rose vision and Carmen systems/readiness are aligned, partly aligned, or missing context.
+
+2. Translation Lens
+Converts Rose’s strategic idea into Carmen-ready process/build requirements.
+Converts Carmen’s system notes into Rose-ready business implications.
+
+3. Decision Heatmap
+Highlights which items need Rose decision, Carmen systems review, both, or no decision yet.
+
+4. Friction Detector
+Identifies where an idea is exciting but operationally unclear, or where a system is strong but needs founder voice.
+
+5. Question Composer
+Drafts the 3-5 highest-value questions Rose should ask Carmen or Carmen should ask Rose.
+
+6. Merge Magic
+Identifies two separate Rose/Carmen ideas that could become one stronger structure.
+
+7. Readiness Passport
+Checklist for:
+- vision readiness
+- systems readiness
+- data readiness
+- privacy readiness
+- build readiness
+- launch readiness
+
+8. Time-Saver Brief
+Creates a one-page “what you need to know before responding” summary.
+
+9. Decision Echo
+Captures what changed after Rose/Carmen feedback so the reasoning can be preserved.
+
+10. Sensitive Flag
+Marks private leadership content that should not enter general Company Brain records without explicit approval.
+
+Mind Meld guardrails:
+- Private to Rose and Carmen unless explicitly shared.
+- Rose/Carmen notes do not automatically become company decisions.
+- Rose OS synthesis remains a recommendation.
+- Sensitive, private, HR, financial, legal, client, and leadership-only content must stay permission-protected.
+- Items can become proposed company-record updates only after Rose or Carmen sends them to review.
+
+10. REVIEW QUEUE
+
+Create one central review queue for:
+- duplicate recommendations
+- team pulse recommendations
+- SOP update suggestions
+- automation suggestions
+- mockup/build prompts
+- market opportunity recommendations
+- Mind Meld handoffs
+- company-record update suggestions
+- sensitive items
+- final decision requests
+
+Each item shows:
+- source
+- recommendation
+- classification
+- risk level
+- required approver
+- approve/reject/needs revision buttons
+- audit history
+
+Approval actions update local state only.
+
+11. SETTINGS / SOURCES / PERMISSIONS
+
+Create settings for:
+- data sources
+- mock Company Brain sources
+- alert thresholds
+- duplicate sensitivity
+- report cadence
+- competitor list
+- market keywords
+- permissions
+- role access
+- privacy settings
+- integration status
+- Mind Meld privacy rules
+
+Show integrations as:
+- Company Brain: simulated / local
+- Zoho: not connected / future
+- WorkDrive: not connected / future
+- Supabase: planned
+- Email alerts: disabled
+- Market monitoring: sample data only
+
+ROSE BRAIN ASSISTANT PANEL
+
+Include a Rose Brain assistant drawer available throughout the system.
+
+It helps users:
+- summarize current view
+- find duplicates
+- explain alerts
+- draft reports
+- draft solutions
+- draft build prompts
+- explain recommendations
+- identify missing information
+- summarize Mind Meld items
+- generate Carmenfy/Rosify handoff summaries
+
+The assistant must label output as draft/recommendation unless based on approved company records.
+
+SAMPLE DATA
+
+Create realistic sample data for:
+
+- Command Center build
+- Business Services Hub
+- QualifierConnect
+- Document Collection
+- CRM architecture
+- SOP updates
+- marketing command center
+- sales assets
+- automation registry
+- requirements registry
+- team support needs
+- competitor market signals
+- Rose/Carmen Mind Meld threads
+- Carmenfy/Rosify handoffs
+
+TECHNICAL REQUIREMENTS
+
+Use existing project stack if present. If starting fresh, use:
+
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- lucide-react icons
+- localStorage or in-memory state for prototype persistence
+- clean component structure
+- reusable data model
+- no backend required for first prototype unless already available
+
+Create folders:
+- components
+- pages
+- data
+- lib
+- types
+- hooks
+
+Include tests for:
+- duplicate detection helper
+- approval routing helper
+- report generation helper
+- permission visibility helper
+- solution finder source matching
+- Mind Meld Carmenfy/Rosify routing helper
+
+QUALITY REQUIREMENTS
+
+Before finishing:
+- run typecheck
+- run tests
+- run build
+- verify sidebar navigation works
+- verify all buttons work or are clearly disabled
+- verify mobile layout
+- verify no console errors
+- verify Mind Meld is permission-gated
+- verify visual design matches the attached mockups
+- provide a summary of what was built, files changed, how to run, and what remains future/live-integration scope
+
+ACCEPTANCE CRITERIA
+
+The finished prototype must allow a user to:
+
+1. Open the Collab Command Center dashboard.
+2. See a visual system matching the provided mockups.
+3. Navigate through all core modules.
+4. Check a new idea/request for duplicate effort.
+5. Review duplicate-risk recommendations.
+6. Submit or review team pulse feedback.
+7. Ask the Solution Finder for help.
+8. Create or combine ideas in Innovation Lab.
+9. Generate a mockup/design concept brief.
+10. View executive reports.
+11. Review market and competitor signals.
+12. Enter Mind Meld Room as Rose or Carmen.
+13. Add Rose thoughts and Carmen thoughts.
+14. Use Ready to Carmenfy.
+15. Use Ready to Rosify.
+16. See Alignment Meter, Translation Lens, Decision Heatmap, Question Composer, Merge Magic, Readiness Passport, and Time-Saver Brief.
+17. Approve/reject/revise recommendations locally.
+18. Understand sample data versus approved company knowledge.
+19. Understand what requires Rose review, Carmen review, or both.
+
+DO NOT
+
+- Do not build a generic admin dashboard.
+- Do not ignore the mockups.
+- Do not change the visual direction.
+- Do not make AI recommendations automatically approved.
+- Do not create live external integrations.
+- Do not send real emails.
+- Do not connect to live competitor scraping.
+- Do not expose private Mind Meld notes to general users.
+- Do not expose private/sensitive team sentiment as employee scoring.
+- Do not use yellow-heavy Rose Brain branding.
+- Do not bury the system behind a marketing landing page.
+
+Build the entire RoseOS Collab Command Center prototype now, matching the attached mockups exactly and making the Mind Meld Room feel like the private creative strategy space for Rose and Carmen.

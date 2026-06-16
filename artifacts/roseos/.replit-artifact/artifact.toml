@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "RoseOS Collab Command Center"
+version = "1.0.0"
+id = "artifacts/roseos"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25533
+
+[services.development]
+run = "pnpm --filter @workspace/roseos run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/roseos", "run", "build" ]
+publicDir = "artifacts/roseos/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25533"
+BASE_PATH = "/"
