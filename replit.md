@@ -1,4 +1,4 @@
-# RoseOS Collab Command Center
+# CollabOS Command Center
 
 A local-first (no backend) collaboration-intelligence internal OS that helps two founders (Rose & Carmen) and their team align on ideas, surface duplicate work, route decisions for approval, and synthesize their two perspectives in a private Mind Meld Room.
 
@@ -37,7 +37,7 @@ The whole product lives in the `roseos` artifact (`artifacts/roseos`, slug `@wor
 
 ## Architecture decisions
 
-- Local-first prototype: no backend, no API calls. All state is seeded in `src/data/seed.ts` and persisted to localStorage. The api-server/db/api-spec packages exist in the monorepo but are unused by RoseOS.
+- Local-first prototype: no backend, no API calls. All state is seeded in `src/data/seed.ts` and persisted to localStorage. The api-server/db/api-spec packages exist in the monorepo but are unused by CollabOS.
 - Role-based permissions live in `src/lib/helpers.ts` (`canApprove`, `canAccessMindMeld`, `canViewSensitive`, `canSubmit`). Roles: Rose, Carmen, Admin, Department Lead, Team Member, Viewer.
 - The Mind Meld Room is gated to Rose / Carmen / Admin only via `canAccessMindMeld`; everyone else sees `LockedState`.
 - Dual approval is enforced in the store, not the button: a recommendation whose `requiredApprover === "both"` only finalizes to `approved` once BOTH Rose and Carmen have approved (tracked in `recommendation.approvals`). A single approval leaves it `pending` with a "awaiting X" indicator. Admin counts as both.
@@ -53,7 +53,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-- RoseOS is a frontend-only SPA. Verify with `pnpm --filter @workspace/roseos run typecheck` and `pnpm --filter @workspace/roseos run test`, NOT `build` (build needs workflow-provided `PORT`/`BASE_PATH`). Run/preview via the `artifacts/roseos: web` workflow, never `pnpm dev` from root.
+- CollabOS Command Center is a frontend-only SPA (artifact slug stays `roseos`). Verify with `pnpm --filter @workspace/roseos run typecheck` and `pnpm --filter @workspace/roseos run test`, NOT `build` (build needs workflow-provided `PORT`/`BASE_PATH`). Run/preview via the `artifacts/roseos: web` workflow, never `pnpm dev` from root.
 - Tests are required for the helpers in `src/lib/helpers.test.ts` (currently 16 passing). Keep them green.
 - The `roseos` package still lists `@workspace/api-client-react` as a dependency but does not use it (harmless).
 

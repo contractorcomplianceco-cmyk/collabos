@@ -35,6 +35,51 @@ function threatTone(threat: string) {
   return "emerald" as const;
 }
 
+function MiniRadar({ points }: { points: number[] }) {
+  const cx = 50, cy = 50;
+  const dots = points.map((p, i) => {
+    const angle = (i / Math.max(points.length, 1)) * Math.PI * 2 - Math.PI / 2;
+    const r = 10 + (1 - p / 100) * 32;
+    const color = p >= 80 ? "#f43f5e" : p >= 70 ? "#fb923c" : "#38bdf8";
+    return { x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, color, big: p >= 80 };
+  });
+  return (
+    <svg viewBox="0 0 100 100" className="h-28 w-28 shrink-0">
+      {[40, 28, 16].map((r) => <circle key={r} cx={cx} cy={cy} r={r} fill="none" stroke="#fbcfe8" strokeWidth="1" />)}
+      <line x1="50" y1="8" x2="50" y2="92" stroke="#fce7f3" strokeWidth="1" />
+      <line x1="8" y1="50" x2="92" y2="50" stroke="#fce7f3" strokeWidth="1" />
+      {dots.map((d, i) => <circle key={i} cx={d.x} cy={d.y} r={d.big ? 4 : 3} fill={d.color} />)}
+      <circle cx={cx} cy={cy} r="9" fill="none" stroke="#f43f5e" strokeWidth="1.5" opacity="0.35" />
+      <circle cx={cx} cy={cy} r="5" fill="#f43f5e" />
+    </svg>
+  );
+}
+
+function Sparkline({ data, color }: { data: number[]; color: string }) {
+  const min = Math.min(...data), max = Math.max(...data);
+  const range = max - min || 1;
+  const w = 96, h = 30;
+  const pts = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * (h - 4) - 2}`).join(" ");
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="h-7 w-24" preserveAspectRatio="none">
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+const BUBBLE_POS = [
+  { left: "2%", top: "20%" },
+  { left: "38%", top: "2%" },
+  { left: "26%", top: "46%" },
+  { left: "62%", top: "34%" },
+  { left: "8%", top: "64%" },
+];
+function bubbleColor(score: number) {
+  if (score >= 0.6) return "from-emerald-300 to-teal-400 text-emerald-900";
+  if (score >= 0.3) return "from-amber-200 to-orange-300 text-amber-900";
+  return "from-rose-300 to-rose-400 text-rose-900";
+}
+
 export default function Dashboard() {
   const { ideas, recommendations, currentRole } = useAppState();
 
@@ -73,13 +118,16 @@ export default function Dashboard() {
           accent="rose"
           action={<span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-600">High overlap</span>}
         >
-          <div className="space-y-2.5">
-            {topDuplicates.map((d) => (
-              <div key={d.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3">
-                <span className="text-sm font-medium text-slate-700">{d.title}</span>
-                <span className="shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-600">{d.similarity}% match</span>
-              </div>
-            ))}
+          <div className="flex items-center gap-4">
+            <MiniRadar points={topDuplicates.map((d) => d.similarity)} />
+            <div className="flex-1 space-y-2">
+              {topDuplicates.map((d) => (
+                <div key={d.id} className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium leading-tight text-slate-700">{d.title}</span>
+                  <span className="shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-600">{d.similarity}%</span>
+                </div>
+              ))}
+            </div>
           </div>
           <Link href="/duplicate-radar" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-rose-500 hover:underline">
             View all duplicates <ArrowRight className="h-3.5 w-3.5" />
@@ -88,20 +136,20 @@ export default function Dashboard() {
 
         {/* Team Pulse */}
         <SectionCard title="Team Pulse" icon={Users} accent="sky" action={<Link href="/team-pulse" className="text-xs font-semibold text-sky-500 hover:underline">View</Link>}>
-          <div className="space-y-3">
-            {sentimentSignals.map((s) => {
-              const pct = Math.round(((s.score + 1) / 2) * 100);
-              const bar = s.score >= 0.6 ? "from-emerald-400 to-teal-500" : s.score >= 0.3 ? "from-amber-400 to-orange-500" : "from-rose-400 to-rose-500";
+          <div className="relative h-44">
+            {sentimentSignals.map((s, i) => {
+              const pos = BUBBLE_POS[i] ?? BUBBLE_POS[0];
+              const size = 50 + Math.max(s.score, 0.1) * 44;
               const val = s.score >= 0 ? `+${s.score.toFixed(2)}` : s.score.toFixed(2);
               return (
-                <div key={s.team}>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-slate-700">{s.team}</span>
-                    <span className="font-semibold text-slate-500">{val}</span>
-                  </div>
-                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                    <div className={`h-full rounded-full bg-gradient-to-r ${bar}`} style={{ width: `${pct}%` }} />
-                  </div>
+                <div
+                  key={s.team}
+                  title={s.theme}
+                  className={`absolute flex flex-col items-center justify-center rounded-full bg-gradient-to-br shadow-sm ring-2 ring-white ${bubbleColor(s.score)}`}
+                  style={{ left: pos.left, top: pos.top, width: size, height: size }}
+                >
+                  <span className="text-[10px] font-semibold leading-none">{s.team}</span>
+                  <span className="text-[11px] font-bold leading-tight">{val}</span>
                 </div>
               );
             })}
@@ -133,18 +181,25 @@ export default function Dashboard() {
 
         {/* Innovation Lab */}
         <SectionCard title="Innovation Lab" icon={Lightbulb} accent="amber" action={<Link href="/innovation-lab" className="text-xs font-semibold text-amber-500 hover:underline">View</Link>}>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Top idea clusters</p>
-          <ul className="mt-2 space-y-2.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Top idea clusters gaining momentum</p>
+          <div className="mt-2 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
             {topIdeas.map((i) => {
               const tag = ideaTag(i.momentum);
               return (
-                <li key={i.id} className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium text-slate-700">{i.title}</span>
-                  <StatusChip label={tag.label} tone={tag.tone} />
-                </li>
+                <Link key={i.id} href="/innovation-lab" className="flex flex-col rounded-xl border border-slate-100 bg-slate-50/60 p-3 transition hover:border-amber-200 hover:bg-amber-50/40">
+                  <div className="flex items-center justify-between">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-white"><Lightbulb className="h-4 w-4" /></div>
+                    <StatusChip label={tag.label} tone={tag.tone} />
+                  </div>
+                  <p className="mt-2 text-xs font-semibold leading-tight text-slate-700">{i.title}</p>
+                  <div className="mt-auto flex items-center gap-1.5 pt-2">
+                    <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500" style={{ width: `${i.momentum}%` }} /></div>
+                    <span className="text-[10px] font-bold text-amber-600">{i.momentum}</span>
+                  </div>
+                </Link>
               );
             })}
-          </ul>
+          </div>
           <Link href="/innovation-lab" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-amber-500 hover:underline">
             View all ideas <ArrowRight className="h-3.5 w-3.5" />
           </Link>
@@ -170,13 +225,16 @@ export default function Dashboard() {
 
         {/* Market Pulse */}
         <SectionCard title="Market Pulse" icon={Activity} accent="emerald" action={<Link href="/market-pulse" className="text-xs font-semibold text-emerald-500 hover:underline">View</Link>}>
-          <ul className="space-y-2.5">
+          <ul className="space-y-3">
             {topCompetitors.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-slate-700">{c.name}</span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-slate-700">{c.name}</p>
+                  <div className="mt-0.5"><StatusChip label={c.threat} tone={threatTone(c.threat)} /></div>
+                </div>
                 <div className="flex items-center gap-2">
-                  <StatusChip label={c.threat} tone={threatTone(c.threat)} />
-                  <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${c.movement >= 0 ? "text-emerald-600" : "text-rose-500"}`}>
+                  <Sparkline data={c.series} color={c.movement >= 0 ? "#10b981" : "#f43f5e"} />
+                  <span className={`inline-flex w-12 shrink-0 items-center justify-end gap-0.5 text-xs font-semibold ${c.movement >= 0 ? "text-emerald-600" : "text-rose-500"}`}>
                     {c.movement >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
                     {c.movement >= 0 ? `+${c.movement}` : c.movement}%
                   </span>
@@ -247,7 +305,7 @@ export default function Dashboard() {
 
       {/* Footer */}
       <div className="flex items-center justify-center gap-1.5 border-t border-slate-100 pt-5 text-xs text-slate-400">
-        RoseOS Collab Command Center · Built with <Heart className="h-3.5 w-3.5 text-rose-400" /> for collaboration
+        CollabOS Command Center · Built with <Heart className="h-3.5 w-3.5 text-rose-400" /> for collaboration
       </div>
     </div>
   );

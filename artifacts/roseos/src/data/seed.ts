@@ -90,7 +90,7 @@ export const requirements: Requirement[] = [
 ];
 
 export const decisions: Decision[] = [
-  { id: "dec-1", title: "Public launch domain for Collab Command Center", context: "Choose primary domain ahead of internal launch.", status: "open", owner: "Rose Almeida", approvalRoute: "rose", risk: "high" },
+  { id: "dec-1", title: "Public launch domain for CollabOS Command Center", context: "Choose primary domain ahead of internal launch.", status: "open", owner: "Rose Almeida", approvalRoute: "rose", risk: "high" },
   { id: "dec-2", title: "CRM consolidation approach", context: "Merge or keep parallel Zoho modules.", status: "open", owner: "Carmen Vega", approvalRoute: "carmen", risk: "medium" },
   { id: "dec-3", title: "Pricing model for Business Services Hub", context: "Tiered vs usage-based pricing.", status: "open", owner: "Rose Almeida", approvalRoute: "both", risk: "high" },
   { id: "dec-4", title: "Automation registry ownership", context: "Who owns the registry long-term.", status: "deferred", owner: "Sam Rivera", approvalRoute: "carmen", risk: "low" },

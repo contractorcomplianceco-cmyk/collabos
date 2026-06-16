@@ -3,6 +3,7 @@ import {
   Brain, Lock, ShieldCheck, Languages, Grid3x3, MessageCircleQuestion,
   Combine, BadgeCheck, Timer, Activity, ArrowRightLeft, Send, History,
   Sparkles, AlertTriangle, Radio, TrendingUp, Target, FileText, Heart,
+  ArrowRight, ArrowLeft,
 } from "lucide-react";
 import { SectionCard, StatusChip, RiskBadge, Donut, LockedState } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
@@ -197,6 +198,11 @@ export default function MindMeldRoom() {
 
                   {/* CENTER */}
                   <div className="flex flex-col gap-5">
+                    <div className="flex items-center justify-center gap-3 text-[11px] font-semibold">
+                      <span className="inline-flex items-center gap-1 text-rose-500">Rose <ArrowRight className="h-3.5 w-3.5" /></span>
+                      <span className="rounded-full bg-violet-100 px-2 py-0.5 text-violet-600">Mind Meld</span>
+                      <span className="inline-flex items-center gap-1 text-sky-500"><ArrowLeft className="h-3.5 w-3.5" /> Carmen</span>
+                    </div>
                     <div className="rounded-2xl border border-violet-100 bg-violet-50/40 p-5 text-center">
                       <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-400">Alignment Meter</p>
                       <div className="mt-2 flex justify-center"><Donut value={selected.alignmentScore} label="aligned" accent="#a855f7" /></div>
@@ -288,14 +294,24 @@ export default function MindMeldRoom() {
               {/* Right rail */}
               <div className="space-y-6">
                 <SectionCard title="Decision Heatmap" icon={Grid3x3} accent="rose">
-                  <div className="grid grid-cols-6 gap-1.5">
-                    {Array.from({ length: 30 }).map((_, i) => {
+                  <div className="grid grid-cols-6 gap-1">
+                    {Array.from({ length: 24 }).map((_, i) => {
                       const intensity = (Math.sin(i * 1.7) + 1) / 2;
-                      const bg = intensity > 0.66 ? "bg-rose-400" : intensity > 0.33 ? "bg-amber-300" : "bg-emerald-200";
-                      return <div key={i} className={`h-6 rounded-md ${bg}`} style={{ opacity: 0.5 + intensity * 0.5 }} />;
+                      const bg = intensity > 0.66 ? "bg-rose-400" : intensity > 0.33 ? "bg-fuchsia-400" : "bg-sky-300";
+                      return (
+                        <div
+                          key={i}
+                          className={`aspect-square ${bg}`}
+                          style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)", opacity: 0.45 + intensity * 0.55 }}
+                        />
+                      );
                     })}
                   </div>
-                  <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400"><span>Aligned</span><span>Needs clarity</span></div>
+                  <div className="mt-3 flex items-center justify-between text-[10px] text-slate-400">
+                    <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-rose-400" />Strong</span>
+                    <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-fuchsia-400" />Partial</span>
+                    <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-sky-300" />Needs clarity</span>
+                  </div>
                 </SectionCard>
 
                 <SectionCard title="Handoff History" icon={History} accent="violet">

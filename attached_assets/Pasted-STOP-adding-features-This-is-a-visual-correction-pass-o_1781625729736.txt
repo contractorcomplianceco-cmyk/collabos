@@ -1,0 +1,121 @@
+STOP adding features. This is a visual correction pass only.
+
+The current implementation is functional, but it does NOT match the approved mockups closely enough.
+
+Your task is to rebuild the visual design of CollabOS Command Center to match the attached mockups exactly in spirit, layout, visual richness, and product feel.
+
+Do not reinterpret the mockups.
+Do not simplify the mockups.
+Do not create a generic admin dashboard.
+Do not keep the current plain white utility layout.
+
+OFFICIAL PRODUCT NAME:
+Use CollabOS Command Center everywhere.
+
+Replace all old labels:
+- Replace RoseOS as the product shell name with CollabOS Command Center.
+- Replace Collab Command Center with CollabOS Command Center.
+- Keep Rose OS only when referring to the broader operating system.
+- Keep Rose Brain only for the assistant feature.
+
+PRIMARY VISUAL PROBLEM:
+The current UI is too plain, too sparse, too admin-like, and not close enough to the approved mockups.
+
+Rebuild the UI so it feels like the mockups became a working product:
+- richer visual hierarchy
+- more polished app shell
+- more colorful intelligence widgets
+- more refined gradients and accent areas
+- more fun status chips and badges
+- stronger product identity
+- more energetic dashboard composition
+- more distinctive Mind Meld Room
+- more visual depth, layering, and private strategy-room feeling
+
+APP SHELL REQUIREMENTS:
+- Left sidebar should feel like a premium operating-system navigation shell, not a plain list.
+- Sidebar top must clearly say CollabOS Command Center.
+- Navigation should include: Collab Dashboard, Duplicate Radar, Team Pulse, Solution Finder, Innovation Lab, Mockup Studio, Executive Reports, Market Pulse, Mind Meld Room, Review Queue, Settings.
+- The active Mind Meld Room nav item should be colorful and obvious, matching the mockup energy.
+- The bottom Rose Brain help card should be polished and visually integrated, not generic.
+
+TOP BAR REQUIREMENTS:
+- Create a richer top bar like the mockups.
+- Include global search, alert count, role selector, and Rose Brain assistant button.
+- Make the top bar feel designed and premium, not just functional.
+
+MIND MELD ROOM REQUIREMENTS:
+The Mind Meld Room must feel like a private creative leadership strategy room for Rose and Carmen.
+
+It should include:
+- clear title: Mind Meld Room
+- privacy indicator: Private: Rose + Carmen
+- Rose View
+- Carmen View
+- central shared Mind Meld board
+- visual handoff arrows between Rose and Carmen
+- prominent Ready to Carmenfy button
+- prominent Ready to Rosify button
+- Alignment Meter
+- Translation Lens
+- Decision Heatmap
+- Question Composer
+- Merge Magic
+- Readiness Passport
+- Time-Saver Brief
+- Thought Layers
+- Handoff History
+- Rose OS Synthesis
+- Open Questions
+- Sensitive Flag
+
+The current Mind Meld screen has some of these items but does not look enough like the mockup. Make it more visual, layered, colorful, and special.
+
+DESIGN STYLE TO MATCH:
+- clean white and soft neutral workspace
+- deep navy/charcoal text
+- refined rose/coral accents
+- electric blue highlights
+- mint, lilac, sky, and soft green status chips
+- colorful intelligence widgets
+- subtle glowing connection lines
+- idea-node visual accents
+- soft gradients in accent areas
+- polished rounded panels
+- high-end SaaS quality
+- fun but executive
+
+AVOID:
+- plain white card grid
+- generic admin layout
+- flat gray sidebar
+- overly minimal dashboard
+- dark-heavy theme
+- yellow-heavy Rose Brain branding
+- cartoon illustrations
+- visual clutter
+- dead controls
+
+VISUAL ACCEPTANCE CHECK:
+Before you finish, compare the result against the attached mockups side by side.
+
+The answer should be YES to all of these:
+1. Does the product name say CollabOS Command Center everywhere it should?
+2. Does the screen visually resemble the mockups, not just contain similar text?
+3. Does Mind Meld Room feel like a private creative leadership strategy room?
+4. Are Ready to Carmenfy and Ready to Rosify prominent?
+5. Are the widgets colorful, polished, and information-rich?
+6. Does the UI feel fun, executive, and high quality?
+7. Is the sidebar more polished than a basic nav list?
+8. Is the top bar visually designed?
+9. Are there no old RoseOS / Collab Command Center product labels?
+10. Does the design avoid generic admin-dashboard styling?
+
+Only make visual/design changes unless a small structural change is required to match the mockups.
+
+After completing the pass, report:
+- what labels were corrected
+- what layout/design changes were made
+- what specific mockup elements were matched
+- what still does not match, if anything
+- verification steps completed

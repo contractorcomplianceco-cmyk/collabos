@@ -56,16 +56,26 @@ const ROSE_BRAIN_TIPS: Record<string, string[]> = {
   "Settings": ["Adjust duplicate sensitivity and alert thresholds.", "All integrations are recommend-only.", "Reset sample data anytime."],
 };
 
+const ROLE_IDENTITY: Record<string, { name: string; title: string; initials: string }> = {
+  Rose: { name: "Rose Almeida", title: "Founder & CEO", initials: "RA" },
+  Carmen: { name: "Carmen Vega", title: "Systems Lead", initials: "CV" },
+  Admin: { name: "Admin", title: "Full access", initials: "AD" },
+  "Department Lead": { name: "Department Lead", title: "Team oversight", initials: "DL" },
+  "Team Member": { name: "Team Member", title: "Contributor", initials: "TM" },
+  Viewer: { name: "Viewer", title: "Read-only", initials: "VW" },
+};
+
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const [location] = useLocation();
   const { currentRole, setRoseBrainContext, setRoseBrainOpen } = useAppState();
+  const me = ROLE_IDENTITY[currentRole] ?? ROLE_IDENTITY.Rose;
   return (
     <>
       <div className="flex items-center gap-3 px-6 py-6">
-        <img src={roseLogo} alt="RoseOS rose logo" className="h-10 w-10 shrink-0 object-contain" />
+        <img src={roseLogo} alt="CollabOS Command Center logo" className="h-10 w-10 shrink-0 object-contain" />
         <div>
-          <p className="text-sm font-bold tracking-tight text-slate-900">RoseOS</p>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-rose-400">Collab Command Center</p>
+          <p className="text-sm font-bold tracking-tight text-slate-900">CollabOS</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-rose-400">Command Center</p>
         </div>
       </div>
       <nav className="flex-1 space-y-0.5 px-3 pb-4">
@@ -73,20 +83,41 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           const Icon = l.icon;
           const active = location === l.href;
           const locked = l.gated && !canAccessMindMeld(currentRole);
+          const cls = active
+            ? (l.gated
+                ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-sm"
+                : "bg-gradient-to-r from-rose-50 to-fuchsia-50 text-rose-600 ring-1 ring-rose-100")
+            : (l.gated
+                ? "bg-violet-50/70 text-violet-700 ring-1 ring-violet-100 hover:bg-violet-100"
+                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900");
+          const iconCls = active
+            ? (l.gated ? "text-white" : "text-rose-500")
+            : (l.gated ? "text-violet-500" : "text-slate-400");
           return (
             <Link
               key={l.href}
               href={l.href}
               onClick={() => { setRoseBrainContext(l.ctx); onNavigate?.(); }}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${active ? "bg-gradient-to-r from-rose-50 to-fuchsia-50 text-rose-600 ring-1 ring-rose-100" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`}
+              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${cls}`}
             >
-              <Icon className={`h-4 w-4 ${active ? "text-rose-500" : "text-slate-400"}`} />
+              <Icon className={`h-4 w-4 ${iconCls}`} />
               <span className="flex-1">{l.label}</span>
-              {l.gated && (locked ? <Lock className="h-3.5 w-3.5 text-slate-300" /> : <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />)}
+              {l.gated && (locked
+                ? <Lock className={`h-3.5 w-3.5 ${active ? "text-white/70" : "text-violet-300"}`} />
+                : <span className={`h-1.5 w-1.5 rounded-full ${active ? "bg-white" : "bg-violet-400"}`} />)}
             </Link>
           );
         })}
       </nav>
+      <div className="px-3 pb-2">
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-blue-500 text-xs font-bold text-white">{me.initials}</div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-slate-800">{me.name}</p>
+            <p className="truncate text-[11px] text-slate-400">{me.title}</p>
+          </div>
+        </div>
+      </div>
       <div className="px-3 pb-2">
         <div className="rounded-2xl bg-gradient-to-br from-rose-500 via-rose-500 to-blue-500 p-4 text-white shadow-sm">
           <div className="flex items-center gap-2">
@@ -142,18 +173,24 @@ function AlertsBell() {
 }
 
 function TopBar({ onMenu }: { onMenu: () => void }) {
-  const { currentRole, setCurrentRole, setRoseBrainOpen } = useAppState();
+  const { currentRole, setCurrentRole, setRoseBrainOpen, recommendations } = useAppState();
+  const pending = recommendations.filter((r) => r.status === "pending").length;
   return (
     <header className="flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 sm:px-6">
       <div className="flex flex-1 items-center gap-3">
         <button onClick={onMenu} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 md:hidden"><Menu className="h-5 w-5" /></button>
         <div className="relative hidden max-w-md flex-1 sm:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input type="text" placeholder="Search everything in Rose OS..." className="w-full rounded-full border-none bg-slate-100 py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200" />
+          <input type="text" placeholder="Search projects, teams, solutions, insights..." className="w-full rounded-full border-none bg-slate-100 py-2 pl-9 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200" />
+          <kbd className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400 lg:block">⌘K</kbd>
         </div>
       </div>
       <div className="flex items-center gap-2 sm:gap-3">
         <AlertsBell />
+        <Link href="/review-queue" aria-label="Review queue" className="relative rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
+          <ClipboardCheck className="h-5 w-5" />
+          {pending > 0 && <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-500 px-1 text-[10px] font-bold text-white">{pending}</span>}
+        </Link>
         <select value={currentRole} onChange={(e) => setCurrentRole(e.target.value as typeof currentRole)} className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-200 sm:text-sm">
           <option value="Rose">Rose / Leadership</option>
           <option value="Carmen">Carmen / Systems</option>
