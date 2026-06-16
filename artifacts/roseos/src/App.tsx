@@ -186,21 +186,27 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
         </div>
       </div>
       <div className="flex items-center gap-2 sm:gap-3">
+        <button onClick={() => setRoseBrainOpen(true)} className="hidden items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:text-rose-600 sm:inline-flex sm:text-sm">
+          <Brain className="h-4 w-4 text-rose-500" /> Rose Brain <Sparkles className="h-3.5 w-3.5 text-sky-400" />
+        </button>
         <AlertsBell />
         <Link href="/review-queue" aria-label="Review queue" className="relative rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
           <ClipboardCheck className="h-5 w-5" />
           {pending > 0 && <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-500 px-1 text-[10px] font-bold text-white">{pending}</span>}
         </Link>
-        <select value={currentRole} onChange={(e) => setCurrentRole(e.target.value as typeof currentRole)} className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-200 sm:text-sm">
-          <option value="Rose">Rose / Leadership</option>
-          <option value="Carmen">Carmen / Systems</option>
-          <option value="Admin">Admin</option>
-          <option value="Department Lead">Department Lead</option>
-          <option value="Team Member">Team Member</option>
-          <option value="Viewer">Viewer</option>
-        </select>
-        <button onClick={() => setRoseBrainOpen(true)} className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-rose-500 via-rose-500 to-blue-500 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:shadow-md sm:text-sm">
-          <Brain className="h-4 w-4" /> Rose Brain
+        <div className="hidden items-center gap-1.5 sm:flex">
+          <span className="text-xs font-medium text-slate-400">Role:</span>
+          <select value={currentRole} onChange={(e) => setCurrentRole(e.target.value as typeof currentRole)} className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-200 sm:text-sm">
+            <option value="Rose">Rose / Leadership</option>
+            <option value="Carmen">Carmen / Systems</option>
+            <option value="Admin">Admin</option>
+            <option value="Department Lead">Department Lead</option>
+            <option value="Team Member">Team Member</option>
+            <option value="Viewer">Viewer</option>
+          </select>
+        </div>
+        <button onClick={() => setRoseBrainOpen(true)} aria-label="Open Rose Brain" className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-sky-400 text-sm font-bold text-white shadow-sm ring-2 ring-white">
+          {currentRole.charAt(0)}
         </button>
       </div>
     </header>

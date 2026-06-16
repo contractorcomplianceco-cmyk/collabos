@@ -142,38 +142,47 @@ export function SectionCard({
   );
 }
 
+const KPI_TONES: Record<string, { card: string; icon: string }> = {
+  blue: { card: "border-sky-100 bg-sky-50/70", icon: "bg-sky-100 text-sky-500" },
+  emerald: { card: "border-emerald-100 bg-emerald-50/70", icon: "bg-emerald-100 text-emerald-500" },
+  violet: { card: "border-violet-100 bg-violet-50/70", icon: "bg-violet-100 text-violet-500" },
+  rose: { card: "border-rose-100 bg-rose-50/70", icon: "bg-rose-100 text-rose-500" },
+  amber: { card: "border-amber-100 bg-amber-50/70", icon: "bg-amber-100 text-amber-500" },
+};
+
 export function KpiWidget({
   label,
   value,
   sub,
   icon: Icon,
-  gradient,
+  tone = "rose",
   delta,
 }: {
   label: string;
   value: string | number;
   sub: string;
   icon: React.ElementType;
-  gradient: string;
+  tone?: string;
   delta?: string;
 }) {
+  const t = KPI_TONES[tone] ?? KPI_TONES.rose;
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
-      <div className="flex items-start justify-between">
-        <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm", gradient)}>
-          <Icon className="h-5 w-5" />
-        </div>
-        {delta && (
-          <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-600">
-            <ArrowUpRight className="h-3 w-3" />
-            {delta}
-          </span>
-        )}
+    <div className={cn("flex items-center gap-3.5 rounded-2xl border p-4 shadow-sm transition-shadow hover:shadow-md", t.card)}>
+      <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl", t.icon)}>
+        <Icon className="h-5 w-5" />
       </div>
-      <div className="mt-4">
-        <div className="text-3xl font-bold tracking-tight text-slate-900">{value}</div>
-        <div className="mt-1 text-sm font-medium text-slate-600">{label}</div>
-        <div className="mt-0.5 text-xs text-slate-400">{sub}</div>
+      <div className="min-w-0">
+        <div className="truncate text-xs font-medium text-slate-500">{label}</div>
+        <div className="mt-0.5 flex items-baseline gap-2">
+          <span className="text-2xl font-bold tracking-tight text-slate-900">{value}</span>
+          {delta && (
+            <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-emerald-600">
+              <ArrowUpRight className="h-3 w-3" />
+              {delta}
+            </span>
+          )}
+        </div>
+        <div className="truncate text-[11px] text-slate-400">{sub}</div>
       </div>
     </div>
   );

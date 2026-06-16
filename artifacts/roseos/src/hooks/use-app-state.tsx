@@ -26,7 +26,7 @@ import {
   feedbackItems as seedFeedback,
   defaultSettings,
 } from "@/data/seed";
-import { routeMindMeld } from "@/lib/helpers";
+import { routeMindMeld, canApprove } from "@/lib/helpers";
 
 export type { Role };
 
@@ -136,6 +136,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         ...s,
         recommendations: s.recommendations.map((r) => {
           if (r.id !== id) return r;
+
+          // Authorization guard: only roles permitted by the approval route may
+          // change a recommendation's status. Unauthorized actors are a no-op.
+          if (!canApprove(actor as Role, r.requiredApprover)) return r;
 
           // Dual approval: a "both" route needs BOTH Rose and Carmen to approve
           // before it is finalized. One approval alone leaves it pending.

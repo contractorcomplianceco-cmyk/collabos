@@ -242,6 +242,8 @@ export const mindMeldItems: MindMeldItem[] = [
     finalOutcome: null,
     layers: ["Vision", "Strategy", "Execution"],
     focusAreas: ["Brand Soul", "Experience", "Community"],
+    roseFeedback: ["Love the direction. Protect the magic in the details.", "Consider simplifying the handoff moments."],
+    carmenFeedback: ["Let's define the playbook for consistent execution.", "We can automate this handoff workflow."],
     sensitive: true,
     history: [
       { id: "h-1", timestamp: "2026-06-14 09:58", actor: "Rose", action: "Added vision thought" },
@@ -266,6 +268,8 @@ export const mindMeldItems: MindMeldItem[] = [
     finalOutcome: null,
     layers: ["Strategy", "Execution"],
     focusAreas: ["Systems", "Efficiency", "Scale"],
+    roseFeedback: ["Keep the client relationship nuance front and center.", "Phase the migration so nothing breaks trust."],
+    carmenFeedback: ["Playbook draft is ready for founder review.", "Migration steps are reversible and logged."],
     sensitive: false,
     history: [
       { id: "h-3", timestamp: "2026-06-13 14:10", actor: "Carmen", action: "Added systems note" },
@@ -289,6 +293,8 @@ export const mindMeldItems: MindMeldItem[] = [
     finalOutcome: null,
     layers: ["Vision", "Impact"],
     focusAreas: ["Launch", "Brand Soul"],
+    roseFeedback: ["Make the launch feel like a movement.", "Story first, then the feature list."],
+    carmenFeedback: ["Confirm infra can handle the attention.", "Stagger the rollout to de-risk volume."],
     sensitive: true,
     history: [
       { id: "h-4", timestamp: "2026-06-12 16:30", actor: "Rose", action: "Pressed Ready to Carmenfy" },

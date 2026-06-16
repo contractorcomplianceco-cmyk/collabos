@@ -3,14 +3,22 @@ import {
   Brain, Lock, ShieldCheck, Languages, Grid3x3, MessageCircleQuestion,
   Combine, BadgeCheck, Timer, Activity, ArrowRightLeft, Send, History,
   Sparkles, AlertTriangle, Radio, TrendingUp, Target, FileText, Heart,
-  ArrowRight, ArrowLeft,
+  ArrowRight, ArrowLeft, Lightbulb, ClipboardCheck, Users,
 } from "lucide-react";
 import { SectionCard, StatusChip, RiskBadge, Donut, LockedState } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
 import { canAccessMindMeld } from "@/lib/helpers";
-import { mindFeed } from "@/data/seed";
+import { mindFeed, duplicateRisks, sentimentSignals, competitors, reports } from "@/data/seed";
 import { useToast } from "@/hooks/use-toast";
 import type { MindMeldItem, ThoughtLayer } from "@/types";
+
+const STAT_TONE: Record<string, { card: string; icon: string; text: string }> = {
+  rose: { card: "border-rose-100 bg-rose-50/70", icon: "bg-rose-100 text-rose-500", text: "text-rose-500" },
+  emerald: { card: "border-emerald-100 bg-emerald-50/70", icon: "bg-emerald-100 text-emerald-500", text: "text-emerald-600" },
+  violet: { card: "border-violet-100 bg-violet-50/70", icon: "bg-violet-100 text-violet-500", text: "text-violet-500" },
+  amber: { card: "border-amber-100 bg-amber-50/70", icon: "bg-amber-100 text-amber-500", text: "text-amber-600" },
+  sky: { card: "border-sky-100 bg-sky-50/70", icon: "bg-sky-100 text-sky-500", text: "text-sky-600" },
+};
 
 const LAYERS: ThoughtLayer[] = ["Vision", "Strategy", "Execution", "Experience", "Impact"];
 const LAYER_TONE: Record<ThoughtLayer, string> = {
@@ -33,7 +41,7 @@ const FUNCTIONS = [
 ];
 
 export default function MindMeldRoom() {
-  const { currentRole, mindMeldItems, handoffs, carmenfy, rosify, addMindMeldThought } = useAppState();
+  const { currentRole, mindMeldItems, handoffs, carmenfy, rosify, addMindMeldThought, ideas, recommendations } = useAppState();
   const { toast } = useToast();
   const [view, setView] = useState("room");
   const [selectedId, setSelectedId] = useState(mindMeldItems[0]?.id ?? "");
@@ -46,6 +54,18 @@ export default function MindMeldRoom() {
     () => mindMeldItems.find((m) => m.id === selectedId) ?? mindMeldItems[0],
     [mindMeldItems, selectedId],
   );
+
+  const pending = recommendations.filter((r) => r.status === "pending");
+  const pulseAvg = sentimentSignals.length
+    ? (sentimentSignals.reduce((a, s) => a + s.score, 0) / sentimentSignals.length) * 5
+    : 0;
+  const STATS = [
+    { key: "dupes", label: "Duplicate Alerts", value: duplicateRisks.length, sub: `${duplicateRisks.filter((d) => d.similarity >= 80).length} High Priority`, icon: Target, tone: "rose" },
+    { key: "pulse", label: "Team Pulse", value: pulseAvg.toFixed(1), sub: pulseAvg >= 3 ? "Strong Momentum" : "Watch closely", icon: Users, tone: "emerald" },
+    { key: "ideas", label: "Innovation Ideas", value: ideas.length, sub: `${ideas.filter((i) => i.status === "approved-for-build").length} in Development`, icon: Lightbulb, tone: "violet" },
+    { key: "queue", label: "Approval Queue", value: pending.length, sub: `${pending.filter((r) => r.risk === "high").length} Urgent`, icon: ClipboardCheck, tone: "amber" },
+    { key: "recos", label: "Rose OS Recommends", value: recommendations.length, sub: `${recommendations.filter((r) => r.risk === "high").length} High Impact Actions`, icon: Sparkles, tone: "sky" },
+  ] as const;
 
   if (!canAccessMindMeld(currentRole)) {
     return (
@@ -144,6 +164,24 @@ export default function MindMeldRoom() {
         </div>
       ) : view === "room" ? (
         <div className="space-y-6">
+          {/* Command stats */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {STATS.map((s) => {
+              const Icon = s.icon;
+              const tone = STAT_TONE[s.tone];
+              return (
+                <div key={s.key} className={`rounded-2xl border p-4 shadow-sm ${tone.card}`}>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{s.label}</p>
+                    <span className={`flex h-7 w-7 items-center justify-center rounded-lg ${tone.icon}`}><Icon className="h-4 w-4" /></span>
+                  </div>
+                  <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">{s.value}</p>
+                  <p className={`mt-0.5 text-[11px] font-medium ${tone.text}`}>{s.sub}</p>
+                </div>
+              );
+            })}
+          </div>
+
           {/* Item selector */}
           <div className="flex flex-wrap gap-2">
             {mindMeldItems.map((m) => (
@@ -185,6 +223,18 @@ export default function MindMeldRoom() {
                     <p className="mt-1 text-sm text-slate-700">{selected.roseThoughts}</p>
                     <p className="mt-4 text-[10px] font-semibold uppercase tracking-wide text-rose-400">Focus Areas</p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">{selected.focusAreas.map((f) => <StatusChip key={f} label={f} tone="rose" />)}</div>
+                    {selected.roseFeedback && selected.roseFeedback.length > 0 && (
+                      <>
+                        <p className="mt-4 text-[10px] font-semibold uppercase tracking-wide text-rose-400">Rose OS Feedback</p>
+                        <ul className="mt-1.5 space-y-1.5">
+                          {selected.roseFeedback.map((f) => (
+                            <li key={f} className="flex items-start gap-1.5 rounded-lg bg-white/70 px-2.5 py-1.5 text-[11px] text-slate-600 ring-1 ring-rose-100">
+                              <Sparkles className="mt-0.5 h-3 w-3 shrink-0 text-rose-400" /> {f}
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
                     {currentRole === "Rose" && (
                       <div className="mt-3">
                         <textarea value={roseDraft} onChange={(e) => setRoseDraft(e.target.value)} placeholder="Add or refine your thought..." className="h-16 w-full rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-rose-200" />
@@ -193,6 +243,9 @@ export default function MindMeldRoom() {
                     )}
                     <button onClick={() => { carmenfy(selected.id, handoffNote); setHandoffNote(""); toast({ title: "Ready to Carmenfy", description: "Routed to Carmen for systems review. No official decision created." }); }} className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 mt-4">
                       <Send className="h-4 w-4" /> Ready to Carmenfy
+                    </button>
+                    <button onClick={() => { carmenfy(selected.id, handoffNote); setHandoffNote(""); toast({ title: "Handoff to Carmen", description: "Routed to Carmen for systems review. No official decision created." }); }} className="mt-2 inline-flex items-center justify-center gap-1 text-[11px] font-semibold text-rose-500 transition hover:text-rose-600">
+                      Handoff to Carmen <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
 
@@ -219,6 +272,7 @@ export default function MindMeldRoom() {
                             <button key={f.key} onClick={() => setActiveFn(activeFn === f.key ? null : f.key)} className={`rounded-xl border p-2.5 text-left transition ${activeFn === f.key ? "border-violet-300 bg-violet-50" : "border-slate-100 hover:border-violet-200 hover:bg-slate-50"}`}>
                               <Icon className="h-4 w-4 text-violet-500" />
                               <p className="mt-1.5 text-[11px] font-semibold leading-tight text-slate-800">{f.name}</p>
+                              <p className="mt-0.5 text-[10px] leading-snug text-slate-400">{f.desc}</p>
                             </button>
                           );
                         })}
@@ -261,6 +315,18 @@ export default function MindMeldRoom() {
                     <p className="mt-1 text-sm text-slate-700">{selected.carmenThoughts}</p>
                     <p className="mt-4 text-[10px] font-semibold uppercase tracking-wide text-sky-400">Thought Layers</p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">{selected.layers.map((l) => <span key={l} className={`rounded-full px-2 py-0.5 text-xs font-medium ${LAYER_TONE[l]}`}>{l}</span>)}</div>
+                    {selected.carmenFeedback && selected.carmenFeedback.length > 0 && (
+                      <>
+                        <p className="mt-4 text-[10px] font-semibold uppercase tracking-wide text-sky-400">Carmen OS Feedback</p>
+                        <ul className="mt-1.5 space-y-1.5">
+                          {selected.carmenFeedback.map((f) => (
+                            <li key={f} className="flex items-start gap-1.5 rounded-lg bg-white/70 px-2.5 py-1.5 text-[11px] text-slate-600 ring-1 ring-sky-100">
+                              <Sparkles className="mt-0.5 h-3 w-3 shrink-0 text-sky-400" /> {f}
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
                     {currentRole === "Carmen" && (
                       <div className="mt-3">
                         <textarea value={carmenDraft} onChange={(e) => setCarmenDraft(e.target.value)} placeholder="Add or refine your perspective..." className="h-16 w-full rounded-lg border border-sky-200 bg-white px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-sky-200" />
@@ -269,6 +335,9 @@ export default function MindMeldRoom() {
                     )}
                     <button onClick={() => { rosify(selected.id, handoffNote); setHandoffNote(""); toast({ title: "Ready to Rosify", description: "Routed to Rose for direction review. No official decision created." }); }} className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 mt-4">
                       <Send className="h-4 w-4" /> Ready to Rosify
+                    </button>
+                    <button onClick={() => { rosify(selected.id, handoffNote); setHandoffNote(""); toast({ title: "Handoff to Rose", description: "Routed to Rose for direction review. No official decision created." }); }} className="mt-2 inline-flex items-center justify-center gap-1 text-[11px] font-semibold text-sky-500 transition hover:text-sky-600">
+                      <ArrowLeft className="h-3.5 w-3.5" /> Handoff to Rose
                     </button>
                   </div>
                 </div>
@@ -339,6 +408,69 @@ export default function MindMeldRoom() {
               </div>
             </div>
           )}
+
+          {/* Module pulse strip */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <SectionCard title="Duplicate Radar" icon={Target} accent="rose">
+              <ul className="space-y-2.5">
+                {duplicateRisks.slice(0, 3).map((d) => (
+                  <li key={d.id} className="text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-slate-700">{d.similarity}% overlap</span>
+                      <RiskBadge value={d.risk} />
+                    </div>
+                    <p className="mt-0.5 truncate text-slate-500">{d.title}</p>
+                  </li>
+                ))}
+              </ul>
+            </SectionCard>
+
+            <SectionCard title="Team Pulse" icon={Users} accent="emerald">
+              <ul className="space-y-2">
+                {sentimentSignals.slice(0, 4).map((s) => (
+                  <li key={s.team} className="flex items-center gap-2 text-xs">
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${s.score >= 0.6 ? "bg-emerald-400" : s.score >= 0.3 ? "bg-amber-400" : "bg-rose-400"}`} />
+                    <span className="truncate text-slate-600">{s.team}</span>
+                    <span className="ml-auto font-semibold text-slate-700">{(s.score * 5).toFixed(1)}</span>
+                  </li>
+                ))}
+              </ul>
+            </SectionCard>
+
+            <SectionCard title="Innovation Clusters" icon={Lightbulb} accent="violet">
+              <ul className="space-y-2">
+                {ideas.slice(0, 4).map((i) => (
+                  <li key={i.id} className="flex items-center gap-2 text-xs">
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400" />
+                    <span className="truncate text-slate-600">{i.title}</span>
+                  </li>
+                ))}
+              </ul>
+            </SectionCard>
+
+            <SectionCard title="Market Pulse" icon={Activity} accent="sky">
+              <ul className="space-y-2">
+                {competitors.slice(0, 3).map((c) => (
+                  <li key={c.id} className="flex items-center gap-2 text-xs">
+                    <TrendingUp className={`h-3.5 w-3.5 shrink-0 ${c.movement >= 0 ? "text-emerald-500" : "text-rose-500"}`} />
+                    <span className="truncate text-slate-600">{c.name}</span>
+                    <span className={`ml-auto font-semibold ${c.movement >= 0 ? "text-emerald-600" : "text-rose-500"}`}>{c.movement >= 0 ? "+" : ""}{c.movement}%</span>
+                  </li>
+                ))}
+              </ul>
+            </SectionCard>
+
+            <SectionCard title="Executive Reports" icon={FileText} accent="amber">
+              <ul className="space-y-2">
+                {reports.slice(0, 3).map((r) => (
+                  <li key={r.id} className="flex items-center gap-2 text-xs">
+                    <FileText className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                    <span className="truncate text-slate-600">{r.title}</span>
+                  </li>
+                ))}
+              </ul>
+            </SectionCard>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

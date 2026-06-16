@@ -334,6 +334,8 @@ export interface MindMeldItem {
   finalOutcome: string | null;
   layers: ThoughtLayer[];
   focusAreas: string[];
+  roseFeedback?: string[];
+  carmenFeedback?: string[];
   sensitive: boolean;
   history: AuditEntry[];
 }

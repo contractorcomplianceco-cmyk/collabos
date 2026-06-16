@@ -3,9 +3,10 @@ import { Link } from "wouter";
 import {
   Target, Users, Lightbulb, Search, FileBarChart, Activity, ClipboardCheck,
   Brain, ArrowRight, Download, TrendingUp, TrendingDown, FolderKanban, Sparkles,
-  Heart, FileText,
+  Heart, FileText, Check, X,
 } from "lucide-react";
 import { useAppState } from "@/hooks/use-app-state";
+import { canApprove } from "@/lib/helpers";
 import {
   KpiWidget, SectionCard, StatusChip, ClassificationBadge,
 } from "@/components/shared";
@@ -55,16 +56,26 @@ function MiniRadar({ points }: { points: number[] }) {
   );
 }
 
-function Sparkline({ data, color }: { data: number[]; color: string }) {
+function AreaSpark({ data, color }: { data: number[]; color: string }) {
   const min = Math.min(...data), max = Math.max(...data);
   const range = max - min || 1;
-  const w = 96, h = 30;
-  const pts = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * (h - 4) - 2}`).join(" ");
+  const w = 100, h = 34;
+  const pts = data.map((v, i) => [(i / (data.length - 1)) * w, h - ((v - min) / range) * (h - 6) - 3] as const);
+  const line = pts.map((p) => p.join(",")).join(" ");
+  const area = `0,${h} ${line} ${w},${h}`;
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="h-7 w-24" preserveAspectRatio="none">
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    <svg viewBox={`0 0 ${w} ${h}`} className="h-9 w-full" preserveAspectRatio="none">
+      <polygon points={area} fill={color} opacity="0.12" />
+      <polyline points={line} fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
+}
+
+function approverAvatars(route: string): { ini: string; cls: string }[] {
+  if (route === "both") return [{ ini: "R", cls: "bg-rose-400" }, { ini: "C", cls: "bg-sky-400" }];
+  if (route === "carmen") return [{ ini: "C", cls: "bg-sky-400" }];
+  if (route === "rose") return [{ ini: "R", cls: "bg-rose-400" }];
+  return [{ ini: "–", cls: "bg-slate-300" }];
 }
 
 const BUBBLE_POS = [
@@ -81,7 +92,7 @@ function bubbleColor(score: number) {
 }
 
 export default function Dashboard() {
-  const { ideas, recommendations, currentRole } = useAppState();
+  const { ideas, recommendations, currentRole, setRecommendationStatus } = useAppState();
 
   const greeting =
     currentRole === "Carmen" ? "Carmen" : currentRole === "Rose" ? "Rose" : currentRole;
@@ -103,10 +114,10 @@ export default function Dashboard() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiWidget label="Active Projects" value={projects.length} sub="across all departments" icon={FolderKanban} gradient="from-rose-500 to-pink-500" delta="+12%" />
-        <KpiWidget label="Solutions Found" value={companyRecords.length} sub="in Company Brain" icon={Search} gradient="from-sky-500 to-blue-500" delta="+18%" />
-        <KpiWidget label="Ideas Generated" value={ideas.length} sub="in the innovation pipeline" icon={Lightbulb} gradient="from-amber-500 to-orange-500" delta="+24%" />
-        <KpiWidget label="Dupes Avoided" value={duplicateRisks.length} sub="overlaps flagged early" icon={Target} gradient="from-emerald-500 to-teal-500" delta="+15%" />
+        <KpiWidget label="Active Projects" value={projects.length} sub="across all departments" icon={FolderKanban} tone="blue" delta="+12%" />
+        <KpiWidget label="Solutions Found" value={companyRecords.length} sub="in Company Brain" icon={Search} tone="emerald" delta="+18%" />
+        <KpiWidget label="Ideas Generated" value={ideas.length} sub="in the innovation pipeline" icon={Lightbulb} tone="violet" delta="+24%" />
+        <KpiWidget label="Dupes Avoided" value={duplicateRisks.length} sub="overlaps flagged early" icon={Target} tone="rose" delta="+15%" />
       </div>
 
       {/* Module grid */}
@@ -224,24 +235,27 @@ export default function Dashboard() {
         </SectionCard>
 
         {/* Market Pulse */}
-        <SectionCard title="Market Pulse" icon={Activity} accent="emerald" action={<Link href="/market-pulse" className="text-xs font-semibold text-emerald-500 hover:underline">View</Link>}>
-          <ul className="space-y-3">
-            {topCompetitors.map((c) => (
-              <li key={c.id} className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-slate-700">{c.name}</p>
-                  <div className="mt-0.5"><StatusChip label={c.threat} tone={threatTone(c.threat)} /></div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Sparkline data={c.series} color={c.movement >= 0 ? "#10b981" : "#f43f5e"} />
-                  <span className={`inline-flex w-12 shrink-0 items-center justify-end gap-0.5 text-xs font-semibold ${c.movement >= 0 ? "text-emerald-600" : "text-rose-500"}`}>
-                    {c.movement >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                    {c.movement >= 0 ? `+${c.movement}` : c.movement}%
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
+        <SectionCard title="Market Pulse" icon={Activity} accent="emerald" action={<Link href="/market-pulse" className="text-xs font-semibold text-emerald-500 hover:underline">View market</Link>}>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Competitor &amp; market movement</p>
+          <div className="grid grid-cols-3 gap-2">
+            {topCompetitors.map((c) => {
+              const up = c.movement >= 0;
+              return (
+                <Link key={c.id} href="/market-pulse" className="flex flex-col rounded-xl border border-slate-100 bg-slate-50/60 p-2.5 transition hover:border-emerald-200 hover:bg-emerald-50/40">
+                  <p className="truncate text-xs font-semibold text-slate-700">{c.name}</p>
+                  <div className="mt-1"><StatusChip label={c.threat} tone={threatTone(c.threat)} /></div>
+                  <div className="mt-2"><AreaSpark data={c.series} color={up ? "#10b981" : "#f43f5e"} /></div>
+                  <div className="mt-1 flex items-center justify-between">
+                    <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold ${up ? "text-emerald-600" : "text-rose-500"}`}>
+                      {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                      {up ? `+${c.movement}` : c.movement}%
+                    </span>
+                    <span className="text-[10px] text-slate-400">News {c.newsCount}</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </SectionCard>
 
         {/* Review Queue */}
@@ -251,16 +265,48 @@ export default function Dashboard() {
           accent="rose"
           action={<Link href="/review-queue" className="text-xs font-semibold text-rose-500 hover:underline">View all ({pendingRecs.length})</Link>}
         >
-          <ul className="space-y-2.5">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Items awaiting your review or approval</p>
+          <ul className="space-y-2">
             {queuePreview.map((r) => (
-              <li key={r.id} className="rounded-xl border border-slate-100 p-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium text-slate-400">{r.source}</span>
-                  <ClassificationBadge value={r.classification} />
+              <li key={r.id} className="flex items-center gap-2.5 rounded-xl border border-slate-100 p-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-500"><Sparkles className="h-4 w-4" /></div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-slate-700">{r.recommendation}</p>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <ClassificationBadge value={r.classification} />
+                    <span className="truncate text-[10px] text-slate-400">{r.source}</span>
+                  </div>
                 </div>
-                <p className="mt-1 text-sm text-slate-700">{r.recommendation}</p>
+                <div className="flex -space-x-1.5">
+                  {approverAvatars(r.requiredApprover).map((a, i) => (
+                    <span key={i} className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white ring-2 ring-white ${a.cls}`}>{a.ini}</span>
+                  ))}
+                </div>
+                {canApprove(currentRole, r.requiredApprover) ? (
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      onClick={() => setRecommendationStatus(r.id, "approved", currentRole)}
+                      aria-label="Approve"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100"
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setRecommendationStatus(r.id, "rejected", currentRole)}
+                      aria-label="Reject"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-500 transition hover:bg-rose-100"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <span className="shrink-0 rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-500">
+                    Requires {r.requiredApprover === "both" ? "Rose + Carmen" : r.requiredApprover}
+                  </span>
+                )}
               </li>
             ))}
+            {queuePreview.length === 0 && <li className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-400">Queue is clear — nothing awaiting review.</li>}
           </ul>
         </SectionCard>
 

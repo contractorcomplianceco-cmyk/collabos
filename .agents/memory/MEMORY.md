@@ -1,1 +1,2 @@
 - [RoseOS asset imports](asset-imports.md) — import images via `@/assets/...` (resolves in both vite + tsc); avoid `@assets` for typechecked code.
+- [RoseOS approval authorization](roseos-approval-authorization.md) — recommendation status changes must be gated by canApprove in both the UI and the setRecommendationStatus store mutator.
