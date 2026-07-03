@@ -31,7 +31,7 @@ The whole product lives in the `roseos` artifact (`artifacts/roseos`, slug `@wor
 - `src/types/index.ts` — all TypeScript domain types (source of truth for the data model).
 - `src/data/seed.ts` — all seed data (people, projects, ideas, recommendations, mind-meld items, handoffs, alerts, reports, market signals, integrations, default settings).
 - `src/components/shared.tsx` — shared UI primitives (SectionCard, StatusChip, RiskBadge, Donut, LockedState, KpiWidget w/ optional `delta` pill, etc.).
-- `src/assets/rose-logo.png` — rose-flower brand logo (sidebar). Import via `@/assets/rose-logo.png` (resolves in both Vite and tsc); do NOT use the `@assets` alias for typechecked imports.
+- `src/assets/collabos-logo.png` — full CollabOS Command Center logo lockup (flower mark + wordmark), shown centered in the sidebar header. Import via `@/assets/collabos-logo.png` (resolves in both Vite and tsc); do NOT use the `@assets` alias for typechecked imports. Old `rose-logo.png` is unused.
 - Dashboard matches the "Welcome back" layout (greeting + 4 delta stat cards + module grid). Mind Meld Room's default "room" tab matches its mockup (Rose View · Alignment center w/ 10 function tiles · Carmen View + right rail: Decision Heatmap / Handoff History / Private Room Status). Other Mind Meld tabs (rose/carmen/board/handoff/notes) use the fallback branch.
 - `src/index.css` — theme tokens + `@layer components` utilities (e.g. `.field-input`).
 

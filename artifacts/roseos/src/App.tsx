@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { alerts } from "@/data/seed";
 import { canAccessMindMeld } from "@/lib/helpers";
-import roseLogo from "@/assets/rose-logo.png";
+import collabosLogo from "@/assets/collabos-logo.png";
 
 import Dashboard from "@/pages/dashboard";
 import DuplicateRadar from "@/pages/duplicate-radar";
@@ -71,12 +71,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const me = ROLE_IDENTITY[currentRole] ?? ROLE_IDENTITY.Rose;
   return (
     <>
-      <div className="flex items-center gap-3 px-6 py-6">
-        <img src={roseLogo} alt="CollabOS Command Center logo" className="h-10 w-10 shrink-0 object-contain" />
-        <div>
-          <p className="text-sm font-bold tracking-tight text-slate-900">CollabOS</p>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-rose-400">Command Center</p>
-        </div>
+      <div className="flex items-center justify-center px-6 py-5">
+        <img src={collabosLogo} alt="CollabOS Command Center logo" className="w-36 shrink-0 object-contain" />
       </div>
       <nav className="flex-1 space-y-0.5 px-3 pb-4">
         {NAV.map((l) => {
