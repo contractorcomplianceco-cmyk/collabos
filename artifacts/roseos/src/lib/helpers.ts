@@ -332,6 +332,8 @@ export interface SolutionResult {
   owner: string | null;
   nextSteps: string[];
   escalation: string;
+  /** Query terms that matched documented records — the "why" behind the answer. */
+  matchedTerms: string[];
 }
 
 /** Solution finder: search mock Company Brain records for a question. */
@@ -346,7 +348,7 @@ export function findSolution(
       const haystack = `${r.title} ${r.summary} ${r.keywords.join(" ")}`;
       const tokens = new Set(tokenize(haystack));
       const matches = queryTokens.filter((t) => tokens.has(t) || r.keywords.includes(t));
-      return { record: r, score: matches.length };
+      return { record: r, score: matches.length, matches };
     })
     .filter((s) => s.score > 0)
     .sort((a, b) => b.score - a.score);
@@ -362,8 +364,11 @@ export function findSolution(
       owner: null,
       nextSteps: ["Document this in Company Brain", "Route to the right owner for review"],
       escalation: "Escalate to Carmen for systems questions or Rose for direction.",
+      matchedTerms: [],
     };
   }
+
+  const matchedTerms = [...new Set(scored.slice(0, 3).flatMap((s) => s.matches))].slice(0, 8);
 
   const top = scored.slice(0, 3).map((s) => s.record);
   const confidence = Math.min(95, 45 + scored[0].score * 15);
@@ -390,6 +395,7 @@ export function findSolution(
       confidence < 70
         ? "Low confidence — escalate to Carmen (systems) or Rose (direction)."
         : "Sufficient documentation found. Proceed with owner confirmation.",
+    matchedTerms,
   };
 }
 

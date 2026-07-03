@@ -248,7 +248,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const addRecommendation = useCallback(
     (rec: Omit<Recommendation, "id" | "history" | "status">) => {
-      setState((s) => ({
+      setState((s) => {
+        // Authorization guard: read-only roles (e.g. Viewer) cannot create recommendations.
+        if (!canSubmit(s.currentRole)) return s;
+        return {
         ...s,
         recommendations: [
           {
@@ -261,7 +264,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           },
           ...s.recommendations,
         ],
-      }));
+        };
+      });
     },
     [],
   );

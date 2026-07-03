@@ -347,9 +347,9 @@ function TopBar({ onMenu, onOpenPalette }: { onMenu: () => void; onOpenPalette: 
     <header className="flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 sm:px-6">
       <div className="flex flex-1 items-center gap-3">
         <button onClick={onMenu} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 md:hidden"><Menu className="h-5 w-5" /></button>
-        <button type="button" onClick={onOpenPalette} className="relative hidden max-w-md flex-1 sm:block">
+        <button type="button" onClick={onOpenPalette} className="relative hidden min-w-0 max-w-md flex-1 sm:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <span className="block w-full rounded-full bg-slate-100 py-2 pl-9 pr-12 text-left text-sm text-slate-400 transition hover:bg-slate-200/70">
+          <span className="block w-full truncate whitespace-nowrap rounded-full bg-slate-100 py-2 pl-9 pr-12 text-left text-sm text-slate-400 transition hover:bg-slate-200/70">
             Search modules, or type an idea to act on...
           </span>
           <kbd className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400 lg:block">⌘K</kbd>

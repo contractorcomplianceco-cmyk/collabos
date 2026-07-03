@@ -139,6 +139,15 @@ describe("findSolution (solution finder matching)", () => {
     expect(res.found).toBe(false);
     expect(res.answer).toContain("cannot find documentation");
     expect(res.confidence).toBe(0);
+    expect(res.matchedTerms).toEqual([]);
+  });
+
+  it("exposes matched terms explaining why the answer was chosen", () => {
+    const res = findSolution("how do I handle client onboarding?", companyRecords, projects);
+    expect(res.found).toBe(true);
+    expect(res.matchedTerms.length).toBeGreaterThan(0);
+    expect(res.matchedTerms).toContain("onboarding");
+    expect(res.matchedTerms.length).toBeLessThanOrEqual(8);
   });
 });
 
