@@ -372,7 +372,8 @@ export interface Recommendation {
     | "mind-meld-handoff"
     | "company-record"
     | "sensitive"
-    | "final-decision";
+    | "final-decision"
+    | "external-intake";
   recommendation: string;
   classification: Classification;
   risk: RiskLevel;
@@ -396,4 +397,93 @@ export interface AppSettings {
   marketKeywords: string[];
   mindMeldPrivate: boolean;
   emailAlerts: boolean;
+  zohoCliqMode: IntegrationMode;
+  whatsappMode: IntegrationMode;
+  lastTestMessageAt: string | null;
+}
+
+export type IntegrationMode = "off" | "test" | "live";
+
+export type IntakeSource = "zoho_cliq" | "whatsapp" | "manual";
+
+export type IntakeDetectedType =
+  | "idea"
+  | "todo"
+  | "build_request"
+  | "decision_candidate"
+  | "blocker"
+  | "question"
+  | "process_update"
+  | "crm_or_zoho_request"
+  | "rose_carmen_mind_meld"
+  | "company_brain_update_suggestion"
+  | "ignore_or_noise";
+
+export type IntakeDestination =
+  | "mind-meld"
+  | "review-queue"
+  | "command-center-task"
+  | "idea-backlog"
+  | "build-registry"
+  | "requirements-registry"
+  | "automation-registry"
+  | "decision-log"
+  | "company-brain-update"
+  | "no-action";
+
+export type IntakeSensitivity =
+  | "normal"
+  | "private_leadership"
+  | "client_sensitive"
+  | "hr_sensitive"
+  | "financial_sensitive"
+  | "legal_sensitive"
+  | "unclear";
+
+export type IntakeReviewOwner =
+  | "Rose"
+  | "Carmen"
+  | "Rose and Carmen"
+  | "Assigned team member"
+  | "Unassigned";
+
+export type IntakeStatus =
+  | "new"
+  | "needs_review"
+  | "routed"
+  | "approved"
+  | "rejected"
+  | "archived";
+
+export type IntakeDuplicateRisk = "none" | "possible" | "likely";
+
+export interface IntakeClassification {
+  detectedType: IntakeDetectedType;
+  suggestedDestination: IntakeDestination;
+  sensitivity: IntakeSensitivity;
+  reviewOwner: IntakeReviewOwner;
+  nextStep: string;
+}
+
+export interface IntakeItem {
+  id: string;
+  source: IntakeSource;
+  sourceChannel: string;
+  senderName: string;
+  senderHandle: string;
+  senderRole: string | null;
+  receivedAt: string;
+  rawMessage: string;
+  cleanedSummary: string;
+  detectedType: IntakeDetectedType;
+  suggestedDestination: IntakeDestination;
+  sensitivity: IntakeSensitivity;
+  reviewOwner: IntakeReviewOwner;
+  status: IntakeStatus;
+  duplicateRisk: IntakeDuplicateRisk;
+  relatedProjectNames: string[];
+  reviewerNotes: string;
+  finalActionTaken: string | null;
+  nextStep: string;
+  auditLog: AuditEntry[];
 }

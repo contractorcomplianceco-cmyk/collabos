@@ -8,7 +8,7 @@ import { AppStateProvider, useAppState } from "@/hooks/use-app-state";
 import {
   LayoutDashboard, Target, Users, Search, Lightbulb, PenTool, FileBarChart,
   Activity, Brain, ClipboardCheck, Settings as SettingsIcon, Bell, Lock, Menu, X,
-  Sparkles, Send, AlertTriangle,
+  Sparkles, Send, AlertTriangle, Inbox,
 } from "lucide-react";
 import { alerts } from "@/data/seed";
 import { canAccessMindMeld } from "@/lib/helpers";
@@ -24,6 +24,7 @@ import ExecutiveReports from "@/pages/executive-reports";
 import MarketPulse from "@/pages/market-pulse";
 import MindMeldRoom from "@/pages/mind-meld";
 import ReviewQueue from "@/pages/review-queue";
+import ExternalIntake from "@/pages/external-intake";
 import SettingsPage from "@/pages/settings";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const NAV = [
   { href: "/market-pulse", label: "Market Pulse", icon: Activity, ctx: "Market Pulse" },
   { href: "/mind-meld", label: "Mind Meld Room", icon: Brain, ctx: "Mind Meld Room", gated: true },
   { href: "/review-queue", label: "Review Queue", icon: ClipboardCheck, ctx: "Review Queue" },
+  { href: "/external-intake", label: "External Intake", icon: Inbox, ctx: "External Intake" },
   { href: "/settings", label: "Settings", icon: SettingsIcon, ctx: "Settings" },
 ];
 
@@ -308,6 +310,7 @@ function Router() {
         <Route path="/market-pulse" component={MarketPulse} />
         <Route path="/mind-meld" component={MindMeldRoom} />
         <Route path="/review-queue" component={ReviewQueue} />
+        <Route path="/external-intake" component={ExternalIntake} />
         <Route path="/settings" component={SettingsPage} />
         <Route component={NotFound} />
       </Switch>

@@ -34,6 +34,7 @@ The whole product lives in the `roseos` artifact (`artifacts/roseos`, slug `@wor
 - `src/assets/collabos-logo.png` — full CollabOS Command Center logo lockup (flower mark + wordmark), shown centered in the sidebar header. Import via `@/assets/collabos-logo.png` (resolves in both Vite and tsc); do NOT use the `@assets` alias for typechecked imports. Old `rose-logo.png` is unused.
 - Dashboard matches the "Welcome back" layout (greeting + 4 delta stat cards + module grid). Mind Meld Room's default "room" tab matches its mockup (Rose View · Alignment center w/ 10 function tiles · Carmen View + right rail: Decision Heatmap / Handoff History / Private Room Status). Other Mind Meld tabs (rose/carmen/board/handoff/notes) use the fallback branch.
 - `src/index.css` — theme tokens + `@layer components` utilities (e.g. `.field-input`).
+- External Intake (`src/pages/external-intake.tsx`, route `/external-intake`): message intake from Zoho Cliq / WhatsApp / manual test entry. Rule-based classifier lives in `helpers.ts` (`classifyIntakeMessage`, `classifyIntakeSensitivity`, `summarizeIntakeMessage`, `detectIntakeDuplicates`). Routing (`routeIntakeItem` in the store) is draft-only: mind-meld → private leadership-only MindMeldItem (safe summary only), idea-backlog → draft Idea, no-action → archived, everything else → pending Recommendation (category `"external-intake"`, requiredApprover mapped from reviewOwner: Rose→rose, Carmen→carmen, else both). Nothing is ever auto-approved. Integration settings expose off/test/live modes with live disabled (frontend-only; honest test-mode labeling required — never claim a live integration exists).
 
 ## Architecture decisions
 
@@ -54,7 +55,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 ## Gotchas
 
 - CollabOS Command Center is a frontend-only SPA (artifact slug stays `roseos`). Verify with `pnpm --filter @workspace/roseos run typecheck` and `pnpm --filter @workspace/roseos run test`, NOT `build` (build needs workflow-provided `PORT`/`BASE_PATH`). Run/preview via the `artifacts/roseos: web` workflow, never `pnpm dev` from root.
-- Tests are required for the helpers in `src/lib/helpers.test.ts` (currently 16 passing). Keep them green.
+- Tests are required for the helpers in `src/lib/helpers.test.ts` (currently 28 passing, incl. intake classifier/duplicate/summary tests). Keep them green.
 - The `roseos` package still lists `@workspace/api-client-react` as a dependency but does not use it (harmless).
 
 ## Pointers

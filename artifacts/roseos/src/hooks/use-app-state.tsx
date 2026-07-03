@@ -17,6 +17,10 @@ import type {
   FeedbackItem,
   AppSettings,
   AuditEntry,
+  IntakeItem,
+  IntakeSource,
+  IntakeDestination,
+  ApprovalRoute,
 } from "@/types";
 import {
   ideas as seedIdeas,
@@ -24,9 +28,17 @@ import {
   mindMeldItems as seedMindMeld,
   handoffs as seedHandoffs,
   feedbackItems as seedFeedback,
+  seedIntakeItems,
+  projects as seedProjects,
   defaultSettings,
 } from "@/data/seed";
-import { routeMindMeld, canApprove } from "@/lib/helpers";
+import {
+  routeMindMeld,
+  canApprove,
+  classifyIntakeMessage,
+  summarizeIntakeMessage,
+  detectIntakeDuplicates,
+} from "@/lib/helpers";
 
 export type { Role };
 
@@ -39,6 +51,7 @@ interface PersistedState {
   mindMeldItems: MindMeldItem[];
   handoffs: Handoff[];
   feedbackItems: FeedbackItem[];
+  intakeItems: IntakeItem[];
   settings: AppSettings;
 }
 
@@ -57,6 +70,16 @@ interface AppState extends PersistedState {
   addMindMeldThought: (itemId: string, owner: "Rose" | "Carmen", text: string) => void;
   addFeedback: (item: Omit<FeedbackItem, "id" | "count">) => void;
   updateSettings: (patch: Partial<AppSettings>) => void;
+  addIntakeItem: (input: {
+    source: IntakeSource;
+    sourceChannel: string;
+    senderName: string;
+    senderHandle: string;
+    senderRole?: string | null;
+    rawMessage: string;
+  }) => void;
+  updateIntakeItem: (id: string, patch: Partial<IntakeItem>, actor: string, action: string) => void;
+  routeIntakeItem: (id: string, destination: IntakeDestination, actor: string) => void;
   resetData: () => void;
 }
 
@@ -70,6 +93,7 @@ function freshState(): PersistedState {
     mindMeldItems: seedMindMeld,
     handoffs: seedHandoffs,
     feedbackItems: seedFeedback,
+    intakeItems: seedIntakeItems,
     settings: defaultSettings,
   };
 }
@@ -80,7 +104,11 @@ function load(): PersistedState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return freshState();
     const parsed = JSON.parse(raw) as Partial<PersistedState>;
-    return { ...freshState(), ...parsed };
+    return {
+      ...freshState(),
+      ...parsed,
+      settings: { ...defaultSettings, ...parsed.settings },
+    };
   } catch {
     return freshState();
   }
@@ -309,6 +337,200 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, settings: { ...s.settings, ...patch } }));
   }, []);
 
+  const addIntakeItem = useCallback(
+    (input: {
+      source: IntakeSource;
+      sourceChannel: string;
+      senderName: string;
+      senderHandle: string;
+      senderRole?: string | null;
+      rawMessage: string;
+    }) => {
+      const classification = classifyIntakeMessage(input.rawMessage);
+      const dup = detectIntakeDuplicates(
+        input.rawMessage,
+        seedProjects.map((p) => ({ name: p.name, keywords: p.tags })),
+      );
+      const sourceLabel =
+        input.source === "zoho_cliq" ? "Zoho Cliq" : input.source === "whatsapp" ? "WhatsApp" : "manual test entry";
+      const item: IntakeItem = {
+        id: uid("in"),
+        source: input.source,
+        sourceChannel: input.sourceChannel,
+        senderName: input.senderName,
+        senderHandle: input.senderHandle,
+        senderRole: input.senderRole ?? null,
+        receivedAt: now(),
+        rawMessage: input.rawMessage,
+        cleanedSummary: summarizeIntakeMessage(input.rawMessage),
+        detectedType: classification.detectedType,
+        suggestedDestination: classification.suggestedDestination,
+        sensitivity: classification.sensitivity,
+        reviewOwner: classification.reviewOwner,
+        status: "new",
+        duplicateRisk: dup.risk,
+        relatedProjectNames: dup.relatedNames,
+        reviewerNotes: "",
+        finalActionTaken: null,
+        nextStep: classification.nextStep,
+        auditLog: [
+          {
+            id: uid("al"),
+            timestamp: now(),
+            actor: "System",
+            action: `Captured from ${sourceLabel} (test mode) and classified as ${classification.detectedType.replace(/_/g, " ")}.`,
+          },
+        ],
+      };
+      setState((s) => ({
+        ...s,
+        intakeItems: [item, ...s.intakeItems],
+        settings: { ...s.settings, lastTestMessageAt: now() },
+      }));
+    },
+    [],
+  );
+
+  const updateIntakeItem = useCallback(
+    (id: string, patch: Partial<IntakeItem>, actor: string, action: string) => {
+      setState((s) => ({
+        ...s,
+        intakeItems: s.intakeItems.map((it) =>
+          it.id === id
+            ? {
+                ...it,
+                ...patch,
+                auditLog: [
+                  ...it.auditLog,
+                  { id: uid("al"), timestamp: now(), actor, action },
+                ],
+              }
+            : it,
+        ),
+      }));
+    },
+    [],
+  );
+
+  const routeIntakeItem = useCallback(
+    (id: string, destination: IntakeDestination, actor: string) => {
+      setState((s) => {
+        const item = s.intakeItems.find((it) => it.id === id);
+        if (!item) return s;
+
+        const sensitive = item.sensitivity !== "normal";
+        const approver: ApprovalRoute =
+          item.reviewOwner === "Rose"
+            ? "rose"
+            : item.reviewOwner === "Carmen"
+              ? "carmen"
+              : "both";
+
+        let next = { ...s };
+        let actionLabel = "";
+
+        if (destination === "mind-meld") {
+          const meldItem: MindMeldItem = {
+            id: uid("mm"),
+            title: item.cleanedSummary.slice(0, 60),
+            source: "External Intake",
+            owner: "Rose",
+            status: "rose-thinking",
+            roseThoughts: "",
+            carmenThoughts: "",
+            synthesis: `Safe summary: ${item.cleanedSummary}`,
+            openQuestions: [item.nextStep],
+            alignment: "needs-clarity",
+            alignmentScore: 40,
+            risk: sensitive ? "high" : "medium",
+            privacy: "leadership-only",
+            nextHandoff: null,
+            finalOutcome: null,
+            layers: ["Strategy"],
+            focusAreas: ["External Intake"],
+            sensitive: true,
+            history: [
+              {
+                id: uid("h"),
+                timestamp: now(),
+                actor,
+                action: "Created from External Intake — raw message stays in the intake record.",
+              },
+            ],
+          };
+          next = { ...next, mindMeldItems: [meldItem, ...s.mindMeldItems] };
+          actionLabel = "Sent to Rose/Carmen Mind Meld (private, safe summary only).";
+        } else if (destination === "idea-backlog") {
+          const idea: Idea = {
+            id: uid("i"),
+            title: item.cleanedSummary.slice(0, 60),
+            description: item.rawMessage,
+            submittedBy: item.senderName,
+            status: "draft-idea",
+            momentum: 1,
+            cluster: null,
+            benefits: [],
+            risks: [],
+            dependencies: [],
+            approvalRoute: approver,
+            createdAt: now().slice(0, 10),
+          };
+          next = { ...next, ideas: [idea, ...s.ideas] };
+          actionLabel = "Draft idea created in the Idea Backlog (pending review).";
+        } else if (destination === "no-action") {
+          actionLabel = "Archived — no action taken.";
+        } else {
+          const destLabel: Record<string, string> = {
+            "review-queue": "CollabOS Review Queue draft",
+            "command-center-task": "Draft Command Center task",
+            "build-registry": "Build Registry suggestion",
+            "requirements-registry": "Requirements Registry suggestion",
+            "automation-registry": "Automation Registry suggestion",
+            "decision-log": "Decision Log suggestion",
+            "company-brain-update": "Company Brain update proposal",
+          };
+          const rec: Recommendation = {
+            id: uid("r"),
+            source: "External Intake",
+            category: "external-intake",
+            recommendation: `${destLabel[destination]}: ${item.cleanedSummary}`,
+            classification: sensitive ? "sensitive" : "pending-approval",
+            risk: sensitive ? "high" : "medium",
+            requiredApprover: approver,
+            status: "pending",
+            approvals: { rose: false, carmen: false },
+            history: [
+              {
+                id: uid("h"),
+                timestamp: now(),
+                actor,
+                action: `Drafted from external intake — requires approval before it becomes real work.`,
+              },
+            ],
+          };
+          next = { ...next, recommendations: [rec, ...s.recommendations] };
+          actionLabel = `${destLabel[destination]} created (pending approval).`;
+        }
+
+        next.intakeItems = s.intakeItems.map((it) =>
+          it.id === id
+            ? {
+                ...it,
+                status: destination === "no-action" ? "archived" : "routed",
+                finalActionTaken: actionLabel,
+                auditLog: [
+                  ...it.auditLog,
+                  { id: uid("al"), timestamp: now(), actor, action: actionLabel },
+                ],
+              }
+            : it,
+        );
+        return next;
+      });
+    },
+    [],
+  );
+
   const resetData = useCallback(() => {
     const fresh = freshState();
     fresh.currentRole = state.currentRole;
@@ -333,6 +555,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         addMindMeldThought,
         addFeedback,
         updateSettings,
+        addIntakeItem,
+        updateIntakeItem,
+        routeIntakeItem,
         resetData,
       }}
     >

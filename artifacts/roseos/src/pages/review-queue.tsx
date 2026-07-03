@@ -5,7 +5,7 @@ import { useAppState } from "@/hooks/use-app-state";
 import { canApprove } from "@/lib/helpers";
 import { useToast } from "@/hooks/use-toast";
 
-const CATEGORIES = ["all", "duplicate", "team-pulse", "automation", "market", "mind-meld-handoff", "final-decision", "mockup-prompt"];
+const CATEGORIES = ["all", "duplicate", "team-pulse", "automation", "market", "mind-meld-handoff", "final-decision", "mockup-prompt", "external-intake"];
 const STATUS_TONE: Record<string, "amber" | "emerald" | "rose" | "sky"> = { pending: "amber", approved: "emerald", rejected: "rose", "needs-revision": "sky" };
 
 export default function ReviewQueue() {

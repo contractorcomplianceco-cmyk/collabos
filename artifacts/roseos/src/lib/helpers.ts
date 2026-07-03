@@ -8,6 +8,9 @@ import type {
   Project,
   Blocker,
   Decision,
+  IntakeClassification,
+  IntakeSensitivity,
+  IntakeDuplicateRisk,
 } from "@/types";
 
 const STOPWORDS = new Set([
@@ -247,4 +250,191 @@ export function reportFromTemplate(report: Report): GeneratedReport {
     decisionsNeeded: report.decisionsNeeded,
     nextSteps: report.nextSteps,
   };
+}
+
+// ---------- External Message Intake ----------
+
+const MIND_MELD_KEYWORDS = ["rose and carmen", "mind meld", "carmenfy", "rosify", "founder review", "strategy"];
+const ZOHO_KEYWORDS = ["zoho", "crm", "cliq", "deluge", "workflow"];
+const AUTOMATION_KEYWORDS = ["automation", "flow", "form", "field"];
+const DECISION_KEYWORDS = ["decision", "approved", "final", "launch", "pricing", "proposal", "client-facing"];
+const TODO_KEYWORDS = ["todo", "to-do", "task", "follow up", "follow-up", "remind", "need to do"];
+const IDEA_KEYWORDS = ["idea", "what if", "we should", "new product"];
+const BUILD_KEYWORDS = ["build request", "can we build", "build a", "build an", "new app", "new module", "feature request"];
+const PROCESS_KEYWORDS = ["sop", "process update", "procedure", "how we do", "standard operating"];
+const BLOCKER_KEYWORDS = ["blocked", "blocker", "stuck", "can't proceed", "cannot proceed", "waiting on"];
+const BRAIN_KEYWORDS = ["company brain", "document this", "for the record", "institutional", "knowledge base"];
+
+const HR_SENSITIVE = ["salary", "compensation", "hiring", "firing", "termination", "performance review", "hr "];
+const FINANCIAL_SENSITIVE = ["invoice", "payment", "budget", "revenue", "margin", "financial", "pricing"];
+const LEGAL_SENSITIVE = ["contract", "legal", "liability", "nda", "lawsuit", "compliance risk"];
+const CLIENT_SENSITIVE = ["client complaint", "client escalation", "client issue", "churn", "refund"];
+
+function hasAny(text: string, keywords: string[]): boolean {
+  return keywords.some((k) => text.includes(k));
+}
+
+export function classifyIntakeSensitivity(rawMessage: string): IntakeSensitivity {
+  const text = rawMessage.toLowerCase();
+  if (hasAny(text, MIND_MELD_KEYWORDS)) return "private_leadership";
+  if (hasAny(text, HR_SENSITIVE)) return "hr_sensitive";
+  if (hasAny(text, LEGAL_SENSITIVE)) return "legal_sensitive";
+  if (hasAny(text, CLIENT_SENSITIVE)) return "client_sensitive";
+  if (hasAny(text, FINANCIAL_SENSITIVE)) return "financial_sensitive";
+  return "normal";
+}
+
+export function classifyIntakeMessage(rawMessage: string): IntakeClassification {
+  const text = rawMessage.toLowerCase();
+  const sensitivity = classifyIntakeSensitivity(rawMessage);
+  const systemsImpact = hasAny(text, ZOHO_KEYWORDS) || hasAny(text, AUTOMATION_KEYWORDS);
+
+  if (hasAny(text, MIND_MELD_KEYWORDS)) {
+    return {
+      detectedType: "rose_carmen_mind_meld",
+      suggestedDestination: "mind-meld",
+      sensitivity: "private_leadership",
+      reviewOwner: "Rose and Carmen",
+      nextStep: "Review privately in the Mind Meld Room before any broader routing.",
+    };
+  }
+
+  if (hasAny(text, DECISION_KEYWORDS)) {
+    return {
+      detectedType: "decision_candidate",
+      suggestedDestination: "decision-log",
+      sensitivity,
+      reviewOwner: systemsImpact ? "Rose and Carmen" : "Rose",
+      nextStep: systemsImpact
+        ? "Decision touches systems - route for joint Rose and Carmen review."
+        : "Rose reviews direction, pricing, and client-facing decisions.",
+    };
+  }
+
+  if (hasAny(text, ZOHO_KEYWORDS) || hasAny(text, AUTOMATION_KEYWORDS)) {
+    return {
+      detectedType: "crm_or_zoho_request",
+      suggestedDestination: hasAny(text, AUTOMATION_KEYWORDS) ? "automation-registry" : "review-queue",
+      sensitivity,
+      reviewOwner: "Carmen",
+      nextStep: "Carmen reviews systems, Zoho, and automation requests.",
+    };
+  }
+
+  if (hasAny(text, BRAIN_KEYWORDS) || hasAny(text, PROCESS_KEYWORDS)) {
+    return {
+      detectedType: hasAny(text, BRAIN_KEYWORDS) ? "company_brain_update_suggestion" : "process_update",
+      suggestedDestination: "company-brain-update",
+      sensitivity,
+      reviewOwner: "Rose and Carmen",
+      nextStep: "Draft a Company Brain update proposal - never write directly to approved records.",
+    };
+  }
+
+  if (hasAny(text, BLOCKER_KEYWORDS)) {
+    return {
+      detectedType: "blocker",
+      suggestedDestination: "command-center-task",
+      sensitivity,
+      reviewOwner: "Assigned team member",
+      nextStep: "Create a draft task to unblock, then assign an owner.",
+    };
+  }
+
+  if (hasAny(text, BUILD_KEYWORDS)) {
+    return {
+      detectedType: "build_request",
+      suggestedDestination: "build-registry",
+      sensitivity,
+      reviewOwner: "Carmen",
+      nextStep: "Carmen reviews build architecture before registry entry.",
+    };
+  }
+
+  if (hasAny(text, TODO_KEYWORDS)) {
+    return {
+      detectedType: "todo",
+      suggestedDestination: "command-center-task",
+      sensitivity,
+      reviewOwner: "Assigned team member",
+      nextStep: "Create a draft Command Center task for review.",
+    };
+  }
+
+  if (hasAny(text, IDEA_KEYWORDS)) {
+    return {
+      detectedType: "idea",
+      suggestedDestination: "idea-backlog",
+      sensitivity,
+      reviewOwner: "Unassigned",
+      nextStep: "Add to the idea backlog as a draft and check for duplicates.",
+    };
+  }
+
+  if (text.trim().endsWith("?") || text.includes("question") || text.startsWith("how ") || text.includes("how do")) {
+    return {
+      detectedType: "question",
+      suggestedDestination: "review-queue",
+      sensitivity,
+      reviewOwner: "Unassigned",
+      nextStep: "Route to the review queue so the right owner can answer.",
+    };
+  }
+
+  if (text.trim().split(/\s+/).length <= 3) {
+    return {
+      detectedType: "ignore_or_noise",
+      suggestedDestination: "no-action",
+      sensitivity: sensitivity === "normal" ? "normal" : sensitivity,
+      reviewOwner: "Unassigned",
+      nextStep: "Likely noise - archive unless a reviewer disagrees.",
+    };
+  }
+
+  return {
+    detectedType: "question",
+    suggestedDestination: "review-queue",
+    sensitivity: sensitivity === "normal" ? "unclear" : sensitivity,
+    reviewOwner: "Unassigned",
+    nextStep: "Unclear intent - needs a human reviewer to classify.",
+  };
+}
+
+export function summarizeIntakeMessage(rawMessage: string): string {
+  const cleaned = rawMessage.replace(/\s+/g, " ").trim();
+  if (cleaned.length <= 110) return cleaned;
+  return cleaned.slice(0, 107).trimEnd() + "...";
+}
+
+export interface IntakeDuplicateResult {
+  risk: IntakeDuplicateRisk;
+  relatedNames: string[];
+}
+
+export function detectIntakeDuplicates(
+  rawMessage: string,
+  candidates: { name: string; keywords?: string[] }[],
+): IntakeDuplicateResult {
+  const text = rawMessage.toLowerCase();
+  const words = new Set(
+    text.split(/[^a-z0-9]+/).filter((w) => w.length > 3 && !STOPWORDS.has(w)),
+  );
+  const related: { name: string; score: number }[] = [];
+
+  for (const c of candidates) {
+    const nameLower = c.name.toLowerCase();
+    let score = 0;
+    if (text.includes(nameLower)) score += 2;
+    const nameWords = nameLower.split(/[^a-z0-9]+/).filter((w) => w.length > 3);
+    const nameHits = nameWords.filter((w) => words.has(w)).length;
+    if (nameHits > 0) score += nameHits;
+    const keywordHits = (c.keywords ?? []).filter((k) => text.includes(k.toLowerCase())).length;
+    score += keywordHits;
+    if (score > 0) related.push({ name: c.name, score });
+  }
+
+  related.sort((a, b) => b.score - a.score);
+  const top = related[0];
+  const risk: IntakeDuplicateRisk = !top ? "none" : top.score >= 2 ? "likely" : "possible";
+  return { risk, relatedNames: related.slice(0, 3).map((r) => r.name) };
 }
