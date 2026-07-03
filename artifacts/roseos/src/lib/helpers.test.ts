@@ -12,8 +12,12 @@ import {
   classifyIntakeMessage,
   detectIntakeDuplicates,
   summarizeIntakeMessage,
+  computeIntakeReadiness,
+  detectIntakeFriction,
+  generateBuildPrompt,
 } from "./helpers";
 import { companyRecords, projects, blockers, decisions } from "@/data/seed";
+import type { IntakeItem } from "@/types";
 
 describe("similarityScore / detectDuplicates", () => {
   it("returns 100 for identical text", () => {
@@ -204,5 +208,146 @@ describe("summarizeIntakeMessage", () => {
     expect(summary.length).toBeLessThanOrEqual(110);
     expect(summary.endsWith("...")).toBe(true);
     expect(summarizeIntakeMessage("short   message")).toBe("short message");
+  });
+});
+
+describe("computeIntakeReadiness", () => {
+  const baseItem = {
+    rawMessage: "Can we automate the qualifier follow-up workflow in Zoho CRM so leads get a reminder after three days without a response from our team?",
+    detectedType: "automation_request" as const,
+    suggestedDestination: "review-queue" as const,
+    sensitivity: "normal" as const,
+    reviewOwner: "Carmen" as const,
+    duplicateRisk: "none" as const,
+    relatedProjectNames: ["QualifierConnect"],
+    nextStep: "Route to Carmen for systems review.",
+    senderRole: "Ops Lead",
+  };
+
+  it("scores a detailed, owned, linked item as review-ready or better", () => {
+    const r = computeIntakeReadiness(baseItem);
+    expect(r.overall).toBeGreaterThanOrEqual(62);
+    expect(["review-ready", "build-ready"]).toContain(r.level);
+    expect(r.categories).toHaveLength(8);
+  });
+
+  it("scores a vague unowned message as not ready and lists missing pieces", () => {
+    const r = computeIntakeReadiness({
+      ...baseItem,
+      rawMessage: "fix the thing",
+      detectedType: "unclear",
+      reviewOwner: "Unassigned",
+      relatedProjectNames: [],
+      nextStep: "Unclear - needs a human decision.",
+      senderRole: null,
+    });
+    expect(r.level).toBe("not-ready");
+    expect(r.missing.length).toBeGreaterThan(0);
+    expect(r.recommendedNextStep.toLowerCase()).toContain("gather more detail");
+  });
+
+  it("penalizes duplicate conflicts on build requests", () => {
+    const clean = computeIntakeReadiness({ ...baseItem, detectedType: "build_request" });
+    const dup = computeIntakeReadiness({ ...baseItem, detectedType: "build_request", duplicateRisk: "likely" });
+    expect(dup.overall).toBeLessThan(clean.overall);
+  });
+});
+
+describe("detectIntakeFriction", () => {
+  const makeItem = (over: Partial<IntakeItem> = {}): IntakeItem => ({
+    id: "in-test",
+    source: "manual",
+    sourceChannel: "Manual entry",
+    senderName: "Test Sender",
+    senderHandle: "@test",
+    senderRole: "Ops Lead",
+    receivedAt: "Jul 3, 9:00 AM",
+    rawMessage: "Please review the updated pricing sheet for the onboarding package before the meeting",
+    cleanedSummary: "Review updated pricing sheet for onboarding package.",
+    detectedType: "task",
+    suggestedDestination: "command-center-task",
+    sensitivity: "normal",
+    reviewOwner: "Assigned team member",
+    status: "new",
+    duplicateRisk: "none",
+    relatedProjectNames: ["Onboarding"],
+    reviewerNotes: "",
+    finalActionTaken: null,
+    nextStep: "Create a draft task.",
+    classificationReason: "Contains an actionable request.",
+    auditLog: [],
+    ...over,
+  });
+
+  it("flags missing owner and next step as high severity", () => {
+    const flags = detectIntakeFriction(makeItem({ reviewOwner: "Unassigned", nextStep: "Unclear - needs review." }));
+    const labels = flags.map((f) => f.label);
+    expect(labels).toContain("No owner");
+    expect(labels).toContain("No next step");
+    expect(flags.find((f) => f.label === "No owner")?.severity).toBe("high");
+  });
+
+  it("flags duplicates, privacy, and automation risks", () => {
+    const flags = detectIntakeFriction(makeItem({
+      rawMessage: "New automation workflow for payroll data in Zoho",
+      duplicateRisk: "likely",
+      sensitivity: "hr_sensitive",
+    }));
+    const labels = flags.map((f) => f.label);
+    expect(labels).toContain("Possible duplicate");
+    expect(labels).toContain("Privacy risk");
+    expect(labels).toContain("Automation risk");
+    expect(labels).toContain("Zoho / CRM impact");
+  });
+
+  it("returns waiting-on flags for leadership-owned pending items", () => {
+    const flags = detectIntakeFriction(makeItem({ reviewOwner: "Rose and Carmen" }));
+    const labels = flags.map((f) => f.label);
+    expect(labels).toContain("Waiting on Rose");
+    expect(labels).toContain("Waiting on Carmen");
+  });
+
+  it("returns no blocking flags for a clean item", () => {
+    const flags = detectIntakeFriction(makeItem());
+    expect(flags.filter((f) => f.severity === "high")).toHaveLength(0);
+  });
+});
+
+describe("generateBuildPrompt", () => {
+  const item: IntakeItem = {
+    id: "in-bp",
+    source: "zoho_cliq",
+    sourceChannel: "#ops-team",
+    senderName: "Jordan Diaz",
+    senderHandle: "@jordan",
+    senderRole: "Ops Lead",
+    receivedAt: "Jul 3, 9:00 AM",
+    rawMessage: "Can we build a client document tracker with reminders?",
+    cleanedSummary: "Build a client document tracker with reminders.",
+    detectedType: "build_request",
+    suggestedDestination: "build-registry",
+    sensitivity: "normal",
+    reviewOwner: "Carmen",
+    status: "new",
+    duplicateRisk: "none",
+    relatedProjectNames: [],
+    reviewerNotes: "",
+    finalActionTaken: null,
+    nextStep: "Route to build registry.",
+    classificationReason: "Explicit build request.",
+    auditLog: [],
+  };
+
+  it("produces a draft prompt with goal, approver, and guardrails", () => {
+    const prompt = generateBuildPrompt(item);
+    expect(prompt).toContain("BUILD PROMPT (draft - review before use)");
+    expect(prompt).toContain(item.cleanedSummary);
+    expect(prompt).toContain("Required approver: Carmen.");
+    expect(prompt).toContain("Nothing is auto-approved.");
+  });
+
+  it("marks sensitive items with restricted visibility rules", () => {
+    const prompt = generateBuildPrompt({ ...item, sensitivity: "hr_sensitive" });
+    expect(prompt).toContain("SENSITIVE (hr sensitive)");
   });
 });

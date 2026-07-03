@@ -1,0 +1,524 @@
+You are working on the CollabOS Command Center / Rose OS collaboration app.
+
+Build a complete External Message Intake + High-Tech Collaboration Intelligence expansion for CollabOS, Rose/Carmen Mind Meld, and Company Brain review workflows.
+
+Product names:
+- Rose OS = full company operating system and AI assistant experience
+- Command Center = work and project dashboard inside Rose OS
+- Rose Brain = AI knowledge assistant and memory feature
+- Company Brain = approved company records and institutional memory
+- CollabOS Command Center = collaboration intelligence layer
+- Mind Meld = private Rose/Carmen collaboration and alignment space
+
+Core principle:
+Make scattered thoughts, messages, ideas, to-dos, build requests, and decisions feel instantly organized, useful, and fun. Do not auto-approve anything. AI/rule-based outputs are recommendations until Rose, Carmen, or both approve them.
+
+Do not auto-create approved tasks, decisions, SOPs, CRM changes, automations, or Company Brain records from messages. Everything captured from WhatsApp, Zoho Cliq, or manual entry must enter as a draft/review item first.
+
+Build this as a safe intake + review + routing workflow.
+
+SECTION 1: External Intake
+
+Add a new app section named:
+External Intake
+
+Navigation label options:
+- External Intake
+- Message Intake
+- Intake Queue
+
+This section should show messages captured from:
+- Zoho Cliq
+- WhatsApp
+- Manual test entry / sample message
+
+Phase 1 should support:
+- Manual sample intake form for testing
+- Zoho Cliq-ready webhook endpoint or mocked endpoint
+- WhatsApp-ready webhook endpoint or mocked endpoint
+
+If real credentials are not configured, clearly show:
+- Integration not connected
+- Demo / test mode
+
+Do not imply live WhatsApp or live Zoho Cliq integration exists unless environment variables and server endpoints are actually configured.
+
+SECTION 2: Message Intake Schema
+
+Each intake item should include:
+
+- id
+- source: zoho_cliq | whatsapp | manual
+- sourceChannel
+- senderName
+- senderHandle
+- senderRole if known
+- receivedAt
+- rawMessage
+- cleanedSummary
+- detectedType:
+  - idea
+  - todo
+  - build_request
+  - decision_candidate
+  - blocker
+  - question
+  - process_update
+  - CRM_or_Zoho_request
+  - automation_request
+  - Rose_Carmen_mind_meld
+  - company_brain_update_suggestion
+  - sensitive_private_item
+  - ignore_or_noise
+- suggestedDestination:
+  - Rose/Carmen Mind Meld
+  - CollabOS Review Queue
+  - Command Center Task
+  - Idea Backlog
+  - Build Registry Suggestion
+  - Requirements Registry Suggestion
+  - Automation Registry Suggestion
+  - Decision Log Suggestion
+  - Company Brain Update Suggestion
+  - No Action
+- sensitivity:
+  - normal
+  - private_leadership
+  - client_sensitive
+  - HR_sensitive
+  - financial_sensitive
+  - legal_sensitive
+  - unclear
+- reviewOwner:
+  - Rose
+  - Carmen
+  - Rose and Carmen
+  - Assigned team member
+  - Unassigned
+- status:
+  - new
+  - needs_review
+  - routed
+  - approved
+  - rejected
+  - archived
+- duplicateRisk:
+  - none
+  - possible
+  - likely
+- relatedProjectIds or relatedProjectNames
+- readinessScore
+- frictionFlags
+- reviewerNotes
+- finalActionTaken
+- auditLog
+
+SECTION 3: Smart Intake Classifier
+
+Add a prominent “What Is This?” classifier for every intake item.
+
+It should classify items as:
+- Idea
+- To-do
+- Blocker
+- Question
+- Decision candidate
+- Build request
+- CRM / Zoho request
+- Automation request
+- Sensitive/private item
+- Company Brain update suggestion
+- Duplicate or related work
+- No action / noise
+
+Show a short plain-English explanation of why the classification was chosen.
+
+Initial implementation can be rule-based if no live AI service exists.
+
+Classification examples:
+- Messages containing “Rose and Carmen,” “mind meld,” “Carmenfy,” “Rosify,” “strategy,” or “founder review” should suggest Rose/Carmen Mind Meld.
+- Messages containing “Zoho,” “CRM,” “Cliq,” “automation,” “Deluge,” “Flow,” “form,” “field,” or “workflow” should route to Carmen review.
+- Messages containing “decision,” “approved,” “final,” “launch,” “pricing,” “proposal,” or “client-facing” should route to Rose review or Rose and Carmen review depending on systems impact.
+- Messages containing “todo,” “task,” “follow up,” “remind,” or “need to do” should suggest Command Center Task.
+- Messages containing “idea,” “what if,” “we should,” or “new product” should suggest Idea Backlog or CollabOS Review Queue.
+- Sensitive messages should not be routed into general Company Brain automatically.
+
+SECTION 4: Magic Routing Buttons
+
+Add intuitive action buttons to each item:
+
+- Carmenfy This
+- Rosify This
+- Send to Mind Meld
+- Turn Into To-Do
+- Make It a Build Request
+- Check for Duplicates
+- Preserve in Company Brain
+- Mark Sensitive / Private
+- Archive / No Action
+
+Button behavior:
+- Carmenfy This routes systems, process, Zoho, automation, AI, and build-readiness items to Carmen review.
+- Rosify This routes company direction, client-facing, pricing, launch, public positioning, final-decision, and sensitive direction items to Rose review.
+- Send to Mind Meld routes private Rose/Carmen alignment items to Rose/Carmen Mind Meld.
+- Turn Into To-Do creates a draft task.
+- Make It a Build Request creates a draft build request.
+- Preserve in Company Brain creates a proposed Company Brain update only, not an approved record.
+- Check for Duplicates runs duplicate radar.
+- Archive / No Action closes the item without creating work.
+
+SECTION 5: Review Queue UI
+
+Create a clear review queue with filters:
+- Source
+- Type
+- Destination
+- Sensitivity
+- Review owner
+- Status
+- Duplicate risk
+- Readiness
+- Friction flags
+
+Each item card/row should show:
+- Source badge
+- Sender
+- Short summary
+- Suggested destination
+- Suggested reviewer
+- Sensitivity badge
+- Duplicate risk badge
+- Readiness badge
+- Status
+- Received date
+
+Item detail panel should show:
+- Original message
+- AI/rule-based summary
+- Classification
+- Suggested routing
+- Related projects if detected
+- Reviewer notes
+- Readiness Meter
+- Friction Detector
+- Audit trail
+
+SECTION 6: Live Idea Constellation
+
+Create a visual “Idea Constellation” view that shows related items as connected nodes.
+
+Node types:
+- Ideas
+- Tasks
+- Decisions
+- Build requests
+- Projects
+- Automations
+- CRM / Zoho items
+- Company Brain update suggestions
+- Mind Meld items
+
+Requirements:
+- Clicking a node opens its details.
+- Related items should visually connect.
+- Highlight possible duplicates.
+- Highlight items needing Rose review, Carmen review, or both.
+- Use a polished command-center feel, but keep it readable and usable.
+
+If full graph rendering is too complex, create a clean interactive relationship map using cards, connection lines, or grouped clusters.
+
+SECTION 7: Decision Readiness Meter
+
+Add a readiness score to intake/review items.
+
+Score categories:
+- Vision clarity
+- Systems clarity
+- Owner clarity
+- Next-step clarity
+- Source/documentation support
+- Privacy/sensitivity readiness
+- Build readiness
+- Approval readiness
+
+Show:
+- Overall readiness: Not Ready / Needs Details / Review Ready / Build Ready
+- Specific missing pieces
+- Recommended next step
+
+SECTION 8: Duplicate Radar + Merge Suggestion
+
+Add lightweight duplicate detection.
+
+Compare new intake items against existing local/project sample records by:
+- project name
+- keywords
+- system name
+- app name
+- CRM/form/automation language
+- similar idea text
+
+When an item is similar to an existing item, show:
+- Possible duplicate
+- Related existing item
+- Why it may overlap
+- Suggested action:
+  - Link existing work
+  - Merge into existing item
+  - Keep separate
+  - Archive as duplicate
+  - Send to review
+
+Do not automatically merge, delete, or overwrite anything.
+
+SECTION 9: Rose/Carmen Mind Meld Routing
+
+If an item is sent to Rose/Carmen Mind Meld:
+- Preserve privacy.
+- Do not expose the raw message to non-Rose/Carmen areas.
+- Create a safe summary only if needed for broader review.
+
+Include fields:
+- Rose thoughts
+- Carmen thoughts
+- Rose OS synthesis
+- Open questions
+- Ready to Carmenfy
+- Ready to Rosify
+- Needs both review
+- Sensitive flag
+
+SECTION 10: Mind Meld Timeline
+
+Inside Rose/Carmen Mind Meld, add a timeline view showing how an idea or decision evolved.
+
+Timeline events may include:
+- Original message
+- Rose thought
+- Carmen thought
+- Rose OS synthesis
+- Open question
+- Routing action
+- Decision candidate
+- Approved direction
+- Company Brain update suggestion
+- Build request created
+- Archived / no action
+
+Add filters:
+- Needs Rose
+- Needs Carmen
+- Needs both
+- Ready to Carmenfy
+- Ready to Rosify
+- Sensitive
+- Finalized
+
+SECTION 11: Daily Attention Lens
+
+Add a dashboard section called:
+What Needs My Attention?
+
+It should summarize:
+- Items Rose needs to decide
+- Items Carmen needs to review
+- Items needing both Rose and Carmen
+- Possible duplicates
+- Blockers
+- Ideas ready to become tasks
+- Build requests ready for review
+- Company Brain update suggestions pending approval
+- Sensitive/private items needing careful routing
+
+This should feel like a smart executive cockpit, not a generic task list.
+
+SECTION 12: Friction Detector
+
+Add a friction/risk detector for each item.
+
+Detect and show:
+- No owner
+- No next step
+- Missing source/documentation
+- Possible duplicate
+- Privacy risk
+- Client-facing risk
+- Zoho/CRM impact
+- Automation risk
+- Waiting on Rose
+- Waiting on Carmen
+- Too vague to act on
+
+Each friction flag should include a suggested fix.
+
+SECTION 13: Instant Build Prompt Generator
+
+For approved or review-ready build requests, add a button:
+Generate Build Prompt
+
+The generated prompt should include:
+- App/product context
+- Goal
+- User roles
+- Required screens
+- Required data model
+- Required actions
+- Review/approval guardrails
+- Privacy/sensitivity rules
+- Integration notes
+- Acceptance criteria
+
+The generated prompt should be editable before copying/exporting.
+
+SECTION 14: “Do Not Forget This” Memory Catcher
+
+Add a lightweight memory-candidate flow.
+
+For important but not-yet-actionable information:
+- Mark as Do Not Forget This
+- Choose destination:
+  - Private Rose/Carmen memory
+  - Company Brain update suggestion
+  - Project note
+  - Future idea
+  - Decision candidate
+  - Knowledge Gap Report suggestion
+
+Important:
+This must create a reviewable memory candidate, not an approved permanent record.
+
+SECTION 15: Company Brain Update Suggestions
+
+If an item suggests company knowledge:
+- Do not write directly to Company Brain.
+- Create a proposed update with:
+  - proposed record type
+  - summary
+  - source message
+  - reason this should be preserved
+  - recommended destination document
+  - approval needed from Rose, Carmen, or both
+
+Potential destination documents:
+- Active Projects Tracker
+- Decision Log
+- Build Registry
+- Requirements Registry
+- Automation Registry
+- SOP Library
+- CRM Architecture Document
+- Meeting Notes Repository
+- Knowledge Gap Report
+
+SECTION 16: Integration Settings
+
+Add settings for:
+- Zoho Cliq connection status
+- WhatsApp connection status
+- Webhook URL display
+- Test webhook button
+- Environment variable status
+- Last received test message
+- Integration mode:
+  - off
+  - test
+  - live
+
+Do not expose secrets in the frontend.
+
+Suggested environment variables:
+- ZOHO_CLIQ_WEBHOOK_SECRET
+- WHATSAPP_VERIFY_TOKEN
+- WHATSAPP_APP_SECRET
+- WHATSAPP_PHONE_NUMBER_ID
+- WHATSAPP_ACCESS_TOKEN
+- MESSAGE_INTAKE_ENABLED
+
+SECTION 17: Backend/API Requirements
+
+If this app has a backend, add endpoints:
+
+POST /api/intake/manual
+POST /api/intake/zoho-cliq
+GET /api/intake/whatsapp/webhook
+POST /api/intake/whatsapp/webhook
+GET /api/intake/items
+PATCH /api/intake/items/:id
+POST /api/intake/items/:id/route
+POST /api/intake/items/:id/classify
+POST /api/intake/items/:id/generate-build-prompt
+POST /api/intake/items/:id/memory-candidate
+
+WhatsApp GET webhook should support verification challenge if live integration is later enabled.
+
+If the app is frontend-only right now:
+- Build the UI and local mock service.
+- Label it clearly as “test mode.”
+- Do not claim live webhook support.
+
+SECTION 18: Design Requirements
+
+The UI should feel modern, polished, executive, high-tech, and slightly fun.
+
+Use:
+- Clean dashboard layout
+- Strong filters
+- Scannable queue
+- Clear status badges
+- Private/sensitive visual treatment
+- Motion for classification, routing success, readiness changes, and node interactions
+- Clear badges, filters, and status chips
+- Operational command-center feel
+
+Avoid:
+- Yellow-heavy Rose Brain branding
+- Fake live AI claims
+- Fake live WhatsApp/Cliq claims
+- Technical language overload
+- Marketing-page layout
+- Auto-approval behavior
+
+Prioritize:
+- Speed
+- Clarity
+- “I instantly know what to do next”
+
+SECTION 19: Governance Rules
+
+Add visible guardrail copy in the admin/review UI:
+- External messages are intake drafts until reviewed.
+- Sensitive/private items must not be shared broadly.
+- AI/rule classifications are recommendations, not approved company decisions.
+- Draft ideas are not approved company decisions.
+- Company Brain updates require approval.
+- Rose approves company direction, client-facing content, pricing/proposals, sensitive work, public launch/domain decisions, and final decisions.
+- Carmen reviews systems, process, Zoho, AI, automation, and build architecture.
+- High-risk system or public-facing changes may require both Rose and Carmen.
+- Sensitive/private leadership content must not be exposed broadly.
+
+SECTION 20: Acceptance Criteria
+
+The build is complete when:
+
+- External Intake section exists in navigation.
+- User can add a manual sample message.
+- Sample message is classified into type, destination, sensitivity, reviewer, and status.
+- Every intake item can be classified.
+- Every item shows magic routing buttons.
+- User can route an item to draft task, idea, build request, Company Brain suggestion, or Rose/Carmen Mind Meld.
+- Sensitive/private items are visibly protected.
+- Integration settings show Zoho Cliq and WhatsApp as off/test/live.
+- No UI claims live WhatsApp/Cliq integration unless configured.
+- Review queue supports filters and status changes.
+- Idea Constellation or equivalent relationship map exists.
+- Readiness Meter appears on item details.
+- Duplicate Radar flags possible overlap.
+- Mind Meld Timeline exists.
+- Daily Attention Lens exists.
+- Friction Detector flags missing owners, missing next steps, duplicates, and privacy risk.
+- Build Prompt Generator creates editable prompts.
+- Do Not Forget This creates memory candidates.
+- Audit trail records routing/review actions.
+- Rose/Carmen Mind Meld receives only private/review-safe items.
+- Company Brain updates remain proposed, not automatic.
+- No feature auto-approves company decisions, Company Brain records, CRM changes, automations, or build actions.

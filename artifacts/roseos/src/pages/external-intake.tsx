@@ -2,14 +2,21 @@ import React, { useMemo, useState } from "react";
 import {
   Inbox, Filter, ShieldAlert, Lock, Archive, Brain, ClipboardCheck, ListTodo,
   Lightbulb, Hammer, BookOpen, Link2, Plus, Send, Plug, MessageSquare, History,
+  Wand2, Sparkles, Gauge, AlertTriangle, Copy, GitMerge, Network, BookmarkPlus,
+  HelpCircle, SearchCheck,
 } from "lucide-react";
 import { PageHeader, SectionCard, StatusChip, EmptyState } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
 import { useToast } from "@/hooks/use-toast";
+import {
+  computeIntakeReadiness, detectIntakeFriction, generateBuildPrompt, detectIntakeDuplicates,
+  canViewSensitive, canSubmit,
+} from "@/lib/helpers";
+import { projects as seedProjects } from "@/data/seed";
 import type {
   IntakeSource, IntakeDestination, IntakeSensitivity,
   IntakeDetectedType, IntakeStatus, IntakeDuplicateRisk, IntakeReviewOwner,
-  IntegrationMode,
+  IntegrationMode, ReadinessLevel, MemoryDestination, IntakeItem,
 } from "@/types";
 
 const SOURCE_LABEL: Record<IntakeSource, string> = {
@@ -32,6 +39,8 @@ const TYPE_LABEL: Record<IntakeDetectedType, string> = {
   question: "Question",
   process_update: "Process update",
   crm_or_zoho_request: "CRM / Zoho request",
+  automation_request: "Automation request",
+  sensitive_private_item: "Sensitive / private",
   rose_carmen_mind_meld: "Rose/Carmen Mind Meld",
   company_brain_update_suggestion: "Company Brain suggestion",
   ignore_or_noise: "Noise",
@@ -101,6 +110,34 @@ const GUARDRAILS = [
   "High-risk items may require both Rose and Carmen.",
 ];
 
+const READINESS_LABEL: Record<ReadinessLevel, string> = {
+  "not-ready": "Not ready",
+  "needs-details": "Needs details",
+  "review-ready": "Review ready",
+  "build-ready": "Build ready",
+};
+const READINESS_TONE: Record<ReadinessLevel, "rose" | "amber" | "sky" | "emerald"> = {
+  "not-ready": "rose",
+  "needs-details": "amber",
+  "review-ready": "sky",
+  "build-ready": "emerald",
+};
+const READINESS_BAR: Record<ReadinessLevel, string> = {
+  "not-ready": "bg-rose-400",
+  "needs-details": "bg-amber-400",
+  "review-ready": "bg-sky-400",
+  "build-ready": "bg-emerald-400",
+};
+
+const MEMORY_DEST_LABEL: Record<MemoryDestination, string> = {
+  "private-rose-carmen-memory": "Private Rose+Carmen memory",
+  "company-brain-suggestion": "Company Brain suggestion",
+  "project-note": "Project note",
+  "future-idea": "Future idea",
+  "decision-candidate": "Decision candidate",
+  "knowledge-gap-report": "Knowledge gap report",
+};
+
 const ROUTE_ACTIONS: { dest: IntakeDestination; label: string; icon: React.ElementType }[] = [
   { dest: "mind-meld", label: "Send to Rose/Carmen Mind Meld", icon: Brain },
   { dest: "review-queue", label: "Send to Review Queue", icon: ClipboardCheck },
@@ -133,7 +170,7 @@ function FilterSelect({ label, value, onChange, options }: {
   );
 }
 
-function IntegrationCard({ name, icon: Icon, mode, onModeChange, webhookPath, envVars, onTest, lastTest }: {
+function IntegrationCard({ name, icon: Icon, mode, onModeChange, webhookPath, envVars, onTest, lastTest, canMutate }: {
   name: string;
   icon: React.ElementType;
   mode: IntegrationMode;
@@ -142,6 +179,7 @@ function IntegrationCard({ name, icon: Icon, mode, onModeChange, webhookPath, en
   envVars: string[];
   onTest: () => void;
   lastTest: string | null;
+  canMutate: boolean;
 }) {
   const connected = mode === "live";
   return (
@@ -165,10 +203,10 @@ function IntegrationCard({ name, icon: Icon, mode, onModeChange, webhookPath, en
               <button
                 key={m}
                 onClick={() => onModeChange(m)}
-                disabled={m === "live"}
-                title={m === "live" ? "Live mode requires configured environment variables and server endpoints." : undefined}
+                disabled={m === "live" || !canMutate}
+                title={m === "live" ? "Live mode requires configured environment variables and server endpoints." : !canMutate ? "Your role has view-only access." : undefined}
                 className={`rounded-lg px-2.5 py-1 font-medium capitalize transition ${
-                  mode === m ? "bg-rose-500 text-white" : m === "live" ? "cursor-not-allowed bg-slate-50 text-slate-300" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  mode === m ? "bg-rose-500 text-white" : m === "live" || !canMutate ? "cursor-not-allowed bg-slate-50 text-slate-300" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
               >
                 {m}
@@ -199,9 +237,9 @@ function IntegrationCard({ name, icon: Icon, mode, onModeChange, webhookPath, en
 
       <button
         onClick={onTest}
-        disabled={mode === "off"}
+        disabled={mode === "off" || !canMutate}
         className={`mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
-          mode === "off" ? "cursor-not-allowed bg-slate-50 text-slate-300" : "bg-sky-100 text-sky-700 hover:bg-sky-200"
+          mode === "off" || !canMutate ? "cursor-not-allowed bg-slate-50 text-slate-300" : "bg-sky-100 text-sky-700 hover:bg-sky-200"
         }`}
       >
         <Send className="h-3.5 w-3.5" /> Send test webhook message
@@ -214,13 +252,19 @@ function IntegrationCard({ name, icon: Icon, mode, onModeChange, webhookPath, en
 }
 
 export default function ExternalIntake() {
-  const { intakeItems, addIntakeItem, updateIntakeItem, routeIntakeItem, currentRole, settings, updateSettings } = useAppState();
+  const {
+    intakeItems, addIntakeItem, updateIntakeItem, routeIntakeItem, addMemoryCandidate,
+    currentRole, settings, updateSettings,
+  } = useAppState();
   const { toast } = useToast();
 
-  const [tab, setTab] = useState<"queue" | "integrations">("queue");
+  const [tab, setTab] = useState<"queue" | "constellation" | "integrations">("queue");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
+  const [buildPrompt, setBuildPrompt] = useState<string | null>(null);
+  const [memoryDest, setMemoryDest] = useState<MemoryDestination>("company-brain-suggestion");
+  const [showMemoryPicker, setShowMemoryPicker] = useState(false);
 
   const [fSource, setFSource] = useState("all");
   const [fType, setFType] = useState("all");
@@ -229,6 +273,8 @@ export default function ExternalIntake() {
   const [fOwner, setFOwner] = useState("all");
   const [fStatus, setFStatus] = useState("all");
   const [fDup, setFDup] = useState("all");
+  const [fReadiness, setFReadiness] = useState("all");
+  const [fFriction, setFFriction] = useState("all");
 
   const [formSource, setFormSource] = useState<IntakeSource>("manual");
   const [formSender, setFormSender] = useState("");
@@ -237,6 +283,21 @@ export default function ExternalIntake() {
   const [formMessage, setFormMessage] = useState("");
 
   const actor = currentRole === "Rose" ? "Rose Almeida" : currentRole === "Carmen" ? "Carmen Vega" : String(currentRole);
+  const canSeeSensitive = canViewSensitive(currentRole);
+  const canAct = canSubmit(currentRole);
+  const isRestricted = (it: IntakeItem) => it.sensitivity !== "normal" && !canSeeSensitive;
+
+  const readinessById = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof computeIntakeReadiness>>();
+    intakeItems.forEach((it) => map.set(it.id, computeIntakeReadiness(it)));
+    return map;
+  }, [intakeItems]);
+
+  const frictionById = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof detectIntakeFriction>>();
+    intakeItems.forEach((it) => map.set(it.id, detectIntakeFriction(it)));
+    return map;
+  }, [intakeItems]);
 
   const filtered = useMemo(
     () =>
@@ -248,14 +309,36 @@ export default function ExternalIntake() {
           (fSens === "all" || it.sensitivity === fSens) &&
           (fOwner === "all" || it.reviewOwner === fOwner) &&
           (fStatus === "all" || it.status === fStatus) &&
-          (fDup === "all" || it.duplicateRisk === fDup),
+          (fDup === "all" || it.duplicateRisk === fDup) &&
+          (fReadiness === "all" || readinessById.get(it.id)?.level === fReadiness) &&
+          (fFriction === "all" ||
+            (fFriction === "has-friction"
+              ? (frictionById.get(it.id)?.length ?? 0) > 0
+              : (frictionById.get(it.id)?.length ?? 0) === 0)),
       ),
-    [intakeItems, fSource, fType, fDest, fSens, fOwner, fStatus, fDup],
+    [intakeItems, fSource, fType, fDest, fSens, fOwner, fStatus, fDup, fReadiness, fFriction, readinessById, frictionById],
   );
 
   const selected = intakeItems.find((it) => it.id === selectedId) ?? null;
+  const selectedReadiness = selected ? readinessById.get(selected.id) ?? null : null;
+  const selectedFriction = selected ? frictionById.get(selected.id) ?? [] : [];
+
+  const constellationClusters = useMemo(() => {
+    const clusters = new Map<string, IntakeItem[]>();
+    intakeItems.forEach((it) => {
+      const keys = it.relatedProjectNames.length > 0 ? it.relatedProjectNames : [`${TYPE_LABEL[it.detectedType]} (unlinked)`];
+      keys.forEach((k) => {
+        clusters.set(k, [...(clusters.get(k) ?? []), it]);
+      });
+    });
+    return [...clusters.entries()].sort((a, b) => b[1].length - a[1].length);
+  }, [intakeItems]);
 
   const submitManual = () => {
+    if (!canAct) {
+      toast({ title: "View-only access", description: "Your role cannot add intake messages." });
+      return;
+    }
     if (!formMessage.trim() || !formSender.trim()) {
       toast({ title: "Missing fields", description: "Sender name and message are required." });
       return;
@@ -275,13 +358,66 @@ export default function ExternalIntake() {
     toast({ title: "Sample message captured", description: "Classified and added to the intake queue (test mode)." });
   };
 
-  const route = (dest: IntakeDestination) => {
-    if (!selected) return;
-    routeIntakeItem(selected.id, dest, actor);
+  const route = (dest: IntakeDestination, ownerOverride?: IntakeReviewOwner) => {
+    if (!canAct || !selected) return;
+    routeIntakeItem(selected.id, dest, actor, ownerOverride);
     toast({ title: DEST_LABEL[dest], description: dest === "no-action" ? "Item archived." : "Draft created — nothing is approved automatically." });
   };
 
+  const carmenfy = () => {
+    if (!canAct || !selected) return;
+    routeIntakeItem(selected.id, "review-queue", actor, "Carmen");
+    toast({ title: "Carmenfy", description: "Draft sent to the Review Queue with Carmen as reviewer — systems lens applied." });
+  };
+
+  const rosify = () => {
+    if (!canAct || !selected) return;
+    routeIntakeItem(selected.id, "review-queue", actor, "Rose");
+    toast({ title: "Rosify", description: "Draft sent to the Review Queue with Rose as reviewer — direction lens applied." });
+  };
+
+  const checkDuplicates = () => {
+    if (!canAct || !selected) return;
+    const dup = detectIntakeDuplicates(selected.rawMessage, seedProjects);
+    updateIntakeItem(
+      selected.id,
+      { duplicateRisk: dup.risk, relatedProjectNames: dup.relatedNames },
+      actor,
+      dup.risk === "none"
+        ? "Duplicate check run — no overlapping work found."
+        : `Duplicate check run — ${dup.risk} overlap with: ${dup.relatedNames.join(", ")}.`,
+    );
+    toast({
+      title: "Duplicate check complete",
+      description: dup.risk === "none" ? "No overlapping work found." : `${dup.risk === "likely" ? "Likely" : "Possible"} overlap: ${dup.relatedNames.join(", ")}`,
+    });
+  };
+
+  const preserveMemory = (dest: MemoryDestination) => {
+    if (!canAct || !selected) return;
+    addMemoryCandidate({
+      sourceIntakeId: selected.id,
+      summary: selected.cleanedSummary,
+      destination: dest,
+      sensitive: selected.sensitivity !== "normal",
+      createdBy: actor,
+    });
+    setShowMemoryPicker(false);
+    toast({ title: "Memory candidate created", description: `Proposed for ${MEMORY_DEST_LABEL[dest]} — pending approval, nothing written yet.` });
+  };
+
+  const copyBuildPrompt = async () => {
+    if (!buildPrompt) return;
+    try {
+      await navigator.clipboard.writeText(buildPrompt);
+      toast({ title: "Copied", description: "Build prompt copied to clipboard." });
+    } catch {
+      toast({ title: "Copy failed", description: "Select the text and copy manually." });
+    }
+  };
+
   const sendTest = (source: IntakeSource) => {
+    if (!canAct) return;
     addIntakeItem({
       source,
       sourceChannel: source === "zoho_cliq" ? "#test-webhook" : "Test webhook",
@@ -303,24 +439,26 @@ export default function ExternalIntake() {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          {(["queue", "integrations"] as const).map((t) => (
+          {(["queue", "constellation", "integrations"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`rounded-full px-4 py-1.5 text-xs font-semibold capitalize transition ${tab === t ? "bg-rose-500 text-white shadow-sm" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"}`}
             >
-              {t === "queue" ? "Intake Queue" : "Integration Settings"}
+              {t === "queue" ? "Intake Queue" : t === "constellation" ? "Collab Constellation" : "Integration Settings"}
             </button>
           ))}
         </div>
         <div className="flex items-center gap-2">
           <StatusChip label="Demo / test mode — no live integrations" tone="amber" />
-          <button
-            onClick={() => setShowForm((v) => !v)}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-rose-500 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-rose-600"
-          >
-            <Plus className="h-3.5 w-3.5" /> Add sample message
-          </button>
+          {canAct && (
+            <button
+              onClick={() => setShowForm((v) => !v)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-rose-500 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-rose-600"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add sample message
+            </button>
+          )}
         </div>
       </div>
 
@@ -334,7 +472,7 @@ export default function ExternalIntake() {
         </ul>
       </SectionCard>
 
-      {showForm && (
+      {showForm && canAct && (
         <SectionCard title="Manual sample intake (test mode)" icon={Plus} accent="sky">
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs text-slate-500">
@@ -382,6 +520,7 @@ export default function ExternalIntake() {
             envVars={["ZOHO_CLIQ_WEBHOOK_SECRET", "MESSAGE_INTAKE_ENABLED"]}
             onTest={() => sendTest("zoho_cliq")}
             lastTest={settings.lastTestMessageAt}
+            canMutate={canAct}
           />
           <IntegrationCard
             name="WhatsApp"
@@ -392,10 +531,60 @@ export default function ExternalIntake() {
             envVars={["WHATSAPP_VERIFY_TOKEN", "WHATSAPP_APP_SECRET", "WHATSAPP_PHONE_NUMBER_ID", "WHATSAPP_ACCESS_TOKEN"]}
             onTest={() => sendTest("whatsapp")}
             lastTest={settings.lastTestMessageAt}
+            canMutate={canAct}
           />
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800 lg:col-span-2">
             This app currently runs frontend-only. Webhook URLs above are placeholders for a future backend — no live Zoho Cliq or WhatsApp
             integration exists. All intake here is simulated test data.
+          </div>
+        </div>
+      ) : tab === "constellation" ? (
+        <div className="space-y-4">
+          <SectionCard title="Collab Constellation" icon={Network} accent="sky">
+            <p className="text-xs text-slate-500">
+              Intake items clustered by the existing work they touch. Bigger clusters mean more conversations orbiting the same thing — a signal to align before building.
+            </p>
+          </SectionCard>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {constellationClusters.map(([cluster, items]) => (
+              <div key={cluster} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-slate-800">{cluster}</p>
+                  <StatusChip label={`${items.length} item${items.length === 1 ? "" : "s"}`} tone={items.length >= 3 ? "rose" : items.length === 2 ? "amber" : "slate"} />
+                </div>
+                <ul className="mt-3 space-y-2">
+                  {items.map((it) => {
+                    const r = readinessById.get(it.id);
+                    return (
+                      <li key={it.id}>
+                        <button
+                          onClick={() => { setTab("queue"); setSelectedId(it.id); setNoteDraft(it.reviewerNotes); setBuildPrompt(null); setShowMemoryPicker(false); }}
+                          className="w-full rounded-xl bg-slate-50 p-2.5 text-left transition hover:bg-slate-100"
+                        >
+                          <p className="text-xs font-medium text-slate-700">
+                            {isRestricted(it) ? (
+                              <span className="inline-flex items-center gap-1.5 text-rose-600"><Lock className="h-3 w-3" /> Restricted — leadership review only</span>
+                            ) : (
+                              it.cleanedSummary
+                            )}
+                          </p>
+                          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                            <StatusChip label={TYPE_LABEL[it.detectedType]} tone="sky" />
+                            {r && <StatusChip label={READINESS_LABEL[r.level]} tone={READINESS_TONE[r.level]} />}
+                            {it.sensitivity !== "normal" && <StatusChip label="Sensitive" tone="rose" />}
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {items.length >= 2 && (
+                  <p className="mt-2.5 rounded-lg bg-amber-50 p-2 text-[11px] text-amber-800">
+                    Multiple items orbit {cluster} — consider linking or merging before creating new work.
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       ) : (
@@ -409,6 +598,8 @@ export default function ExternalIntake() {
             <FilterSelect label="Owner" value={fOwner} onChange={setFOwner} options={(["Rose", "Carmen", "Rose and Carmen", "Assigned team member", "Unassigned"] as IntakeReviewOwner[]).map((v) => ({ value: v, label: v }))} />
             <FilterSelect label="Status" value={fStatus} onChange={setFStatus} options={Object.entries(STATUS_LABEL).map(([value, label]) => ({ value, label }))} />
             <FilterSelect label="Duplicate risk" value={fDup} onChange={setFDup} options={[{ value: "none", label: "None" }, { value: "possible", label: "Possible" }, { value: "likely", label: "Likely" }]} />
+            <FilterSelect label="Readiness" value={fReadiness} onChange={setFReadiness} options={Object.entries(READINESS_LABEL).map(([value, label]) => ({ value, label }))} />
+            <FilterSelect label="Friction" value={fFriction} onChange={setFFriction} options={[{ value: "has-friction", label: "Has friction" }, { value: "no-friction", label: "No friction" }]} />
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[1fr_420px]">
@@ -416,10 +607,12 @@ export default function ExternalIntake() {
               {filtered.length === 0 && <EmptyState message="No intake items match these filters." />}
               {filtered.map((it) => {
                 const isSensitive = it.sensitivity !== "normal";
+                const itemReadiness = readinessById.get(it.id);
+                const itemFriction = frictionById.get(it.id) ?? [];
                 return (
                   <button
                     key={it.id}
-                    onClick={() => { setSelectedId(it.id); setNoteDraft(it.reviewerNotes); }}
+                    onClick={() => { setSelectedId(it.id); setNoteDraft(it.reviewerNotes); setBuildPrompt(null); setShowMemoryPicker(false); }}
                     className={`w-full rounded-2xl border p-4 text-left shadow-sm transition ${
                       selectedId === it.id ? "border-rose-300 bg-rose-50/40 ring-1 ring-rose-200" : isSensitive ? "border-rose-100 bg-white hover:border-rose-200" : "border-slate-200 bg-white hover:border-slate-300"
                     }`}
@@ -429,11 +622,19 @@ export default function ExternalIntake() {
                       <StatusChip label={STATUS_LABEL[it.status]} tone={STATUS_TONE[it.status]} />
                       {isSensitive && <StatusChip label={SENSITIVITY_LABEL[it.sensitivity]} tone={SENSITIVITY_TONE[it.sensitivity]} />}
                       {it.duplicateRisk !== "none" && <StatusChip label={`${it.duplicateRisk === "likely" ? "Likely" : "Possible"} duplicate`} tone={DUP_TONE[it.duplicateRisk]} />}
+                      {itemReadiness && <StatusChip label={READINESS_LABEL[itemReadiness.level]} tone={READINESS_TONE[itemReadiness.level]} />}
+                      {itemFriction.length > 0 && <StatusChip label={`${itemFriction.length} friction`} tone="amber" />}
                       <span className="ml-auto text-[11px] text-slate-400">{it.receivedAt}</span>
                     </div>
-                    <p className="mt-2 text-sm font-medium text-slate-800">{it.cleanedSummary}</p>
+                    <p className="mt-2 text-sm font-medium text-slate-800">
+                      {isRestricted(it) ? (
+                        <span className="inline-flex items-center gap-1.5 text-rose-600"><Lock className="h-3.5 w-3.5" /> Restricted — leadership review only</span>
+                      ) : (
+                        it.cleanedSummary
+                      )}
+                    </p>
                     <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500">
-                      <span><span className="text-slate-400">From</span> {it.senderName} · {it.sourceChannel}</span>
+                      {!isRestricted(it) && <span><span className="text-slate-400">From</span> {it.senderName} · {it.sourceChannel}</span>}
                       <span><span className="text-slate-400">Type</span> {TYPE_LABEL[it.detectedType]}</span>
                       <span><span className="text-slate-400">Suggested</span> {DEST_LABEL[it.suggestedDestination]}</span>
                       <span><span className="text-slate-400">Reviewer</span> {it.reviewOwner}</span>
@@ -458,13 +659,22 @@ export default function ExternalIntake() {
 
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Original message</p>
-                    <div className={`mt-1 rounded-xl p-3 text-sm ${selected.sensitivity !== "normal" ? "bg-rose-50 text-rose-900 ring-1 ring-rose-100" : "bg-slate-50 text-slate-700"}`}>
-                      {selected.sensitivity !== "normal" && (
-                        <p className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500"><Lock className="h-3 w-3" /> Sensitive — do not share broadly</p>
-                      )}
-                      {selected.rawMessage}
-                    </div>
-                    <p className="mt-1 text-[11px] text-slate-400">From {selected.senderName} ({selected.senderHandle}) · {selected.sourceChannel} · {selected.receivedAt}</p>
+                    {isRestricted(selected) ? (
+                      <div className="mt-1 rounded-xl bg-rose-50 p-3 text-sm text-rose-900 ring-1 ring-rose-100">
+                        <p className="flex items-center gap-1 text-[11px] font-semibold text-rose-500"><Lock className="h-3 w-3" /> Restricted — leadership review only</p>
+                        <p className="mt-1.5 text-xs text-rose-800/80">This item is marked {SENSITIVITY_LABEL[selected.sensitivity]}. Only Rose, Carmen, or an Admin can view its content.</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className={`mt-1 rounded-xl p-3 text-sm ${selected.sensitivity !== "normal" ? "bg-rose-50 text-rose-900 ring-1 ring-rose-100" : "bg-slate-50 text-slate-700"}`}>
+                          {selected.sensitivity !== "normal" && (
+                            <p className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500"><Lock className="h-3 w-3" /> Sensitive — do not share broadly</p>
+                          )}
+                          {selected.rawMessage}
+                        </div>
+                        <p className="mt-1 text-[11px] text-slate-400">From {selected.senderName} ({selected.senderHandle}) · {selected.sourceChannel} · {selected.receivedAt}</p>
+                      </>
+                    )}
                   </div>
 
                   <div>
@@ -478,6 +688,48 @@ export default function ExternalIntake() {
                     <p className="mt-2 rounded-lg bg-sky-50 p-2 text-xs text-sky-800">{selected.nextStep}</p>
                     <p className="mt-1.5 text-[11px] text-slate-400">Classifications are recommendations only — a human decides the final routing.</p>
                   </div>
+
+                  <div className="rounded-xl bg-violet-50/60 p-3 ring-1 ring-violet-100">
+                    <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-violet-500"><HelpCircle className="h-3.5 w-3.5" /> What is this?</p>
+                    <p className="mt-1.5 text-xs text-slate-700">{selected.classificationReason}</p>
+                  </div>
+
+                  {selectedReadiness && (
+                    <div>
+                      <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400"><Gauge className="h-3.5 w-3.5" /> Decision readiness</p>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                          <div className={`h-full rounded-full ${READINESS_BAR[selectedReadiness.level]}`} style={{ width: `${selectedReadiness.overall}%` }} />
+                        </div>
+                        <span className="text-xs font-semibold text-slate-600">{selectedReadiness.overall}%</span>
+                        <StatusChip label={READINESS_LABEL[selectedReadiness.level]} tone={READINESS_TONE[selectedReadiness.level]} />
+                      </div>
+                      <p className="mt-1.5 rounded-lg bg-slate-50 p-2 text-[11px] text-slate-600">{selectedReadiness.recommendedNextStep}</p>
+                      {selectedReadiness.missing.length > 0 && (
+                        <ul className="mt-1.5 space-y-1">
+                          {selectedReadiness.missing.map((m) => (
+                            <li key={m} className="flex items-start gap-1.5 text-[11px] text-amber-700">
+                              <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" /> {m}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedFriction.length > 0 && (
+                    <div>
+                      <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400"><AlertTriangle className="h-3.5 w-3.5" /> Friction detector</p>
+                      <ul className="mt-1.5 space-y-1.5">
+                        {selectedFriction.map((f) => (
+                          <li key={f.label} className={`rounded-lg p-2 text-[11px] ${f.severity === "high" ? "bg-rose-50 text-rose-800" : f.severity === "medium" ? "bg-amber-50 text-amber-800" : "bg-slate-50 text-slate-600"}`}>
+                            <span className="font-semibold">{f.label}:</span> {f.detail}
+                            <span className="mt-0.5 block text-[10px] opacity-80">Fix: {f.suggestedFix}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                   {selected.relatedProjectNames.length > 0 && (
                     <div>
@@ -497,7 +749,146 @@ export default function ExternalIntake() {
                     <p className="rounded-lg bg-emerald-50 p-2 text-xs text-emerald-800">Final action: {selected.finalActionTaken}</p>
                   )}
 
-                  {selected.status !== "routed" && selected.status !== "archived" && (
+                  {!canAct && (
+                    <p className="rounded-lg bg-slate-50 p-2.5 text-[11px] text-slate-500 ring-1 ring-slate-200">
+                      Your role has view-only access — routing and review actions are limited to team members and leadership.
+                    </p>
+                  )}
+
+                  {canAct && selected.status !== "routed" && selected.status !== "archived" && selected.duplicateRisk !== "none" && (
+                    <div className="rounded-xl bg-amber-50/70 p-3 ring-1 ring-amber-100">
+                      <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-600"><GitMerge className="h-3.5 w-3.5" /> Merge suggestion</p>
+                      <p className="mt-1 text-[11px] text-amber-800">
+                        This overlaps with {selected.relatedProjectNames.join(", ") || "existing work"}. Nothing is merged automatically — pick how to handle it:
+                      </p>
+                      <div className="mt-2 grid grid-cols-2 gap-1.5">
+                        <button
+                          onClick={() => {
+                            updateIntakeItem(selected.id, { status: "needs_review" }, actor, `Linked to existing work (${selected.relatedProjectNames.join(", ")}) — kept for review.`);
+                            toast({ title: "Linked", description: "Item linked to the existing work for review." });
+                          }}
+                          className="rounded-lg bg-white px-2.5 py-1.5 text-[11px] font-medium text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100"
+                        >
+                          Link to existing work
+                        </button>
+                        <button
+                          onClick={() => route("review-queue")}
+                          className="rounded-lg bg-white px-2.5 py-1.5 text-[11px] font-medium text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100"
+                        >
+                          Send merge to review
+                        </button>
+                        <button
+                          onClick={() => {
+                            updateIntakeItem(selected.id, { duplicateRisk: "none" }, actor, "Reviewed duplicate suggestion — kept as separate work.");
+                            toast({ title: "Kept separate", description: "Marked as distinct from existing work." });
+                          }}
+                          className="rounded-lg bg-white px-2.5 py-1.5 text-[11px] font-medium text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100"
+                        >
+                          Keep separate
+                        </button>
+                        <button
+                          onClick={() => route("no-action")}
+                          className="rounded-lg bg-white px-2.5 py-1.5 text-[11px] font-medium text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100"
+                        >
+                          Archive as duplicate
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {canAct && selected.status !== "routed" && selected.status !== "archived" && (
+                    <div>
+                      <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400"><Wand2 className="h-3.5 w-3.5" /> Magic actions</p>
+                      <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                        <button
+                          onClick={carmenfy}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-sky-50 px-2.5 py-2 text-left text-[11px] font-medium text-sky-700 transition hover:bg-sky-100"
+                        >
+                          <Sparkles className="h-3.5 w-3.5 shrink-0" /> Carmenfy — systems lens
+                        </button>
+                        <button
+                          onClick={rosify}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 px-2.5 py-2 text-left text-[11px] font-medium text-rose-700 transition hover:bg-rose-100"
+                        >
+                          <Sparkles className="h-3.5 w-3.5 shrink-0" /> Rosify — direction lens
+                        </button>
+                        <button
+                          onClick={checkDuplicates}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-violet-50 px-2.5 py-2 text-left text-[11px] font-medium text-violet-700 transition hover:bg-violet-100"
+                        >
+                          <SearchCheck className="h-3.5 w-3.5 shrink-0" /> Check for Duplicates
+                        </button>
+                        <button
+                          onClick={() => setShowMemoryPicker((v) => !v)}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-2 text-left text-[11px] font-medium text-emerald-700 transition hover:bg-emerald-100"
+                        >
+                          <BookmarkPlus className="h-3.5 w-3.5 shrink-0" /> Do Not Forget This
+                        </button>
+                      </div>
+                      {showMemoryPicker && (
+                        <div className="mt-2 rounded-xl bg-emerald-50/60 p-3 ring-1 ring-emerald-100">
+                          <p className="text-[11px] font-semibold text-emerald-700">Where should this memory live? (proposed only — approval required)</p>
+                          <div className="mt-1.5 flex gap-1.5">
+                            <select
+                              value={memoryDest}
+                              onChange={(e) => setMemoryDest(e.target.value as MemoryDestination)}
+                              className="field-input flex-1 text-xs"
+                            >
+                              {Object.entries(MEMORY_DEST_LABEL).map(([value, label]) => (
+                                <option key={value} value={value}>{label}</option>
+                              ))}
+                            </select>
+                            <button
+                              onClick={() => preserveMemory(memoryDest)}
+                              className="rounded-lg bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-600"
+                            >
+                              Preserve
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {canAct && !isRestricted(selected) && (selected.detectedType === "build_request" || selected.detectedType === "automation_request" || selected.detectedType === "idea") && (
+                    <div>
+                      <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400"><Hammer className="h-3.5 w-3.5" /> Instant build prompt</p>
+                      {buildPrompt === null ? (
+                        <button
+                          onClick={() => setBuildPrompt(generateBuildPrompt(selected))}
+                          className="mt-1.5 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200"
+                        >
+                          <Wand2 className="h-3.5 w-3.5" /> Generate build prompt (draft)
+                        </button>
+                      ) : (
+                        <div className="mt-1.5 space-y-1.5">
+                          <textarea
+                            value={buildPrompt}
+                            onChange={(e) => setBuildPrompt(e.target.value)}
+                            rows={10}
+                            className="field-input font-mono text-[11px] leading-relaxed"
+                          />
+                          <div className="flex gap-1.5">
+                            <button
+                              onClick={copyBuildPrompt}
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200"
+                            >
+                              <Copy className="h-3.5 w-3.5" /> Copy
+                            </button>
+                            <button
+                              onClick={() => setBuildPrompt(null)}
+                              className="rounded-lg bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-500 ring-1 ring-slate-200 hover:bg-slate-100"
+                            >
+                              Discard
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-slate-400">A human edits and approves this prompt — it is never sent anywhere automatically.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {canAct && selected.status !== "routed" && selected.status !== "archived" && (
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Route this item</p>
                       <div className="mt-1.5 grid grid-cols-2 gap-1.5">
@@ -539,25 +930,27 @@ export default function ExternalIntake() {
                     </div>
                   )}
 
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Reviewer notes</p>
-                    <textarea
-                      value={noteDraft}
-                      onChange={(e) => setNoteDraft(e.target.value)}
-                      rows={2}
-                      placeholder="Add context for the next reviewer..."
-                      className="field-input mt-1.5"
-                    />
-                    <button
-                      onClick={() => {
-                        updateIntakeItem(selected.id, { reviewerNotes: noteDraft }, actor, "Updated reviewer notes.");
-                        toast({ title: "Notes saved" });
-                      }}
-                      className="mt-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200"
-                    >
-                      Save notes
-                    </button>
-                  </div>
+                  {canAct && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Reviewer notes</p>
+                      <textarea
+                        value={noteDraft}
+                        onChange={(e) => setNoteDraft(e.target.value)}
+                        rows={2}
+                        placeholder="Add context for the next reviewer..."
+                        className="field-input mt-1.5"
+                      />
+                      <button
+                        onClick={() => {
+                          updateIntakeItem(selected.id, { reviewerNotes: noteDraft }, actor, "Updated reviewer notes.");
+                          toast({ title: "Notes saved" });
+                        }}
+                        className="mt-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200"
+                      >
+                        Save notes
+                      </button>
+                    </div>
+                  )}
 
                   <div>
                     <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400"><History className="h-3.5 w-3.5" /> Audit trail</p>

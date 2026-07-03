@@ -20,7 +20,11 @@ import type {
   IntakeItem,
   IntakeSource,
   IntakeDestination,
+  IntakeReviewOwner,
   ApprovalRoute,
+  MemoryCandidate,
+  MemoryDestination,
+  MindMeldTimelineEvent,
 } from "@/types";
 import {
   ideas as seedIdeas,
@@ -29,6 +33,8 @@ import {
   handoffs as seedHandoffs,
   feedbackItems as seedFeedback,
   seedIntakeItems,
+  seedMemoryCandidates,
+  seedMeldTimeline,
   projects as seedProjects,
   defaultSettings,
 } from "@/data/seed";
@@ -52,6 +58,8 @@ interface PersistedState {
   handoffs: Handoff[];
   feedbackItems: FeedbackItem[];
   intakeItems: IntakeItem[];
+  memoryCandidates: MemoryCandidate[];
+  meldTimeline: MindMeldTimelineEvent[];
   settings: AppSettings;
 }
 
@@ -79,7 +87,20 @@ interface AppState extends PersistedState {
     rawMessage: string;
   }) => void;
   updateIntakeItem: (id: string, patch: Partial<IntakeItem>, actor: string, action: string) => void;
-  routeIntakeItem: (id: string, destination: IntakeDestination, actor: string) => void;
+  routeIntakeItem: (
+    id: string,
+    destination: IntakeDestination,
+    actor: string,
+    ownerOverride?: IntakeReviewOwner,
+  ) => void;
+  addMemoryCandidate: (input: {
+    sourceIntakeId: string | null;
+    summary: string;
+    destination: MemoryDestination;
+    sensitive: boolean;
+    createdBy: string;
+  }) => void;
+  setMemoryCandidateStatus: (id: string, status: MemoryCandidate["status"], actor: string) => void;
   resetData: () => void;
 }
 
@@ -94,6 +115,8 @@ function freshState(): PersistedState {
     handoffs: seedHandoffs,
     feedbackItems: seedFeedback,
     intakeItems: seedIntakeItems,
+    memoryCandidates: seedMemoryCandidates,
+    meldTimeline: seedMeldTimeline,
     settings: defaultSettings,
   };
 }
@@ -367,6 +390,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         suggestedDestination: classification.suggestedDestination,
         sensitivity: classification.sensitivity,
         reviewOwner: classification.reviewOwner,
+        classificationReason: classification.reason,
         status: "new",
         duplicateRisk: dup.risk,
         relatedProjectNames: dup.relatedNames,
@@ -413,16 +437,17 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   );
 
   const routeIntakeItem = useCallback(
-    (id: string, destination: IntakeDestination, actor: string) => {
+    (id: string, destination: IntakeDestination, actor: string, ownerOverride?: IntakeReviewOwner) => {
       setState((s) => {
         const item = s.intakeItems.find((it) => it.id === id);
         if (!item) return s;
 
         const sensitive = item.sensitivity !== "normal";
+        const effectiveOwner: IntakeReviewOwner = ownerOverride ?? item.reviewOwner;
         const approver: ApprovalRoute =
-          item.reviewOwner === "Rose"
+          effectiveOwner === "Rose"
             ? "rose"
-            : item.reviewOwner === "Carmen"
+            : effectiveOwner === "Carmen"
               ? "carmen"
               : "both";
 
@@ -458,7 +483,37 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
               },
             ],
           };
-          next = { ...next, mindMeldItems: [meldItem, ...s.mindMeldItems] };
+          const timelineEvents: MindMeldTimelineEvent[] = [
+            {
+              id: uid("tl"),
+              itemTitle: meldItem.title,
+              type: "original-message",
+              actor: "System",
+              text: `Safe summary: ${item.cleanedSummary}`,
+              timestamp: now(),
+              sensitive,
+              needs: "both",
+              readyTo: null,
+              finalized: false,
+            },
+            {
+              id: uid("tl"),
+              itemTitle: meldItem.title,
+              type: "routing-action",
+              actor: "System",
+              text: `Routed from External Intake by ${actor} - private to leadership, raw message stays protected.`,
+              timestamp: now(),
+              sensitive,
+              needs: "both",
+              readyTo: null,
+              finalized: false,
+            },
+          ];
+          next = {
+            ...next,
+            mindMeldItems: [meldItem, ...s.mindMeldItems],
+            meldTimeline: [...timelineEvents, ...s.meldTimeline],
+          };
           actionLabel = "Sent to Rose/Carmen Mind Meld (private, safe summary only).";
         } else if (destination === "idea-backlog") {
           const idea: Idea = {
@@ -512,21 +567,91 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           actionLabel = `${destLabel[destination]} created (pending approval).`;
         }
 
+        const overrideNote = ownerOverride && ownerOverride !== item.reviewOwner
+          ? ` Reviewer set to ${ownerOverride}.`
+          : "";
         next.intakeItems = s.intakeItems.map((it) =>
           it.id === id
             ? {
                 ...it,
                 status: destination === "no-action" ? "archived" : "routed",
+                reviewOwner: effectiveOwner,
                 finalActionTaken: actionLabel,
                 auditLog: [
                   ...it.auditLog,
-                  { id: uid("al"), timestamp: now(), actor, action: actionLabel },
+                  { id: uid("al"), timestamp: now(), actor, action: `${actionLabel}${overrideNote}` },
                 ],
               }
             : it,
         );
         return next;
       });
+    },
+    [],
+  );
+
+  const addMemoryCandidate = useCallback(
+    (input: {
+      sourceIntakeId: string | null;
+      summary: string;
+      destination: MemoryDestination;
+      sensitive: boolean;
+      createdBy: string;
+    }) => {
+      setState((s) => {
+        const candidate: MemoryCandidate = {
+          id: uid("mc"),
+          sourceIntakeId: input.sourceIntakeId,
+          summary: input.summary,
+          destination: input.destination,
+          status: "proposed",
+          sensitive: input.sensitive,
+          createdBy: input.createdBy,
+          createdAt: now(),
+        };
+        const intakeItems = input.sourceIntakeId
+          ? s.intakeItems.map((it) =>
+              it.id === input.sourceIntakeId
+                ? {
+                    ...it,
+                    auditLog: [
+                      ...it.auditLog,
+                      {
+                        id: uid("al"),
+                        timestamp: now(),
+                        actor: input.createdBy,
+                        action: `Preserved as memory candidate (${input.destination.replace(/-/g, " ")}) - pending approval, nothing written yet.`,
+                      },
+                    ],
+                  }
+                : it,
+            )
+          : s.intakeItems;
+        return { ...s, memoryCandidates: [candidate, ...s.memoryCandidates], intakeItems };
+      });
+    },
+    [],
+  );
+
+  const setMemoryCandidateStatus = useCallback(
+    (id: string, status: MemoryCandidate["status"], actor: string) => {
+      setState((s) => ({
+        ...s,
+        memoryCandidates: s.memoryCandidates.map((mc) =>
+          mc.id === id ? { ...mc, status, createdAt: mc.createdAt } : mc,
+        ),
+        intakeItems: s.intakeItems.map((it) => {
+          const mc = s.memoryCandidates.find((m) => m.id === id);
+          if (!mc || !mc.sourceIntakeId || it.id !== mc.sourceIntakeId) return it;
+          return {
+            ...it,
+            auditLog: [
+              ...it.auditLog,
+              { id: uid("al"), timestamp: now(), actor, action: `Memory candidate ${status} by ${actor}.` },
+            ],
+          };
+        }),
+      }));
     },
     [],
   );
@@ -558,6 +683,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         addIntakeItem,
         updateIntakeItem,
         routeIntakeItem,
+        addMemoryCandidate,
+        setMemoryCandidateStatus,
         resetData,
       }}
     >

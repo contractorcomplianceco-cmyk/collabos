@@ -415,8 +415,10 @@ export type IntakeDetectedType =
   | "question"
   | "process_update"
   | "crm_or_zoho_request"
+  | "automation_request"
   | "rose_carmen_mind_meld"
   | "company_brain_update_suggestion"
+  | "sensitive_private_item"
   | "ignore_or_noise";
 
 export type IntakeDestination =
@@ -463,6 +465,83 @@ export interface IntakeClassification {
   sensitivity: IntakeSensitivity;
   reviewOwner: IntakeReviewOwner;
   nextStep: string;
+  reason: string;
+}
+
+export type ReadinessLevel = "not-ready" | "needs-details" | "review-ready" | "build-ready";
+
+export interface ReadinessCategoryScore {
+  category:
+    | "Vision clarity"
+    | "Systems clarity"
+    | "Owner clarity"
+    | "Next-step clarity"
+    | "Source support"
+    | "Privacy readiness"
+    | "Build readiness"
+    | "Approval readiness";
+  score: number;
+  note: string;
+}
+
+export interface ReadinessResult {
+  level: ReadinessLevel;
+  overall: number;
+  categories: ReadinessCategoryScore[];
+  missing: string[];
+  recommendedNextStep: string;
+}
+
+export interface FrictionFlag {
+  label: string;
+  detail: string;
+  suggestedFix: string;
+  severity: "low" | "medium" | "high";
+}
+
+export type MemoryDestination =
+  | "private-rose-carmen-memory"
+  | "company-brain-suggestion"
+  | "project-note"
+  | "future-idea"
+  | "decision-candidate"
+  | "knowledge-gap-report";
+
+export interface MemoryCandidate {
+  id: string;
+  sourceIntakeId: string | null;
+  summary: string;
+  destination: MemoryDestination;
+  status: "proposed" | "approved" | "rejected";
+  sensitive: boolean;
+  createdBy: string;
+  createdAt: string;
+}
+
+export type MindMeldTimelineEventType =
+  | "original-message"
+  | "rose-thought"
+  | "carmen-thought"
+  | "synthesis"
+  | "open-question"
+  | "routing-action"
+  | "decision-candidate"
+  | "approved-direction"
+  | "brain-update-suggestion"
+  | "build-request"
+  | "archived";
+
+export interface MindMeldTimelineEvent {
+  id: string;
+  itemTitle: string;
+  type: MindMeldTimelineEventType;
+  actor: "Rose" | "Carmen" | "Rose OS" | "System";
+  text: string;
+  timestamp: string;
+  sensitive: boolean;
+  needs: "rose" | "carmen" | "both" | null;
+  readyTo: "carmenfy" | "rosify" | null;
+  finalized: boolean;
 }
 
 export interface IntakeItem {
@@ -485,5 +564,6 @@ export interface IntakeItem {
   reviewerNotes: string;
   finalActionTaken: string | null;
   nextStep: string;
+  classificationReason: string;
   auditLog: AuditEntry[];
 }

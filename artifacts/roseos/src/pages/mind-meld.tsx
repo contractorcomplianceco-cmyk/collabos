@@ -41,7 +41,7 @@ const FUNCTIONS = [
 ];
 
 export default function MindMeldRoom() {
-  const { currentRole, mindMeldItems, handoffs, carmenfy, rosify, addMindMeldThought, ideas, recommendations } = useAppState();
+  const { currentRole, mindMeldItems, handoffs, carmenfy, rosify, addMindMeldThought, ideas, recommendations, meldTimeline } = useAppState();
   const { toast } = useToast();
   const [view, setView] = useState("room");
   const [selectedId, setSelectedId] = useState(mindMeldItems[0]?.id ?? "");
@@ -49,6 +49,22 @@ export default function MindMeldRoom() {
   const [roseDraft, setRoseDraft] = useState("");
   const [carmenDraft, setCarmenDraft] = useState("");
   const [handoffNote, setHandoffNote] = useState("");
+  const [tlNeeds, setTlNeeds] = useState("all");
+  const [tlReadyTo, setTlReadyTo] = useState("all");
+  const [tlSensitiveOnly, setTlSensitiveOnly] = useState(false);
+  const [tlFinalizedOnly, setTlFinalizedOnly] = useState(false);
+
+  const filteredTimeline = useMemo(
+    () =>
+      meldTimeline.filter(
+        (e) =>
+          (tlNeeds === "all" || e.needs === tlNeeds) &&
+          (tlReadyTo === "all" || e.readyTo === tlReadyTo) &&
+          (!tlSensitiveOnly || e.sensitive) &&
+          (!tlFinalizedOnly || e.finalized),
+      ),
+    [meldTimeline, tlNeeds, tlReadyTo, tlSensitiveOnly, tlFinalizedOnly],
+  );
 
   const selected = useMemo(
     () => mindMeldItems.find((m) => m.id === selectedId) ?? mindMeldItems[0],
@@ -83,6 +99,7 @@ export default function MindMeldRoom() {
     { key: "board", label: "Shared Mind Board" },
     { key: "handoff", label: "Handoff History" },
     { key: "notes", label: "Private Notes" },
+    { key: "timeline", label: "Meld Timeline" },
   ];
 
   return (
@@ -114,7 +131,66 @@ export default function MindMeldRoom() {
         ))}
       </div>
 
-      {view === "handoff" ? (
+      {view === "timeline" ? (
+        <SectionCard title="Meld Timeline" icon={History} accent="violet">
+          <p className="text-xs text-slate-500">
+            Every thought keeps its origin story — original message, each founder's take, syntheses, open questions, and routing actions. Nothing here is an official decision until it is finalized through the approval flow.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
+              Needs
+              <select value={tlNeeds} onChange={(e) => setTlNeeds(e.target.value)} className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700">
+                <option value="all">All</option>
+                <option value="rose">Needs Rose</option>
+                <option value="carmen">Needs Carmen</option>
+                <option value="both">Needs both</option>
+              </select>
+            </label>
+            <label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
+              Ready to
+              <select value={tlReadyTo} onChange={(e) => setTlReadyTo(e.target.value)} className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700">
+                <option value="all">All</option>
+                <option value="carmenfy">Carmenfy</option>
+                <option value="rosify">Rosify</option>
+              </select>
+            </label>
+            <button
+              onClick={() => setTlSensitiveOnly((v) => !v)}
+              className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${tlSensitiveOnly ? "bg-rose-500 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"}`}
+            >
+              Sensitive only
+            </button>
+            <button
+              onClick={() => setTlFinalizedOnly((v) => !v)}
+              className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${tlFinalizedOnly ? "bg-emerald-500 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"}`}
+            >
+              Finalized only
+            </button>
+          </div>
+          {filteredTimeline.length === 0 ? (
+            <p className="mt-4 rounded-xl bg-slate-50 p-4 text-center text-xs text-slate-400">No timeline events match these filters.</p>
+          ) : (
+            <ul className="mt-4 space-y-3 border-l-2 border-violet-100 pl-4">
+              {filteredTimeline.map((e) => (
+                <li key={e.id} className="relative rounded-xl border border-slate-100 bg-white p-3 shadow-sm">
+                  <span className={`absolute -left-[23px] top-4 h-3 w-3 rounded-full ring-2 ring-white ${e.finalized ? "bg-emerald-400" : e.sensitive ? "bg-rose-400" : "bg-violet-300"}`} />
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs font-semibold text-slate-800">{e.itemTitle}</span>
+                    <StatusChip label={e.type.replace(/-/g, " ")} tone="violet" />
+                    {e.sensitive && <StatusChip label="Sensitive" tone="rose" />}
+                    {e.finalized && <StatusChip label="Finalized" tone="emerald" />}
+                    {e.needs && <StatusChip label={`Needs ${e.needs === "both" ? "Rose + Carmen" : e.needs === "rose" ? "Rose" : "Carmen"}`} tone="amber" />}
+                    {e.readyTo && <StatusChip label={e.readyTo === "carmenfy" ? "Ready to Carmenfy" : "Ready to Rosify"} tone="sky" />}
+                    <span className="ml-auto text-[11px] text-slate-400">{e.timestamp}</span>
+                  </div>
+                  <p className="mt-1.5 text-xs text-slate-600">{e.text}</p>
+                  <p className="mt-1 text-[11px] text-slate-400">by {e.actor}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </SectionCard>
+      ) : view === "handoff" ? (
         <SectionCard title="Handoff History" icon={History} accent="violet">
           <ul className="space-y-3">
             {handoffs.map((h) => (

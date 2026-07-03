@@ -26,6 +26,8 @@ import type {
   IntegrationStatus,
   AppSettings,
   IntakeItem,
+  MemoryCandidate,
+  MindMeldTimelineEvent,
 } from "@/types";
 
 export const people: Person[] = [
@@ -367,6 +369,7 @@ export const seedIntakeItems: IntakeItem[] = [
     reviewerNotes: "",
     finalActionTaken: null,
     nextStep: "Carmen reviews systems, Zoho, and automation requests.",
+    classificationReason: "Mentions Zoho / CRM / Cliq / workflow language, which is Carmen's systems territory.",
     auditLog: [
       { id: "al-1a", timestamp: "2026-07-02 09:14", actor: "System", action: "Captured from Zoho Cliq (test mode) and classified as CRM/Zoho request." },
     ],
@@ -391,6 +394,7 @@ export const seedIntakeItems: IntakeItem[] = [
     reviewerNotes: "",
     finalActionTaken: null,
     nextStep: "Review privately in the Mind Meld Room before any broader routing.",
+    classificationReason: "Mentions founder-alignment language (Rose and Carmen, mind meld), so it belongs in the private Mind Meld space.",
     auditLog: [
       { id: "al-2a", timestamp: "2026-07-02 08:41", actor: "System", action: "Captured from WhatsApp (test mode) and flagged private leadership." },
     ],
@@ -415,6 +419,7 @@ export const seedIntakeItems: IntakeItem[] = [
     reviewerNotes: "",
     finalActionTaken: null,
     nextStep: "Add to the idea backlog as a draft and check for duplicates.",
+    classificationReason: "Uses idea language (what if, client-facing status page), so it is captured as a draft idea.",
     auditLog: [
       { id: "al-3a", timestamp: "2026-07-01 16:22", actor: "System", action: "Captured from Zoho Cliq (test mode) and classified as idea." },
     ],
@@ -439,6 +444,7 @@ export const seedIntakeItems: IntakeItem[] = [
     reviewerNotes: "",
     finalActionTaken: null,
     nextStep: "Sensitive blocker - joint review before any task is drafted.",
+    classificationReason: "Uses blocked / waiting language and contains legal-sensitive content, so it needs careful joint review.",
     auditLog: [
       { id: "al-4a", timestamp: "2026-07-01 11:05", actor: "System", action: "Captured from WhatsApp (test mode); legal-sensitive language detected." },
     ],
@@ -463,6 +469,7 @@ export const seedIntakeItems: IntakeItem[] = [
     reviewerNotes: "Good candidate for the SOP Library once approved.",
     finalActionTaken: "Company Brain update proposal drafted (pending approval).",
     nextStep: "Draft a Company Brain update proposal - never write directly to approved records.",
+    classificationReason: "Describes an SOP / process change, so it becomes a proposed Company Brain update pending approval.",
     auditLog: [
       { id: "al-5a", timestamp: "2026-06-30 14:50", actor: "System", action: "Captured via manual test entry and classified as process update." },
       { id: "al-5b", timestamp: "2026-06-30 15:12", actor: "Carmen Vega", action: "Routed as Company Brain update proposal - awaiting Rose and Carmen approval." },
@@ -488,9 +495,108 @@ export const seedIntakeItems: IntakeItem[] = [
     reviewerNotes: "",
     finalActionTaken: "Archived as noise.",
     nextStep: "Likely noise - archive unless a reviewer disagrees.",
+    classificationReason: "Very short message with no actionable keywords - likely chatter or noise.",
     auditLog: [
       { id: "al-6a", timestamp: "2026-06-30 10:08", actor: "System", action: "Captured from Zoho Cliq (test mode) and classified as noise." },
       { id: "al-6b", timestamp: "2026-06-30 10:31", actor: "Rose Almeida", action: "Archived - no action required." },
     ],
+  },
+];
+
+export const seedMemoryCandidates: MemoryCandidate[] = [
+  {
+    id: "mc-1",
+    sourceIntakeId: "in-5",
+    summary: "CAG automations now require a registry entry with owner and rollback plan before deploy - candidate for the SOP Library.",
+    destination: "company-brain-suggestion",
+    status: "proposed",
+    sensitive: false,
+    createdBy: "Carmen Vega",
+    createdAt: "2026-06-30 15:14",
+  },
+  {
+    id: "mc-2",
+    sourceIntakeId: null,
+    summary: "Rose's instinct on tier structure: keep the entry tier lean so upgrade paths stay obvious. Revisit before pricing finalizes.",
+    destination: "private-rose-carmen-memory",
+    status: "proposed",
+    sensitive: true,
+    createdBy: "Rose Almeida",
+    createdAt: "2026-07-01 09:02",
+  },
+];
+
+export const seedMeldTimeline: MindMeldTimelineEvent[] = [
+  {
+    id: "tl-1",
+    itemTitle: "Collab OS vNext direction",
+    type: "original-message",
+    actor: "Rose",
+    text: "Scale the impact without losing the soul - opened for joint alignment.",
+    timestamp: "2026-06-24 09:10",
+    sensitive: false,
+    needs: "both",
+    readyTo: null,
+    finalized: false,
+  },
+  {
+    id: "tl-2",
+    itemTitle: "Collab OS vNext direction",
+    type: "rose-thought",
+    actor: "Rose",
+    text: "Keep it human, brilliant, and unapologetically different.",
+    timestamp: "2026-06-24 09:32",
+    sensitive: false,
+    needs: "carmen",
+    readyTo: null,
+    finalized: false,
+  },
+  {
+    id: "tl-3",
+    itemTitle: "Collab OS vNext direction",
+    type: "carmen-thought",
+    actor: "Carmen",
+    text: "Operationalize the vision with precision - build the machine that makes the magic repeatable.",
+    timestamp: "2026-06-24 14:05",
+    sensitive: false,
+    needs: "rose",
+    readyTo: null,
+    finalized: false,
+  },
+  {
+    id: "tl-4",
+    itemTitle: "Collab OS vNext direction",
+    type: "synthesis",
+    actor: "Rose OS",
+    text: "Strong synergy: bold vision + clear systems path. Protect the magic in the details while defining a repeatable playbook.",
+    timestamp: "2026-06-25 08:20",
+    sensitive: false,
+    needs: null,
+    readyTo: "carmenfy",
+    finalized: false,
+  },
+  {
+    id: "tl-5",
+    itemTitle: "Pricing model for Business Services Hub",
+    type: "decision-candidate",
+    actor: "Rose",
+    text: "Tiered vs usage-based pricing surfaced as a decision candidate - sensitive until the client call.",
+    timestamp: "2026-06-28 10:44",
+    sensitive: true,
+    needs: "both",
+    readyTo: null,
+    finalized: false,
+  },
+  {
+    id: "tl-6",
+    itemTitle: "Automation registry ownership",
+    type: "approved-direction",
+    actor: "Carmen",
+    text: "Registry ownership stays with Systems; Sam Rivera maintains entries. Finalized after joint review.",
+    timestamp: "2026-06-26 16:30",
+    sensitive: false,
+    needs: null,
+    readyTo: null,
+    finalized: true,
   },
 ];

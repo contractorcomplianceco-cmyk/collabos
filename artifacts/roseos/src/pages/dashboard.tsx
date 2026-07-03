@@ -6,7 +6,7 @@ import {
   Heart, FileText, Check, X,
 } from "lucide-react";
 import { useAppState } from "@/hooks/use-app-state";
-import { canApprove } from "@/lib/helpers";
+import { canApprove, canViewSensitive } from "@/lib/helpers";
 import {
   KpiWidget, SectionCard, StatusChip, ClassificationBadge,
 } from "@/components/shared";
@@ -92,7 +92,7 @@ function bubbleColor(score: number) {
 }
 
 export default function Dashboard() {
-  const { ideas, recommendations, currentRole, setRecommendationStatus } = useAppState();
+  const { ideas, recommendations, currentRole, setRecommendationStatus, intakeItems, meldTimeline, memoryCandidates } = useAppState();
 
   const greeting =
     currentRole === "Carmen" ? "Carmen" : currentRole === "Rose" ? "Rose" : currentRole;
@@ -104,6 +104,54 @@ export default function Dashboard() {
   const queuePreview = pendingRecs.slice(0, 4);
   const topRec = recommendations[0];
 
+  const isRose = currentRole === "Rose" || currentRole === "Admin";
+  const isCarmen = currentRole === "Carmen" || currentRole === "Admin";
+  const isLeadership = isRose || isCarmen;
+
+  const attentionItems: { id: string; label: string; detail: string; href: string; tone: "rose" | "amber" | "sky" | "violet" | "emerald" }[] = [];
+  const awaitingMe = pendingRecs.filter((r) => {
+    if (!canApprove(currentRole, r.requiredApprover)) return false;
+    if (r.requiredApprover === "both") {
+      if (currentRole === "Rose") return !r.approvals?.rose;
+      if (currentRole === "Carmen") return !r.approvals?.carmen;
+      return !(r.approvals?.rose && r.approvals?.carmen);
+    }
+    return true;
+  });
+  if (awaitingMe.length > 0) {
+    attentionItems.push({ id: "att-recs", label: `${awaitingMe.length} approval${awaitingMe.length === 1 ? "" : "s"} waiting on you`, detail: awaitingMe[0].recommendation, href: "/review-queue", tone: "rose" });
+  }
+  const newIntake = intakeItems.filter((it) => it.status === "new" || it.status === "needs_review");
+  if (newIntake.length > 0) {
+    const top = newIntake[0];
+    const intakeDetail = top.sensitivity !== "normal" && !canViewSensitive(currentRole)
+      ? "Restricted — leadership review only"
+      : top.cleanedSummary;
+    attentionItems.push({ id: "att-intake", label: `${newIntake.length} intake message${newIntake.length === 1 ? "" : "s"} to review`, detail: intakeDetail, href: "/external-intake", tone: "sky" });
+  }
+  const dupIntake = intakeItems.filter((it) => it.duplicateRisk !== "none" && it.status !== "archived" && it.status !== "routed");
+  if (dupIntake.length > 0) {
+    attentionItems.push({ id: "att-dup", label: `${dupIntake.length} possible duplicate${dupIntake.length === 1 ? "" : "s"} flagged`, detail: "Review before new work is created.", href: "/external-intake", tone: "amber" });
+  }
+  if (isLeadership) {
+    const needsMe = meldTimeline.filter((e) => !e.finalized && (e.needs === "both" || (e.needs === "rose" && isRose) || (e.needs === "carmen" && isCarmen)));
+    if (needsMe.length > 0) {
+      attentionItems.push({ id: "att-meld", label: `${needsMe.length} Mind Meld thread${needsMe.length === 1 ? "" : "s"} need${needsMe.length === 1 ? "s" : ""} your take`, detail: needsMe[0].itemTitle, href: "/mind-meld", tone: "violet" });
+    }
+    const proposedMemories = memoryCandidates.filter((m) => m.status === "proposed");
+    if (proposedMemories.length > 0) {
+      attentionItems.push({ id: "att-mem", label: `${proposedMemories.length} memory candidate${proposedMemories.length === 1 ? "" : "s"} awaiting approval`, detail: proposedMemories[0].summary, href: "/external-intake", tone: "emerald" });
+    }
+  }
+
+  const ATT_TONE: Record<string, string> = {
+    rose: "border-rose-100 bg-rose-50/70 text-rose-700",
+    amber: "border-amber-100 bg-amber-50/70 text-amber-700",
+    sky: "border-sky-100 bg-sky-50/70 text-sky-700",
+    violet: "border-violet-100 bg-violet-50/70 text-violet-700",
+    emerald: "border-emerald-100 bg-emerald-50/70 text-emerald-700",
+  };
+
   return (
     <div className="space-y-7 p-6">
       {/* Welcome */}
@@ -111,6 +159,23 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Welcome back, {greeting}</h1>
         <p className="mt-1 text-sm text-slate-500">Your collaboration intelligence at a glance.</p>
       </div>
+
+      {/* What Needs My Attention */}
+      <SectionCard title="What Needs My Attention?" icon={Sparkles} accent="rose">
+        {attentionItems.length === 0 ? (
+          <p className="rounded-xl bg-emerald-50 p-3 text-xs text-emerald-700">You're all caught up — nothing is waiting on you right now.</p>
+        ) : (
+          <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+            {attentionItems.map((a) => (
+              <Link key={a.id} href={a.href} className={`rounded-xl border p-3 transition hover:shadow-sm ${ATT_TONE[a.tone]}`}>
+                <p className="text-xs font-semibold">{a.label}</p>
+                <p className="mt-1 line-clamp-2 text-[11px] opacity-80">{a.detail}</p>
+              </Link>
+            ))}
+          </div>
+        )}
+        <p className="mt-2.5 text-[11px] text-slate-400">Personalized for your role — approvals, intake reviews, and Mind Meld threads waiting on you.</p>
+      </SectionCard>
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

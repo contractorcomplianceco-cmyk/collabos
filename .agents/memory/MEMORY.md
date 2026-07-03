@@ -1,3 +1,4 @@
 - [RoseOS asset imports](asset-imports.md) — import images via `@/assets/...` (resolves in both vite + tsc); avoid `@assets` for typechecked code.
 - [RoseOS approval authorization](roseos-approval-authorization.md) — recommendation status changes must be gated by canApprove in both the UI and the setRecommendationStatus store mutator.
 - [File writes can silently revert](file-writes-can-revert.md) — tool-reported write success is not proof of persistence; verify on disk before typecheck/tests.
+- [Access-control review bar](access-control-review.md) — gate mutations in UI AND handlers; redact sensitive data on every surface incl. dashboard, or architect review fails.
