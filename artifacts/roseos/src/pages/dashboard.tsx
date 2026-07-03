@@ -161,7 +161,12 @@ export default function Dashboard() {
       </div>
 
       {/* What Needs My Attention */}
-      <SectionCard title="What Needs My Attention?" icon={Sparkles} accent="rose">
+      <SectionCard
+        title="What Needs My Attention?"
+        icon={Sparkles}
+        accent="rose"
+        action={<AttentionPulse count={attentionItems.length} urgent={awaitingMe.length} />}
+      >
         {attentionItems.length === 0 ? (
           <p className="rounded-xl bg-emerald-50 p-3 text-xs text-emerald-700">You're all caught up — nothing is waiting on you right now.</p>
         ) : (
@@ -419,5 +424,23 @@ export default function Dashboard() {
         CollabOS Command Center · Built with <Heart className="h-3.5 w-3.5 text-rose-400" /> for collaboration
       </div>
     </div>
+  );
+}
+
+function AttentionPulse({ count, urgent }: { count: number; urgent: number }) {
+  const level = count === 0 ? "calm" : urgent > 0 || count >= 3 ? "high" : "active";
+  const meta = {
+    calm: { label: "Pulse: calm", dot: "bg-emerald-500", ring: "bg-emerald-400", text: "text-emerald-600", chip: "bg-emerald-50" },
+    active: { label: "Pulse: active", dot: "bg-amber-500", ring: "bg-amber-400", text: "text-amber-600", chip: "bg-amber-50" },
+    high: { label: "Pulse: high", dot: "bg-rose-500", ring: "bg-rose-400", text: "text-rose-600", chip: "bg-rose-50" },
+  }[level];
+  return (
+    <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold ${meta.chip} ${meta.text}`} title={`${count} item(s) need attention, ${urgent} waiting on your approval`}>
+      <span className="relative flex h-2 w-2">
+        {level !== "calm" && <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${meta.ring}`} />}
+        <span className={`relative inline-flex h-2 w-2 rounded-full ${meta.dot}`} />
+      </span>
+      {meta.label}{count > 0 ? ` · ${count}` : ""}
+    </span>
   );
 }

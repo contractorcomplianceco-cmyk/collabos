@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ClipboardCheck, Check, X, RefreshCw, History, Filter } from "lucide-react";
-import { PageHeader, SectionCard, ClassificationBadge, RiskBadge, ApprovalRouteBadge, StatusChip, EmptyState } from "@/components/shared";
+import { PageHeader, ClassificationBadge, RiskBadge, ApprovalRouteBadge, StatusChip, EmptyState, ApprovalPassport } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
 import { canApprove } from "@/lib/helpers";
 import { useToast } from "@/hooks/use-toast";
@@ -35,7 +35,12 @@ export default function ReviewQueue() {
       </div>
 
       <div className="space-y-3">
-        {filtered.length === 0 && <EmptyState message="Nothing in this category." />}
+        {filtered.length === 0 && (
+          <EmptyState
+            message="Nothing in this category."
+            hint="New recommendations arrive here from External Intake, Mockup Studio, Duplicate Radar, and the Mind Meld Room — and always wait for a human decision."
+          />
+        )}
         {filtered.map((r) => {
           const allowed = canApprove(currentRole, r.requiredApprover);
           return (
@@ -62,6 +67,7 @@ export default function ReviewQueue() {
                 </div>
 
                 <div className="flex shrink-0 flex-col items-end gap-2">
+                  <ApprovalPassport requiredApprover={r.requiredApprover} approvals={r.approvals} status={r.status} />
                   {r.requiredApprover === "both" && r.status === "pending" && (r.approvals?.rose || r.approvals?.carmen) && (
                     <span className="rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
                       {r.approvals?.rose ? "Rose approved" : "Carmen approved"} · awaiting {r.approvals?.rose ? "Carmen" : "Rose"}

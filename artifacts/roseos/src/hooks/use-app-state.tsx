@@ -41,6 +41,7 @@ import {
 import {
   routeMindMeld,
   canApprove,
+  canSubmit,
   classifyIntakeMessage,
   summarizeIntakeMessage,
   detectIntakeDuplicates,
@@ -175,10 +176,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateIdeaStatus = useCallback((id: string, status: IdeaStatus) => {
-    setState((s) => ({
-      ...s,
-      ideas: s.ideas.map((i) => (i.id === id ? { ...i, status } : i)),
-    }));
+    setState((s) => {
+      // Authorization guard: read-only roles (e.g. Viewer) cannot mutate ideas.
+      if (!canSubmit(s.currentRole)) return s;
+      return {
+        ...s,
+        ideas: s.ideas.map((i) => (i.id === id ? { ...i, status } : i)),
+      };
+    });
   }, []);
 
   const setRecommendationStatus = useCallback(

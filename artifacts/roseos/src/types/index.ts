@@ -4,7 +4,8 @@ export type Role =
   | "Admin"
   | "Department Lead"
   | "Team Member"
-  | "Viewer";
+  | "Viewer"
+  | "Guest";
 
 export type RiskLevel = "low" | "medium" | "high" | "critical";
 

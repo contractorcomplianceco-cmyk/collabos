@@ -10,6 +10,14 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: users
+    description: User management (admin)
+  - name: audit
+    description: Audit logs
+  - name: mockups
+    description: Mockup Studio
 paths:
   /healthz:
     get:
@@ -24,6 +32,344 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Log in with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Log out and invalidate the session
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get the current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users (admin only)
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserProfile"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create a user (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /users/{id}:
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update a user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /users/{id}/reset-password:
+    post:
+      operationId: resetUserPassword
+      tags: [users]
+      summary: Reset a user's password to a temporary one (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Temporary password issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TempPasswordResult"
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [audit]
+      summary: List audit logs (admin / leadership only)
+      responses:
+        "200":
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditLogEntry"
+    post:
+      operationId: recordAuditEvent
+      tags: [audit]
+      summary: Record an audit event for an in-app action
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuditEventInput"
+      responses:
+        "201":
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogEntry"
+  /mockups:
+    get:
+      operationId: listMockups
+      tags: [mockups]
+      summary: List mockups
+      responses:
+        "200":
+          description: Mockups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MockupRecord"
+    post:
+      operationId: createMockup
+      tags: [mockups]
+      summary: Create a mockup concept
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MockupInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MockupRecord"
+  /mockups/{id}:
+    get:
+      operationId: getMockup
+      tags: [mockups]
+      summary: Get a mockup
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Mockup
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MockupRecord"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+    patch:
+      operationId: updateMockup
+      tags: [mockups]
+      summary: Update a mockup's brief, screens, or visual direction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MockupUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MockupRecord"
+    delete:
+      operationId: deleteMockup
+      tags: [mockups]
+      summary: Delete a mockup
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /mockups/{id}/status:
+    post:
+      operationId: changeMockupStatus
+      tags: [mockups]
+      summary: Change a mockup's approval status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MockupStatusChange"
+      responses:
+        "200":
+          description: Status changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MockupRecord"
+        "403":
+          description: Not permitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /mockups/{id}/versions:
+    get:
+      operationId: listMockupVersions
+      tags: [mockups]
+      summary: List versions of a mockup
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Versions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MockupVersionRecord"
+    post:
+      operationId: createMockupVersion
+      tags: [mockups]
+      summary: Snapshot the current mockup as a named version
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MockupVersionInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MockupVersionRecord"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +379,234 @@ components:
           type: string
       required:
         - status
-
+    ApiMessage:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+    UserRole:
+      type: string
+      enum:
+        - super_admin
+        - rose_admin
+        - carmen_admin
+        - leadership_reviewer
+        - contributor
+        - viewer
+        - guest
+    UserStatus:
+      type: string
+      enum: [active, inactive]
+    UserProfile:
+      type: object
+      required: [id, name, email, role, status, isDemo, permissions, createdAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string }
+        role: { $ref: "#/components/schemas/UserRole" }
+        status: { $ref: "#/components/schemas/UserStatus" }
+        isDemo: { type: boolean }
+        mustChangePassword: { type: boolean }
+        permissions:
+          type: array
+          items: { type: string }
+        lastLoginAt: { type: ["string", "null"] }
+        createdAt: { type: string }
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, minLength: 1 }
+        password: { type: string, minLength: 1 }
+    AuthSession:
+      type: object
+      required: [token, user]
+      properties:
+        token: { type: string }
+        user: { $ref: "#/components/schemas/UserProfile" }
+    UserInput:
+      type: object
+      required: [name, email, password, role]
+      properties:
+        name: { type: string, minLength: 1 }
+        email: { type: string, minLength: 3 }
+        password: { type: string, minLength: 8 }
+        role: { $ref: "#/components/schemas/UserRole" }
+        isDemo: { type: boolean }
+    UserUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        email: { type: string, minLength: 3 }
+        role: { $ref: "#/components/schemas/UserRole" }
+        status: { $ref: "#/components/schemas/UserStatus" }
+    TempPasswordResult:
+      type: object
+      required: [tempPassword, user]
+      properties:
+        tempPassword: { type: string }
+        user: { $ref: "#/components/schemas/UserProfile" }
+    AuditLogEntry:
+      type: object
+      required: [id, actorName, action, targetType, sourceArea, createdAt]
+      properties:
+        id: { type: integer }
+        actorId: { type: ["integer", "null"] }
+        actorName: { type: string }
+        action: { type: string }
+        targetType: { type: string }
+        targetId: { type: ["string", "null"] }
+        sourceArea: { type: string }
+        details: { type: ["string", "null"] }
+        createdAt: { type: string }
+    AuditEventInput:
+      type: object
+      required: [action, targetType, sourceArea]
+      properties:
+        action:
+          type: string
+          enum:
+            - intake_routed
+            - item_marked_sensitive
+            - item_approved
+            - item_rejected
+            - brain_update_suggested
+            - brain_update_approved
+            - build_prompt_generated
+            - integration_setting_changed
+        targetType: { type: string }
+        targetId: { type: string }
+        sourceArea: { type: string }
+        details: { type: string }
+    MockupStatus:
+      type: string
+      enum:
+        - draft
+        - needs_rose_review
+        - needs_carmen_review
+        - needs_both_review
+        - approved_for_build
+        - sent_back
+        - archived
+    MockupSourceType:
+      type: string
+      enum: [intake_item, idea, build_request, mind_meld_item, scratch]
+    MockupBriefData:
+      type: object
+      required: [productName, audience, mainGoal, userRoles, keyWorkflows, mustHaveFeatures, dataNeeded, privacyRules, brandDirection, visualFeel, approvalNeeded, buildReadiness]
+      properties:
+        productName: { type: string }
+        audience: { type: string }
+        mainGoal: { type: string }
+        userRoles: { type: string }
+        keyWorkflows: { type: string }
+        mustHaveFeatures: { type: string }
+        dataNeeded: { type: string }
+        privacyRules: { type: string }
+        brandDirection: { type: string }
+        visualFeel: { type: string }
+        approvalNeeded:
+          type: string
+          enum: [rose, carmen, both, none]
+        buildReadiness:
+          type: string
+          enum: [not_ready, needs_detail, almost_ready, build_ready]
+    MockupScreenData:
+      type: object
+      required: [id, name, purpose, blocks]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        purpose: { type: string }
+        blocks:
+          type: array
+          items: { type: string }
+    VisualDirectionData:
+      type: object
+      required: [mood, colorDirection, layoutDensity, buttonStyle, cardStyle, navigationStyle, motionLevel, overallFeel]
+      properties:
+        mood: { type: string }
+        colorDirection: { type: string }
+        layoutDensity: { type: string }
+        buttonStyle: { type: string }
+        cardStyle: { type: string }
+        navigationStyle: { type: string }
+        motionLevel: { type: string }
+        overallFeel: { type: string }
+    MockupRecord:
+      type: object
+      required: [id, title, sourceType, ownerName, status, brief, screens, visualDirection, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        sourceType: { $ref: "#/components/schemas/MockupSourceType" }
+        sourceItemId: { type: ["string", "null"] }
+        sourceSummary: { type: ["string", "null"] }
+        ownerId: { type: ["integer", "null"] }
+        ownerName: { type: string }
+        status: { $ref: "#/components/schemas/MockupStatus" }
+        brief: { $ref: "#/components/schemas/MockupBriefData" }
+        screens:
+          type: array
+          items: { $ref: "#/components/schemas/MockupScreenData" }
+        visualDirection: { $ref: "#/components/schemas/VisualDirectionData" }
+        statusNote: { type: ["string", "null"] }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+    MockupInput:
+      type: object
+      required: [title, sourceType, brief, screens, visualDirection]
+      properties:
+        title: { type: string, minLength: 1 }
+        sourceType: { $ref: "#/components/schemas/MockupSourceType" }
+        sourceItemId: { type: string }
+        sourceSummary: { type: string }
+        brief: { $ref: "#/components/schemas/MockupBriefData" }
+        screens:
+          type: array
+          items: { $ref: "#/components/schemas/MockupScreenData" }
+        visualDirection: { $ref: "#/components/schemas/VisualDirectionData" }
+    MockupUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        brief: { $ref: "#/components/schemas/MockupBriefData" }
+        screens:
+          type: array
+          items: { $ref: "#/components/schemas/MockupScreenData" }
+        visualDirection: { $ref: "#/components/schemas/VisualDirectionData" }
+    MockupStatusChange:
+      type: object
+      required: [status]
+      properties:
+        status: { $ref: "#/components/schemas/MockupStatus" }
+        note: { type: string }
+    MockupVersionRecord:
+      type: object
+      required: [id, mockupId, versionName, content, createdByName, createdAt]
+      properties:
+        id: { type: integer }
+        mockupId: { type: integer }
+        versionName: { type: string }
+        content: { $ref: "#/components/schemas/MockupVersionContentData" }
+        notes: { type: ["string", "null"] }
+        createdById: { type: ["integer", "null"] }
+        createdByName: { type: string }
+        createdAt: { type: string }
+    MockupVersionContentData:
+      type: object
+      required: [brief, screens, visualDirection]
+      properties:
+        brief: { $ref: "#/components/schemas/MockupBriefData" }
+        screens:
+          type: array
+          items: { $ref: "#/components/schemas/MockupScreenData" }
+        visualDirection: { $ref: "#/components/schemas/VisualDirectionData" }
+    MockupVersionInput:
+      type: object
+      required: [versionName]
+      properties:
+        versionName: { type: string, minLength: 1 }
+        notes: { type: string }

@@ -1,0 +1,470 @@
+You are working on the CollabOS Command Center / Rose OS collaboration app.
+
+Expand the app with real backend admin login, role-based access levels, permissions, and a much more innovative Mockup Studio / Idea-to-Build creative engine.
+
+Product names:
+- Rose OS = full company operating system and AI assistant experience
+- Command Center = work and project dashboard inside Rose OS
+- Rose Brain = AI knowledge assistant and memory feature
+- Company Brain = approved company records and institutional memory
+- CollabOS Command Center = collaboration intelligence layer
+- Mind Meld = private Rose/Carmen collaboration and alignment space
+
+Core principle:
+This app must feel like a real internal operating system, not a static mockup. It should be intuitive, fun, highly capable, and safe. Do not fake backend login, access control, or live permissions. If something is still demo-only, label it clearly.
+
+SECTION 1: Backend Admin Login
+
+Add a real backend authentication layer.
+
+Required:
+- Admin login screen
+- Email + password login
+- Secure password hashing
+- Server-side session or JWT-based authentication
+- Logout
+- Protected routes
+- Current user profile
+- Role attached to the logged-in user
+- Clear unauthorized / access denied state
+
+Do not store plaintext passwords.
+Do not expose backend secrets in frontend code.
+
+If the project already has a backend:
+- Extend the existing backend/auth system.
+- Do not create a duplicate auth pattern.
+
+If the project does not have a backend:
+- Create a simple backend suitable for Replit testing.
+- Use a local database or existing project database pattern.
+- Keep the code clean and easy to migrate later.
+
+SECTION 2: Access Levels / Roles
+
+Create role-based access control.
+
+Roles:
+
+1. Super Admin
+- Full access to all areas.
+- Can manage users, roles, settings, integrations, records, and system configuration.
+
+2. Rose / Founder Admin
+- Full leadership access.
+- Can approve company direction, final decisions, client-facing content, pricing/proposals, public launch decisions, sensitive leadership items, and Company Brain update suggestions.
+- Has access to Rose/Carmen Mind Meld.
+
+3. Carmen / Systems Admin
+- Full systems/process/build access.
+- Can review Zoho, CRM, automations, AI workflows, backend architecture, app builds, integrations, and operational systems.
+- Has access to Rose/Carmen Mind Meld.
+
+4. Leadership Reviewer
+- Can review assigned items, comment, approve within assigned area, and route items.
+- Cannot change system settings or user permissions unless granted.
+
+5. Contributor
+- Can submit ideas, tasks, notes, blockers, build suggestions, and intake items.
+- Can view their own submitted items and assigned work.
+- Cannot approve decisions or Company Brain updates.
+
+6. Viewer
+- Read-only access to permitted dashboards and assigned items.
+- Cannot submit approvals or change routing.
+
+7. Guest / Demo
+- Limited demo access only.
+- Cannot view private Mind Meld, sensitive items, integrations, settings, or Company Brain suggestions.
+
+SECTION 3: Permission Matrix
+
+Add a permissions layer so features can check both role and item sensitivity.
+
+Protected areas:
+- External Intake
+- CollabOS Review Queue
+- Rose/Carmen Mind Meld
+- Mockup Studio
+- Idea Constellation
+- Company Brain Suggestions
+- Build Prompt Generator
+- Integration Settings
+- User Management
+- System Settings
+- Audit Logs
+
+Special privacy rules:
+- Rose/Carmen Mind Meld is visible only to Rose, Carmen, and Super Admin unless explicitly configured otherwise.
+- Sensitive leadership content is not visible to general contributors.
+- HR, legal, financial, client-sensitive, and private leadership items must require elevated permission.
+- Company Brain suggestions require approval before becoming official records.
+- Integrations and secrets are admin-only.
+
+SECTION 4: User Management
+
+Add an admin user management screen.
+
+Admin should be able to:
+- Create user
+- Edit user
+- Change role
+- Activate/deactivate user
+- Reset temporary password or trigger password reset flow
+- See last login
+- See assigned permissions
+- See access level
+- Filter users by role/status
+
+Add seed/demo users if needed:
+- Rose / Founder Admin
+- Carmen / Systems Admin
+- Demo Contributor
+- Demo Viewer
+
+Clearly label demo credentials if used.
+
+SECTION 5: Audit Logs
+
+Add audit logging for important actions:
+
+Track:
+- Login
+- Logout
+- Failed login
+- User created/edited/deactivated
+- Role changed
+- Intake item routed
+- Item marked sensitive
+- Item approved/rejected
+- Company Brain update suggested
+- Company Brain update approved
+- Build prompt generated
+- Mockup created
+- Mockup approved/rejected
+- Integration setting changed
+
+Audit log fields:
+- action
+- actor
+- target item/user
+- timestamp
+- before/after summary where useful
+- source area
+
+SECTION 6: Expand Mockup Studio
+
+Create or significantly expand Mockup Studio into an innovative creative command center.
+
+Purpose:
+Let Rose, Carmen, and approved users turn ideas, messages, screenshots, build requests, and strategy notes into visual app concepts, screen plans, wireframes, Replit prompts, and build-ready design briefs.
+
+Mockup Studio should include:
+
+1. Idea-to-Mockup Intake
+- User can select an intake item, idea, build request, or Mind Meld item.
+- User can click “Create Mockup Concept.”
+- App generates a structured mockup brief.
+
+2. Mockup Brief Builder
+Fields:
+- Product/app name
+- Audience
+- Main goal
+- User roles
+- Required screens
+- Key workflows
+- Must-have features
+- Data needed
+- Privacy/access rules
+- Brand direction
+- Visual feel
+- Approval needed from Rose/Carmen
+- Build readiness status
+
+3. Screen Planner
+Generate a list of recommended screens:
+- Dashboard
+- Intake
+- Review Queue
+- Detail View
+- Admin
+- Settings
+- Reports
+- Mockup Studio
+- Mind Meld
+- User Management
+- Integration Settings
+
+User can add, remove, rename, and reorder screens.
+
+4. Visual Direction Board
+Let the user choose or generate:
+- Design mood
+- Color direction
+- Layout density
+- Button style
+- Card style
+- Navigation style
+- Motion level
+- Executive / playful / operational feel
+
+Important:
+Avoid yellow-heavy Rose Brain branding by default.
+
+5. Wireframe Generator
+Create an editable wireframe-style layout for each screen.
+
+Can be simple at first:
+- Header
+- Sidebar
+- Cards
+- Tables
+- Detail panel
+- Filters
+- Buttons
+- Timeline
+- Graph/relationship map
+- Preview area
+
+The wireframe should be editable and saved as a mockup concept.
+
+6. Component Idea Library
+Add reusable components:
+- Intake item card
+- Review queue row
+- Sensitivity badge
+- Readiness meter
+- Duplicate radar alert
+- Magic routing button group
+- Mind Meld timeline
+- Idea constellation node
+- Attention lens panel
+- Build prompt preview
+- Approval passport
+- Audit log row
+- User role badge
+
+7. Mockup Versions
+Each mockup should support versions:
+- Version name
+- Created by
+- Created date
+- Notes
+- Status:
+  - draft
+  - needs Rose review
+  - needs Carmen review
+  - needs both review
+  - approved for build
+  - archived
+
+8. Side-by-Side Compare
+Allow comparing two mockup versions:
+- What changed
+- Better for usability
+- Better for build clarity
+- Risks
+- Recommended version
+
+9. Design Review Assistant
+For each mockup, show review checks:
+- Is the next action clear?
+- Can a normal team member understand it?
+- Is this too technical?
+- Does it protect sensitive information?
+- Does it avoid fake live claims?
+- Does it reduce duplicate work?
+- Does it align with Rose OS / CollabOS purpose?
+- Does it need Rose approval, Carmen approval, or both?
+
+10. Build Handoff Generator
+Add button:
+Generate Build Handoff
+
+Output should include:
+- Product goal
+- Screens to build
+- Features
+- Data model
+- User roles
+- Permission rules
+- Integration notes
+- Guardrails
+- Acceptance criteria
+- Open questions
+- Review owner
+
+11. Replit Prompt Generator
+Add button:
+Generate Replit Prompt
+
+This should produce a clean, copy-ready Replit prompt from the mockup brief and selected screens.
+
+12. Screenshot / Reference Upload Placeholder
+If file upload is supported:
+- Allow screenshot/reference upload to attach to mockup.
+If not supported yet:
+- Add placeholder UI labeled “reference upload coming soon” without pretending it works.
+
+13. Approval Flow
+Mockups should not become build-ready automatically.
+
+Approval states:
+- Draft
+- Needs Rose Review
+- Needs Carmen Review
+- Needs Both Review
+- Approved for Build
+- Sent Back for Revision
+- Archived
+
+SECTION 7: High-Tech UX Ideas
+
+Add intuitive/fun interaction features:
+
+1. Command Palette
+Keyboard shortcut or button:
+“Ask CollabOS what to do with this”
+
+Options:
+- classify this
+- route this
+- create task
+- generate mockup
+- generate build prompt
+- check duplicates
+- mark sensitive
+- send to Mind Meld
+
+2. Attention Pulse
+Dashboard widget showing:
+- hot items
+- stuck items
+- duplicates
+- items waiting on Rose
+- items waiting on Carmen
+- build-ready ideas
+- mockups ready for review
+
+3. Approval Passport
+Every important item gets a passport:
+- Rose approval needed
+- Carmen approval needed
+- Sensitive review needed
+- Source check needed
+- Duplicate check needed
+- Build readiness
+- Company Brain update needed
+
+4. Innovation Lab
+A playful but useful space where approved ideas can be expanded into:
+- product concept
+- workflow concept
+- automation concept
+- mockup concept
+- sales/process concept
+- Replit build prompt
+
+5. Smart Empty States
+When there is no data, show useful actions:
+- Add sample intake item
+- Create first mockup
+- Generate demo idea
+- Review pending items
+- Invite user
+- Configure integrations
+
+SECTION 8: Backend Data Models
+
+Add or update data models for:
+
+Users:
+- id
+- name
+- email
+- passwordHash
+- role
+- status
+- createdAt
+- updatedAt
+- lastLoginAt
+
+Roles/permissions:
+- id
+- roleName
+- permissions
+
+Sessions:
+- id
+- userId
+- token/sessionId
+- expiresAt
+- createdAt
+
+Mockups:
+- id
+- title
+- sourceType
+- sourceItemId
+- ownerId
+- status
+- brief
+- screens
+- visualDirection
+- createdAt
+- updatedAt
+
+MockupVersions:
+- id
+- mockupId
+- versionName
+- content
+- notes
+- createdBy
+- createdAt
+
+AuditLogs:
+- id
+- actorId
+- action
+- targetType
+- targetId
+- details
+- createdAt
+
+Keep existing intake/review models if already created.
+
+SECTION 9: Security And Honesty Requirements
+
+- Do not expose passwords or secrets.
+- Protect admin routes.
+- Protect API routes.
+- Do not allow frontend-only role checks for sensitive actions.
+- Backend must verify permission before protected action.
+- Demo users must be clearly marked.
+- If persistence is local/demo only, label it honestly.
+- Do not claim production security unless implemented.
+- Do not claim live WhatsApp/Cliq/AI/mockup generation unless actually connected.
+
+SECTION 10: Acceptance Criteria
+
+The build is complete when:
+
+- App has a backend-protected login.
+- Users have roles.
+- Protected sections require permission.
+- Admin can manage users.
+- Rose/Carmen Mind Meld is private.
+- Sensitive items require elevated access.
+- Audit logs are created for major actions.
+- Mockup Studio exists or is significantly expanded.
+- Mockup Studio can create a mockup brief from an idea/intake item.
+- User can plan screens for a mockup.
+- User can define visual direction.
+- User can create/edit mockup versions.
+- User can generate a build handoff.
+- User can generate a Replit prompt.
+- Approval states exist for mockups.
+- Dashboard includes high-tech intuitive widgets like Attention Pulse, Approval Passport, or Innovation Lab.
+- App does not fake live integrations, AI, or production security.

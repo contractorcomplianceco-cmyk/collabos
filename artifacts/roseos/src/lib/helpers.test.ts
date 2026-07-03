@@ -6,6 +6,8 @@ import {
   canApprove,
   canAccessMindMeld,
   canSubmit,
+  mapServerRole,
+  canViewModule,
   findSolution,
   routeMindMeld,
   generateReport,
@@ -15,6 +17,11 @@ import {
   computeIntakeReadiness,
   detectIntakeFriction,
   generateBuildPrompt,
+  mockupReviewChecklist,
+  generateMockupBuildPrompt,
+  generateMockupHandoff,
+  expandIdeaConcept,
+  type MockupLike,
 } from "./helpers";
 import { companyRecords, projects, blockers, decisions } from "@/data/seed";
 import type { IntakeItem } from "@/types";
@@ -83,7 +90,39 @@ describe("canApprove (permission visibility)", () => {
     expect(canAccessMindMeld("Rose")).toBe(true);
     expect(canAccessMindMeld("Viewer")).toBe(false);
     expect(canSubmit("Viewer")).toBe(false);
+    expect(canSubmit("Guest")).toBe(false);
     expect(canSubmit("Team Member")).toBe(true);
+  });
+});
+
+describe("mapServerRole (backend role → app role)", () => {
+  it("maps every backend role to the right app role", () => {
+    expect(mapServerRole("super_admin")).toBe("Admin");
+    expect(mapServerRole("rose_admin")).toBe("Rose");
+    expect(mapServerRole("carmen_admin")).toBe("Carmen");
+    expect(mapServerRole("leadership_reviewer")).toBe("Department Lead");
+    expect(mapServerRole("contributor")).toBe("Team Member");
+    expect(mapServerRole("viewer")).toBe("Viewer");
+  });
+
+  it("falls back to Guest for unknown roles", () => {
+    expect(mapServerRole("guest")).toBe("Guest");
+    expect(mapServerRole("something_else")).toBe("Guest");
+  });
+});
+
+describe("canViewModule (module visibility per role)", () => {
+  it("restricts guests to the dashboard only", () => {
+    expect(canViewModule("Guest", "/")).toBe(true);
+    expect(canViewModule("Guest", "/mind-meld")).toBe(false);
+    expect(canViewModule("Guest", "/review-queue")).toBe(false);
+    expect(canViewModule("Guest", "/settings")).toBe(false);
+  });
+
+  it("lets all other roles open every module", () => {
+    expect(canViewModule("Viewer", "/review-queue")).toBe(true);
+    expect(canViewModule("Team Member", "/settings")).toBe(true);
+    expect(canViewModule("Rose", "/mind-meld")).toBe(true);
   });
 });
 
@@ -349,5 +388,124 @@ describe("generateBuildPrompt", () => {
   it("marks sensitive items with restricted visibility rules", () => {
     const prompt = generateBuildPrompt({ ...item, sensitivity: "hr_sensitive" });
     expect(prompt).toContain("SENSITIVE (hr sensitive)");
+  });
+});
+
+describe("mockup studio helpers", () => {
+  const emptyMockup: MockupLike = {
+    title: "Untitled",
+    brief: {
+      productName: "", audience: "", mainGoal: "", userRoles: "", keyWorkflows: "",
+      mustHaveFeatures: "", dataNeeded: "", privacyRules: "", brandDirection: "",
+      visualFeel: "", approvalNeeded: "none", buildReadiness: "not_ready",
+    },
+    screens: [],
+    visualDirection: {
+      mood: "", colorDirection: "", layoutDensity: "", buttonStyle: "",
+      cardStyle: "", navigationStyle: "", motionLevel: "", overallFeel: "",
+    },
+  };
+
+  const fullMockup: MockupLike = {
+    title: "Client 360",
+    brief: {
+      productName: "Client 360 Dashboard",
+      audience: "Account managers",
+      mainGoal: "One place to see everything about a client",
+      userRoles: "Admin, manager, viewer",
+      keyWorkflows: "Open client, review status, take action, route for approval",
+      mustHaveFeatures: "Timeline, documents, CRM stage",
+      dataNeeded: "Client records, activity log",
+      privacyRules: "HR items leadership-only",
+      brandDirection: "CollabOS white + rose",
+      visualFeel: "Clean and calm",
+      approvalNeeded: "both",
+      buildReadiness: "almost_ready",
+    },
+    screens: [
+      { id: "s1", name: "Overview", purpose: "Summary of the client", blocks: ["Header bar", "KPI widgets"] },
+      { id: "s2", name: "Timeline", purpose: "Activity history", blocks: ["Timeline"] },
+    ],
+    visualDirection: {
+      mood: "Calm & focused", colorDirection: "CollabOS rose + blue", layoutDensity: "balanced",
+      buttonStyle: "rounded", cardStyle: "soft shadow", navigationStyle: "sidebar",
+      motionLevel: "subtle", overallFeel: "Effortless command center",
+    },
+  };
+
+  it("mockupReviewChecklist returns 10 items, all failing for an empty mockup", () => {
+    const list = mockupReviewChecklist(emptyMockup);
+    expect(list).toHaveLength(10);
+    expect(list.every((c) => !c.ok)).toBe(true);
+    expect(list.every((c) => c.hint.length > 0)).toBe(true);
+  });
+
+  it("mockupReviewChecklist passes all items for a complete mockup", () => {
+    const list = mockupReviewChecklist(fullMockup);
+    expect(list.every((c) => c.ok)).toBe(true);
+  });
+
+  it("mockupReviewChecklist fails the blocks item when a screen has no blocks", () => {
+    const m = { ...fullMockup, screens: [{ id: "s1", name: "Bare", purpose: "x", blocks: [] }] };
+    const item = mockupReviewChecklist(m).find((c) => c.label === "Every screen has layout blocks");
+    expect(item?.ok).toBe(false);
+  });
+
+  it("generateMockupBuildPrompt is honestly labeled and includes screens + approver", () => {
+    const prompt = generateMockupBuildPrompt(fullMockup);
+    expect(prompt).toContain("BUILD PROMPT (draft - review before use)");
+    expect(prompt).toContain("Client 360 Dashboard");
+    expect(prompt).toContain("1. Overview");
+    expect(prompt).toContain("2. Timeline");
+    expect(prompt).toContain("Rose AND Carmen");
+    expect(prompt).toContain("Nothing is auto-approved");
+  });
+
+  it("generateMockupBuildPrompt handles missing fields with TBD instead of inventing content", () => {
+    const prompt = generateMockupBuildPrompt(emptyMockup);
+    expect(prompt).toContain("TBD");
+    expect(prompt).toContain("not set");
+  });
+
+  it("generateMockupHandoff lists open checklist items and metadata", () => {
+    const handoff = generateMockupHandoff(emptyMockup, "Rose", "Draft");
+    expect(handoff).toContain("MOCKUP HANDOFF — Untitled");
+    expect(handoff).toContain("Owner: Rose · Status: Draft");
+    expect(handoff).toContain("Open items before build:");
+  });
+
+  it("generateMockupHandoff reports a clean checklist when complete", () => {
+    const handoff = generateMockupHandoff(fullMockup, "Carmen", "Approved for build");
+    expect(handoff).toContain("All checklist items are complete.");
+    expect(handoff).toContain("Screens (2): Overview, Timeline");
+  });
+});
+
+describe("expandIdeaConcept", () => {
+  it("expands an idea into a product concept with headline, angle, steps, and prompt", () => {
+    const c = expandIdeaConcept("Client Portal", "A portal for clients to track work", "product");
+    expect(c.kind).toBe("product");
+    expect(c.headline).toContain("Client Portal");
+    expect(c.headline.toLowerCase()).toContain("product");
+    expect(c.nextSteps.length).toBeGreaterThan(2);
+    expect(c.buildPrompt).toContain("CONCEPT DRAFT");
+    expect(c.buildPrompt).toContain("nothing is auto-approved");
+  });
+
+  it("produces distinct directions per kind", () => {
+    const kinds = ["product", "workflow", "automation", "mockup", "sales"] as const;
+    const angles = new Set(kinds.map((k) => expandIdeaConcept("Idea", "desc", k).angle));
+    expect(angles.size).toBe(kinds.length);
+  });
+
+  it("handles empty title and description gracefully", () => {
+    const c = expandIdeaConcept("", "", "automation");
+    expect(c.headline).toContain("Untitled idea");
+    expect(c.buildPrompt).toContain("Context: not provided yet.");
+  });
+
+  it("includes an approval checkpoint step for automations", () => {
+    const c = expandIdeaConcept("Auto-router", "route messages", "automation");
+    expect(c.nextSteps.join(" ").toLowerCase()).toContain("approval");
   });
 });

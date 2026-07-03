@@ -218,10 +218,56 @@ export function Donut({ value, size = 120, label, accent = "#f43f5e" }: { value:
   );
 }
 
-export function EmptyState({ message }: { message: string }) {
+export function EmptyState({ message, hint, action }: { message: string; hint?: string; action?: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
-      {message}
+      <p>{message}</p>
+      {hint && <p className="mt-1.5 text-xs text-slate-400">{hint}</p>}
+      {action && <div className="mt-3 flex justify-center">{action}</div>}
+    </div>
+  );
+}
+
+/**
+ * Approval Passport — a compact visual of an item's approval journey.
+ * Shows who must approve and which "stamps" have been collected. Read-only.
+ */
+export function ApprovalPassport({
+  requiredApprover,
+  approvals,
+  status,
+}: {
+  requiredApprover: "rose" | "carmen" | "both" | "none";
+  approvals?: { rose?: boolean; carmen?: boolean };
+  status: string;
+}) {
+  if (requiredApprover === "none") return null;
+  const needsRose = requiredApprover === "rose" || requiredApprover === "both";
+  const needsCarmen = requiredApprover === "carmen" || requiredApprover === "both";
+  const finalized = status !== "pending";
+  const stamp = (label: string, needed: boolean, given: boolean) => {
+    if (!needed) return null;
+    const done = given || (finalized && status === "approved");
+    return (
+      <span
+        key={label}
+        className={cn(
+          "inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wide",
+          done ? "border-emerald-200 bg-emerald-50 text-emerald-600" : "border-dashed border-slate-300 bg-white text-slate-400",
+        )}
+      >
+        <span className={cn("h-1.5 w-1.5 rounded-full", done ? "bg-emerald-500" : "bg-slate-300")} />
+        {label} {done ? "✓" : "…"}
+      </span>
+    );
+  };
+  return (
+    <div className="inline-flex flex-wrap items-center gap-1.5 rounded-xl bg-slate-50 px-2 py-1.5 ring-1 ring-slate-100">
+      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Passport</span>
+      {stamp("Rose", needsRose, Boolean(approvals?.rose))}
+      {stamp("Carmen", needsCarmen, Boolean(approvals?.carmen))}
+      {status === "rejected" && <span className="rounded-lg bg-rose-50 px-2 py-1 text-[10px] font-bold uppercase text-rose-500">Rejected</span>}
+      {status === "needs-revision" && <span className="rounded-lg bg-sky-50 px-2 py-1 text-[10px] font-bold uppercase text-sky-500">Revision</span>}
     </div>
   );
 }

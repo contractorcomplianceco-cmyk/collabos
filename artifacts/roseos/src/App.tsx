@@ -1,18 +1,20 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Switch, Route, Router as WouterRouter, Link, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { AppStateProvider, useAppState } from "@/hooks/use-app-state";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import {
   LayoutDashboard, Target, Users, Search, Lightbulb, PenTool, FileBarChart,
   Activity, Brain, ClipboardCheck, Settings as SettingsIcon, Bell, Lock, Menu, X,
-  Sparkles, Send, AlertTriangle, Inbox,
+  Sparkles, Send, AlertTriangle, Inbox, LogOut, UserCog, ScrollText, Wand2,
 } from "lucide-react";
-import { alerts } from "@/data/seed";
-import { canAccessMindMeld } from "@/lib/helpers";
+import { alerts, projects } from "@/data/seed";
+import { canAccessMindMeld, canViewModule, mapServerRole, canSubmit, classifyIntakeMessage, detectDuplicates } from "@/lib/helpers";
 import collabosLogo from "@/assets/collabos-logo.png";
+import LoginPage from "@/pages/login";
 
 import Dashboard from "@/pages/dashboard";
 import DuplicateRadar from "@/pages/duplicate-radar";
@@ -26,10 +28,20 @@ import MindMeldRoom from "@/pages/mind-meld";
 import ReviewQueue from "@/pages/review-queue";
 import ExternalIntake from "@/pages/external-intake";
 import SettingsPage from "@/pages/settings";
+import UserManagement from "@/pages/user-management";
+import AuditLogs from "@/pages/audit-logs";
 
 const queryClient = new QueryClient();
 
-const NAV = [
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  ctx: string;
+  gated?: boolean;
+}
+
+const NAV: NavItem[] = [
   { href: "/", label: "Collab Dashboard", icon: LayoutDashboard, ctx: "Collab Dashboard" },
   { href: "/duplicate-radar", label: "Duplicate Radar", icon: Target, ctx: "Duplicate Radar" },
   { href: "/team-pulse", label: "Team Pulse", icon: Users, ctx: "Team Pulse" },
@@ -70,14 +82,34 @@ const ROLE_IDENTITY: Record<string, { name: string; title: string; initials: str
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const [location] = useLocation();
   const { currentRole, setRoseBrainContext, setRoseBrainOpen } = useAppState();
-  const me = ROLE_IDENTITY[currentRole] ?? ROLE_IDENTITY.Rose;
+  const { user, hasPermission } = useAuth();
+  const fallback = ROLE_IDENTITY[currentRole] ?? ROLE_IDENTITY.Rose;
+  const me = user
+    ? {
+        name: user.name,
+        title: currentRole,
+        initials: user.name.split(/\s+/).map((p) => p[0]).join("").slice(0, 2).toUpperCase(),
+      }
+    : fallback;
+  const adminNav: NavItem[] = [
+    ...(hasPermission("user_management")
+      ? [{ href: "/user-management", label: "User Management", icon: UserCog, ctx: "User Management" }]
+      : []),
+    ...(hasPermission("audit_logs_view")
+      ? [{ href: "/audit-logs", label: "Audit Logs", icon: ScrollText, ctx: "Audit Logs" }]
+      : []),
+  ];
+  const visibleNav = [
+    ...NAV.filter((l) => canViewModule(currentRole, l.href)),
+    ...adminNav,
+  ];
   return (
     <>
       <div className="flex items-center justify-center px-6 py-5">
         <img src={collabosLogo} alt="CollabOS Command Center logo" className="w-36 shrink-0 object-contain" />
       </div>
       <nav className="flex-1 space-y-0.5 px-3 pb-4">
-        {NAV.map((l) => {
+        {visibleNav.map((l) => {
           const Icon = l.icon;
           const active = location === l.href;
           const locked = l.gated && !canAccessMindMeld(currentRole);
@@ -170,18 +202,158 @@ function AlertsBell() {
   );
 }
 
-function TopBar({ onMenu }: { onMenu: () => void }) {
-  const { currentRole, setCurrentRole, setRoseBrainOpen, recommendations } = useAppState();
+function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { currentRole, submitIdea } = useAppState();
+  const [, navigate] = useLocation();
+  const [query, setQuery] = useState("");
+  const [smartResult, setSmartResult] = useState<{ title: string; lines: string[] } | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setQuery("");
+    setSmartResult(null);
+    const t = window.setTimeout(() => inputRef.current?.focus(), 20);
+    return () => window.clearTimeout(t);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const q = query.trim();
+  const navMatches = NAV.filter(
+    (n) => canViewModule(currentRole, n.href) && (!n.gated || canAccessMindMeld(currentRole)) &&
+      (q === "" || n.label.toLowerCase().includes(q.toLowerCase())),
+  );
+
+  const go = (href: string) => { onClose(); navigate(href); };
+
+  const smartActions: { id: string; label: string; icon: React.ComponentType<{ className?: string }>; run: () => void }[] = [];
+  if (q.length > 2) {
+    smartActions.push({
+      id: "classify",
+      label: `Classify "${q.length > 40 ? q.slice(0, 37) + "..." : q}"`,
+      icon: Wand2,
+      run: () => {
+        const c = classifyIntakeMessage(q);
+        setSmartResult({
+          title: "Classification (rule-based)",
+          lines: [
+            `Detected type: ${c.detectedType.replace(/_/g, " ")}`,
+            `Suggested destination: ${c.suggestedDestination.replace(/-/g, " ")}`,
+            `Review owner: ${c.reviewOwner}`,
+            `Why: ${c.reason}`,
+            "Draft only — route it via External Intake for a real review.",
+          ],
+        });
+      },
+    });
+    smartActions.push({
+      id: "dup",
+      label: "Check for duplicate work",
+      icon: Target,
+      run: () => {
+        const matches = detectDuplicates(q, projects);
+        setSmartResult({
+          title: "Duplicate check (keyword overlap)",
+          lines: matches.length === 0
+            ? ["No overlapping projects found above the similarity threshold."]
+            : matches.slice(0, 4).map((m) => `${m.candidate.name} — ${m.score}% overlap`),
+        });
+      },
+    });
+    if (canSubmit(currentRole)) {
+      smartActions.push({
+        id: "idea",
+        label: "Save as draft idea in Innovation Lab",
+        icon: Lightbulb,
+        run: () => {
+          const overlap = detectDuplicates(q, projects);
+          submitIdea({
+            title: q.length > 80 ? q.slice(0, 77) + "..." : q,
+            description: q,
+            submittedBy: currentRole,
+            status: overlap.length ? "related-to-existing" : "draft-idea",
+            momentum: 50, cluster: null, benefits: [], risks: [], dependencies: [],
+            approvalRoute: "carmen",
+          });
+          go("/innovation-lab");
+        },
+      });
+      smartActions.push({ id: "mockup", label: "Start a mockup from this", icon: PenTool, run: () => go("/mockup-studio") });
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-start justify-center bg-slate-900/40 p-4 pt-[12vh]" onClick={onClose}>
+      <div className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-2 border-b border-slate-100 px-4">
+          <Search className="h-4 w-4 shrink-0 text-slate-400" />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setSmartResult(null); }}
+            placeholder="Jump to a module, or type an idea / message to act on it..."
+            className="w-full border-none bg-transparent py-3.5 text-sm focus:outline-none"
+          />
+          <kbd className="shrink-0 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">Esc</kbd>
+        </div>
+        <div className="max-h-[55vh] overflow-y-auto p-2">
+          {smartActions.length > 0 && (
+            <div className="mb-1">
+              <p className="px-2 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Smart actions</p>
+              {smartActions.map((a) => (
+                <button key={a.id} onClick={a.run} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm text-slate-700 transition hover:bg-rose-50 hover:text-rose-700">
+                  <a.icon className="h-4 w-4 text-rose-400" /> {a.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {smartResult && (
+            <div className="mx-2 mb-2 rounded-xl border border-sky-100 bg-sky-50/70 p-3">
+              <p className="text-xs font-bold text-sky-700">{smartResult.title}</p>
+              <ul className="mt-1 space-y-0.5">
+                {smartResult.lines.map((l) => <li key={l} className="text-[11px] text-slate-600">{l}</li>)}
+              </ul>
+            </div>
+          )}
+          <p className="px-2 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Go to</p>
+          {navMatches.length === 0 && <p className="px-2.5 py-2 text-xs text-slate-400">No modules match.</p>}
+          {navMatches.map((n) => (
+            <button key={n.href} onClick={() => go(n.href)} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
+              <n.icon className="h-4 w-4 text-slate-400" /> {n.label}
+            </button>
+          ))}
+        </div>
+        <p className="border-t border-slate-100 bg-slate-50 px-4 py-2 text-[10px] text-slate-400">
+          Smart actions are rule-based drafts — everything still goes through the Review Queue.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function TopBar({ onMenu, onOpenPalette }: { onMenu: () => void; onOpenPalette: () => void }) {
+  const { currentRole, setRoseBrainOpen, recommendations } = useAppState();
+  const { user, logout } = useAuth();
   const pending = recommendations.filter((r) => r.status === "pending").length;
   return (
     <header className="flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 sm:px-6">
       <div className="flex flex-1 items-center gap-3">
         <button onClick={onMenu} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 md:hidden"><Menu className="h-5 w-5" /></button>
-        <div className="relative hidden max-w-md flex-1 sm:block">
+        <button type="button" onClick={onOpenPalette} className="relative hidden max-w-md flex-1 sm:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input type="text" placeholder="Search projects, teams, solutions, insights..." className="w-full rounded-full border-none bg-slate-100 py-2 pl-9 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200" />
+          <span className="block w-full rounded-full bg-slate-100 py-2 pl-9 pr-12 text-left text-sm text-slate-400 transition hover:bg-slate-200/70">
+            Search modules, or type an idea to act on...
+          </span>
           <kbd className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400 lg:block">⌘K</kbd>
-        </div>
+        </button>
       </div>
       <div className="flex items-center gap-2 sm:gap-3">
         <button onClick={() => setRoseBrainOpen(true)} className="hidden items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:text-rose-600 sm:inline-flex sm:text-sm">
@@ -192,17 +364,14 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
           <ClipboardCheck className="h-5 w-5" />
           {pending > 0 && <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-500 px-1 text-[10px] font-bold text-white">{pending}</span>}
         </Link>
-        <div className="hidden items-center gap-1.5 sm:flex">
-          <span className="text-xs font-medium text-slate-400">Role:</span>
-          <select value={currentRole} onChange={(e) => setCurrentRole(e.target.value as typeof currentRole)} className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-200 sm:text-sm">
-            <option value="Rose">Rose / Leadership</option>
-            <option value="Carmen">Carmen / Systems</option>
-            <option value="Admin">Admin</option>
-            <option value="Department Lead">Department Lead</option>
-            <option value="Team Member">Team Member</option>
-            <option value="Viewer">Viewer</option>
-          </select>
+        <div className="hidden items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 sm:flex">
+          <span className="text-xs font-semibold text-slate-700">{user?.name ?? "Signed in"}</span>
+          <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600">{currentRole}</span>
+          {user?.isDemo && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-600">Demo</span>}
         </div>
+        <button onClick={() => void logout()} aria-label="Sign out" title="Sign out" className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-rose-600">
+          <LogOut className="h-5 w-5" />
+        </button>
         <button onClick={() => setRoseBrainOpen(true)} aria-label="Open Rose Brain" className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-sky-400 text-sm font-bold text-white shadow-sm ring-2 ring-white">
           {currentRole.charAt(0)}
         </button>
@@ -271,6 +440,19 @@ function RoseBrainDrawer() {
 
 function Layout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
       <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
@@ -288,12 +470,45 @@ function Layout({ children }: { children: React.ReactNode }) {
       )}
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar onMenu={() => setMobileOpen(true)} />
+        <TopBar onMenu={() => setMobileOpen(true)} onOpenPalette={() => setPaletteOpen(true)} />
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <RoseBrainDrawer />
     </div>
   );
+}
+
+function Guarded({ href, children }: { href: string; children: React.ReactNode }) {
+  const { currentRole } = useAppState();
+  if (!canViewModule(currentRole, href)) {
+    return (
+      <div className="flex h-full items-center justify-center p-8">
+        <div className="max-w-sm rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100"><Lock className="h-6 w-6 text-slate-400" /></div>
+          <h2 className="text-sm font-bold text-slate-800">Access restricted</h2>
+          <p className="mt-1 text-xs text-slate-500">Your current role ({currentRole}) doesn't have access to this module. Ask an admin if you need more access.</p>
+        </div>
+      </div>
+    );
+  }
+  return <>{children}</>;
+}
+
+function AdminGuarded({ permission, children }: { permission: string; children: React.ReactNode }) {
+  const { hasPermission } = useAuth();
+  if (!hasPermission(permission)) {
+    return (
+      <div className="flex h-full items-center justify-center p-8">
+        <div className="max-w-sm rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100"><Lock className="h-6 w-6 text-slate-400" /></div>
+          <h2 className="text-sm font-bold text-slate-800">Admin area</h2>
+          <p className="mt-1 text-xs text-slate-500">This area is limited to administrators. The server enforces this permission too.</p>
+        </div>
+      </div>
+    );
+  }
+  return <>{children}</>;
 }
 
 function Router() {
@@ -301,34 +516,68 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={Dashboard} />
-        <Route path="/duplicate-radar" component={DuplicateRadar} />
-        <Route path="/team-pulse" component={TeamPulse} />
-        <Route path="/solution-finder" component={SolutionFinder} />
-        <Route path="/innovation-lab" component={InnovationLab} />
-        <Route path="/mockup-studio" component={MockupStudio} />
-        <Route path="/executive-reports" component={ExecutiveReports} />
-        <Route path="/market-pulse" component={MarketPulse} />
-        <Route path="/mind-meld" component={MindMeldRoom} />
-        <Route path="/review-queue" component={ReviewQueue} />
-        <Route path="/external-intake" component={ExternalIntake} />
-        <Route path="/settings" component={SettingsPage} />
+        <Route path="/duplicate-radar">{() => <Guarded href="/duplicate-radar"><DuplicateRadar /></Guarded>}</Route>
+        <Route path="/team-pulse">{() => <Guarded href="/team-pulse"><TeamPulse /></Guarded>}</Route>
+        <Route path="/solution-finder">{() => <Guarded href="/solution-finder"><SolutionFinder /></Guarded>}</Route>
+        <Route path="/innovation-lab">{() => <Guarded href="/innovation-lab"><InnovationLab /></Guarded>}</Route>
+        <Route path="/mockup-studio">{() => <Guarded href="/mockup-studio"><MockupStudio /></Guarded>}</Route>
+        <Route path="/executive-reports">{() => <Guarded href="/executive-reports"><ExecutiveReports /></Guarded>}</Route>
+        <Route path="/market-pulse">{() => <Guarded href="/market-pulse"><MarketPulse /></Guarded>}</Route>
+        <Route path="/mind-meld">{() => <Guarded href="/mind-meld"><MindMeldRoom /></Guarded>}</Route>
+        <Route path="/review-queue">{() => <Guarded href="/review-queue"><ReviewQueue /></Guarded>}</Route>
+        <Route path="/external-intake">{() => <Guarded href="/external-intake"><ExternalIntake /></Guarded>}</Route>
+        <Route path="/settings">{() => <Guarded href="/settings"><SettingsPage /></Guarded>}</Route>
+        <Route path="/user-management">{() => <AdminGuarded permission="user_management"><UserManagement /></AdminGuarded>}</Route>
+        <Route path="/audit-logs">{() => <AdminGuarded permission="audit_logs_view"><AuditLogs /></AdminGuarded>}</Route>
         <Route component={NotFound} />
       </Switch>
     </Layout>
   );
 }
 
+function RoleSync() {
+  const { user } = useAuth();
+  const { currentRole, setCurrentRole } = useAppState();
+  useEffect(() => {
+    if (user) {
+      const mapped = mapServerRole(user.role);
+      if (mapped !== currentRole) setCurrentRole(mapped);
+    }
+  }, [user, currentRole, setCurrentRole]);
+  return null;
+}
+
+function AuthGate() {
+  const { status } = useAuth();
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-rose-50 via-white to-blue-50">
+        <div className="flex items-center gap-3 text-sm font-medium text-slate-500">
+          <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-rose-400" /> Checking your session...
+        </div>
+      </div>
+    );
+  }
+  if (status === "anon") return <LoginPage />;
+  return (
+    <AppStateProvider>
+      <RoleSync />
+      <TooltipProvider>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <Router />
+        </WouterRouter>
+        <Toaster />
+      </TooltipProvider>
+    </AppStateProvider>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppStateProvider>
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
-      </AppStateProvider>
+      <AuthProvider>
+        <AuthGate />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

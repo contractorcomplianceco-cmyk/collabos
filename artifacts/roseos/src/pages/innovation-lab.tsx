@@ -1,11 +1,20 @@
 import React, { useMemo, useState } from "react";
-import { Lightbulb, Plus, Layers, TrendingUp, ArrowRight, Sparkles } from "lucide-react";
+import { Link } from "wouter";
+import { Lightbulb, Plus, Layers, TrendingUp, ArrowRight, Sparkles, Copy, PenTool, Wand2, X } from "lucide-react";
 import { PageHeader, SectionCard, StatusChip, ApprovalRouteBadge } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
-import { canSubmit, detectDuplicates } from "@/lib/helpers";
+import { canSubmit, detectDuplicates, expandIdeaConcept, type IdeaExpansionKind } from "@/lib/helpers";
 import { projects } from "@/data/seed";
 import { useToast } from "@/hooks/use-toast";
 import type { IdeaStatus } from "@/types";
+
+const EXPANSION_KINDS: { kind: IdeaExpansionKind; label: string }[] = [
+  { kind: "product", label: "Product" },
+  { kind: "workflow", label: "Workflow" },
+  { kind: "automation", label: "Automation" },
+  { kind: "mockup", label: "Mockup" },
+  { kind: "sales", label: "Sales concept" },
+];
 
 const STATUS_TONE: Record<string, "amber" | "sky" | "violet" | "rose" | "emerald" | "slate"> = {
   "draft-idea": "amber", "related-to-existing": "sky", "needs-research": "violet",
@@ -27,6 +36,7 @@ export default function InnovationLab() {
   const { toast } = useToast();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [expansion, setExpansion] = useState<{ ideaId: string; kind: IdeaExpansionKind } | null>(null);
 
   const clusters = useMemo(() => {
     const map: Record<string, typeof ideas> = {};
@@ -118,7 +128,7 @@ export default function InnovationLab() {
                             <span className="flex items-center gap-1 text-xs text-amber-600"><TrendingUp className="h-3 w-3" />{i.momentum}</span>
                             <ApprovalRouteBadge value={i.approvalRoute} />
                           </div>
-                          {i.status !== "approved-for-build" && (
+                          {i.status !== "approved-for-build" && canSubmit(currentRole) && (
                             <button
                               onClick={() => {
                                 updateIdeaStatus(i.id, NEXT_STATUS[i.status]);
@@ -130,6 +140,50 @@ export default function InnovationLab() {
                             </button>
                           )}
                         </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2">
+                          <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400"><Wand2 className="h-3 w-3" /> Grow into</span>
+                          {EXPANSION_KINDS.map((k) => {
+                            const active = expansion?.ideaId === i.id && expansion.kind === k.kind;
+                            return (
+                              <button
+                                key={k.kind}
+                                onClick={() => setExpansion(active ? null : { ideaId: i.id, kind: k.kind })}
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${active ? "bg-amber-500 text-white" : "bg-amber-50 text-amber-600 hover:bg-amber-100"}`}
+                              >
+                                {k.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {expansion?.ideaId === i.id && (() => {
+                          const c = expandIdeaConcept(i.title, i.description, expansion.kind);
+                          return (
+                            <div className="mt-2 rounded-xl border border-amber-100 bg-amber-50/60 p-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-xs font-bold text-slate-800">{c.headline}</p>
+                                <button onClick={() => setExpansion(null)} className="rounded p-0.5 text-slate-400 hover:text-slate-600"><X className="h-3.5 w-3.5" /></button>
+                              </div>
+                              <p className="mt-1 text-[11px] text-slate-600">{c.angle}</p>
+                              <ol className="mt-2 space-y-0.5">
+                                {c.nextSteps.map((s, idx) => <li key={s} className="text-[11px] text-slate-600">{idx + 1}. {s}</li>)}
+                              </ol>
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                <button
+                                  onClick={() => { void navigator.clipboard?.writeText(c.buildPrompt); toast({ title: "Concept draft copied" }); }}
+                                  className="inline-flex items-center gap-1 rounded-lg bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
+                                >
+                                  <Copy className="h-3 w-3" /> Copy concept draft
+                                </button>
+                                {expansion.kind === "mockup" && (
+                                  <Link href="/mockup-studio" className="inline-flex items-center gap-1 rounded-lg bg-violet-500 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-violet-600">
+                                    <PenTool className="h-3 w-3" /> Open Mockup Studio
+                                  </Link>
+                                )}
+                              </div>
+                              <p className="mt-1.5 text-[10px] text-slate-400">Rule-based draft — routed through the Review Queue, never auto-approved.</p>
+                            </div>
+                          );
+                        })()}
                       </div>
                     ))}
                   </div>

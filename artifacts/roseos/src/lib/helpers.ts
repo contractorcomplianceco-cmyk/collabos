@@ -118,7 +118,209 @@ export function canViewSensitive(role: Role): boolean {
 
 /** Can a role submit updates/feedback/ideas? */
 export function canSubmit(role: Role): boolean {
-  return role !== "Viewer";
+  return role !== "Viewer" && role !== "Guest";
+}
+
+/** Map a backend account role to the app-facing Role used across the UI. */
+export function mapServerRole(serverRole: string): Role {
+  switch (serverRole) {
+    case "super_admin":
+      return "Admin";
+    case "rose_admin":
+      return "Rose";
+    case "carmen_admin":
+      return "Carmen";
+    case "leadership_reviewer":
+      return "Department Lead";
+    case "contributor":
+      return "Team Member";
+    case "viewer":
+      return "Viewer";
+    default:
+      return "Guest";
+  }
+}
+
+/** Which sidebar modules a role may open. Guests get a limited demo view. */
+export function canViewModule(role: Role, href: string): boolean {
+  if (role === "Guest") {
+    return href === "/";
+  }
+  return true;
+}
+
+/* ---------- Mockup Studio (pure logic over structural types) ---------- */
+
+export interface MockupBriefLike {
+  productName: string;
+  audience: string;
+  mainGoal: string;
+  userRoles: string;
+  keyWorkflows: string;
+  mustHaveFeatures: string;
+  dataNeeded: string;
+  privacyRules: string;
+  brandDirection: string;
+  visualFeel: string;
+  approvalNeeded: string;
+  buildReadiness: string;
+}
+
+export interface MockupScreenLike {
+  id: string;
+  name: string;
+  purpose: string;
+  blocks: string[];
+}
+
+export interface MockupVisualLike {
+  mood: string;
+  colorDirection: string;
+  layoutDensity: string;
+  buttonStyle: string;
+  cardStyle: string;
+  navigationStyle: string;
+  motionLevel: string;
+  overallFeel: string;
+}
+
+export interface MockupLike {
+  title: string;
+  brief: MockupBriefLike;
+  screens: MockupScreenLike[];
+  visualDirection: MockupVisualLike;
+}
+
+export interface MockupChecklistItem {
+  label: string;
+  ok: boolean;
+  hint: string;
+}
+
+/** Design review assistant: what's still missing before this mockup is build-ready. */
+export function mockupReviewChecklist(m: MockupLike): MockupChecklistItem[] {
+  const b = m.brief;
+  return [
+    { label: "Product name & main goal", ok: b.productName.trim().length > 0 && b.mainGoal.trim().length > 0, hint: "Name the product and state the one main goal." },
+    { label: "Audience & user roles", ok: b.audience.trim().length > 0 && b.userRoles.trim().length > 0, hint: "Say who uses it and which roles exist." },
+    { label: "Key workflows described", ok: b.keyWorkflows.trim().length >= 12, hint: "Describe the main workflows in at least a sentence." },
+    { label: "Must-have features listed", ok: b.mustHaveFeatures.trim().length > 0, hint: "List the features that must exist at launch." },
+    { label: "Data needs identified", ok: b.dataNeeded.trim().length > 0, hint: "Note what data the screens read and write." },
+    { label: "Privacy / permission rules", ok: b.privacyRules.trim().length > 0, hint: "State who can see what — especially sensitive items." },
+    { label: "At least one screen planned", ok: m.screens.length > 0, hint: "Add screens in the screen planner." },
+    { label: "Every screen has layout blocks", ok: m.screens.length > 0 && m.screens.every((s) => s.blocks.length > 0), hint: "Give each screen at least one layout block." },
+    { label: "Visual direction chosen", ok: m.visualDirection.mood.trim().length > 0 && m.visualDirection.colorDirection.trim().length > 0, hint: "Pick a mood and color direction on the visual board." },
+    { label: "Approval route set", ok: b.approvalNeeded !== "none", hint: "Choose who must approve: Rose, Carmen, or both." },
+  ];
+}
+
+/** Ready-to-paste build prompt from a mockup. Always labeled as a draft. */
+export function generateMockupBuildPrompt(m: MockupLike): string {
+  const b = m.brief;
+  const v = m.visualDirection;
+  const screens = m.screens
+    .map((s, i) => `${i + 1}. ${s.name} — ${s.purpose || "purpose TBD"}. Layout blocks: ${s.blocks.join(", ") || "TBD"}.`)
+    .join("\n");
+  const approver =
+    b.approvalNeeded === "both" ? "Rose AND Carmen" : b.approvalNeeded === "rose" ? "Rose" : b.approvalNeeded === "carmen" ? "Carmen" : "not set";
+  return [
+    "BUILD PROMPT (draft - review before use)",
+    "",
+    `Build "${b.productName || m.title}" — ${b.mainGoal || "goal TBD"}.`,
+    `Audience: ${b.audience || "TBD"}. User roles: ${b.userRoles || "TBD"}.`,
+    `Key workflows: ${b.keyWorkflows || "TBD"}`,
+    `Must-have features: ${b.mustHaveFeatures || "TBD"}`,
+    `Data needed: ${b.dataNeeded || "TBD"}`,
+    `Privacy & permissions: ${b.privacyRules || "TBD"}`,
+    "",
+    "Screens:",
+    screens || "TBD",
+    "",
+    `Visual direction: ${v.mood || "TBD"} mood, ${v.colorDirection || "TBD"} colors, ${v.layoutDensity || "balanced"} density, ${v.buttonStyle || "rounded"} buttons, ${v.cardStyle || "soft"} cards, ${v.navigationStyle || "sidebar"} navigation, ${v.motionLevel || "subtle"} motion. Overall feel: ${v.overallFeel || b.visualFeel || "clean and modern"}.`,
+    `Brand direction: ${b.brandDirection || "match CollabOS visual language"}.`,
+    "",
+    `Approval: required approver is ${approver}. Nothing is auto-approved — route the result through the review flow before build.`,
+  ].join("\n");
+}
+
+/* ---------- Innovation Lab idea expansion ---------- */
+
+export type IdeaExpansionKind = "product" | "workflow" | "automation" | "mockup" | "sales";
+
+export interface IdeaExpansion {
+  kind: IdeaExpansionKind;
+  headline: string;
+  angle: string;
+  nextSteps: string[];
+  buildPrompt: string;
+}
+
+const EXPANSION_TEMPLATES: Record<IdeaExpansionKind, { label: string; angle: string; steps: string[] }> = {
+  product: {
+    label: "Product concept",
+    angle: "Shape it as a standalone product with its own audience, core loop, and pricing hypothesis.",
+    steps: ["Define the single main user and their painful moment", "Write the one-line value promise", "List the 3 must-have features for a first version", "Route the concept through the Review Queue"],
+  },
+  workflow: {
+    label: "Team workflow",
+    angle: "Turn it into a repeatable internal workflow with clear owners and handoff points.",
+    steps: ["Map the current manual steps", "Mark where work gets stuck or duplicated", "Assign an owner per step", "Pilot with one team before rolling out"],
+  },
+  automation: {
+    label: "Automation",
+    angle: "Frame it as an automation: trigger, action, and a human approval checkpoint.",
+    steps: ["Name the trigger event", "Define the automated action", "Add an approval checkpoint — nothing runs unreviewed", "Measure time saved after two weeks"],
+  },
+  mockup: {
+    label: "Mockup",
+    angle: "Take it into Mockup Studio: brief, screens, visual direction, and an approval flow.",
+    steps: ["Create a mockup draft from this idea", "Fill the build brief", "Plan the key screens with layout blocks", "Submit for Rose/Carmen review"],
+  },
+  sales: {
+    label: "Sales concept",
+    angle: "Position it as a sellable offer: who buys it, what it replaces, and the pitch angle.",
+    steps: ["Identify the buyer and budget owner", "Write the 2-sentence pitch", "List the top objection and your answer", "Draft a one-page offer for leadership review"],
+  },
+};
+
+/** Rule-based expansion of a raw idea into a specific concept direction. Draft only — never auto-approved. */
+export function expandIdeaConcept(title: string, description: string, kind: IdeaExpansionKind): IdeaExpansion {
+  const t = EXPANSION_TEMPLATES[kind];
+  const base = title.trim() || "Untitled idea";
+  return {
+    kind,
+    headline: `${base} — as a ${t.label.toLowerCase()}`,
+    angle: t.angle,
+    nextSteps: t.steps,
+    buildPrompt: [
+      "CONCEPT DRAFT (rule-based - review before use)",
+      "",
+      `Idea: ${base}`,
+      description.trim() ? `Context: ${description.trim()}` : "Context: not provided yet.",
+      `Direction: ${t.label} — ${t.angle}`,
+      "",
+      "Next steps:",
+      ...t.steps.map((s, i) => `${i + 1}. ${s}`),
+      "",
+      "Routing: this is a draft concept. It must go through the Review Queue — nothing is auto-approved.",
+    ].join("\n"),
+  };
+}
+
+/** Human handoff summary for whoever builds the approved mockup. */
+export function generateMockupHandoff(m: MockupLike, ownerName: string, statusLabel: string): string {
+  const checklist = mockupReviewChecklist(m);
+  const open = checklist.filter((c) => !c.ok).map((c) => `- ${c.label}: ${c.hint}`);
+  return [
+    `MOCKUP HANDOFF — ${m.title}`,
+    `Owner: ${ownerName} · Status: ${statusLabel}`,
+    "",
+    `Summary: ${m.brief.mainGoal || "TBD"}`,
+    `Screens (${m.screens.length}): ${m.screens.map((s) => s.name).join(", ") || "none yet"}`,
+    `Build readiness: ${m.brief.buildReadiness.replaceAll("_", " ")}`,
+    "",
+    open.length ? `Open items before build:\n${open.join("\n")}` : "All checklist items are complete.",
+  ].join("\n");
 }
 
 export interface SolutionResult {
