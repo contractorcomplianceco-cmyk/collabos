@@ -1,8 +1,13 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "XthM0aQBNqJaLnoEZBqvI"
 uri = "file://artifacts/roseos/src/assets/rose-logo.png"
 type = "image"
 title = "rose flower logo icon"
+
+[[outputs]]
+id = "SMW7C_9W6WmzBo2Gp1h_2"
+uri = "file://Rose to Carmen Project IT Spec Handoff and Go-Live Onboarding.docx"
+type = "word_document"
+title = "Rose → Carmen: IT Spec Handoff & Go-Live Onboarding"
