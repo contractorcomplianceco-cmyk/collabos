@@ -1,0 +1,192 @@
+You are helping Rose prepare a project for Carmen’s technical handoff and live-readiness review.
+
+BEFORE DOING ANYTHING, ASK ROSE FOR REQUIRED PROJECT INFORMATION
+Do not start inventory, GitHub work, file cleanup, screenshots, document creation, deployment, or code changes until Rose answers these questions:
+
+1. What is the exact project/app name?
+2. What is the current source project link? Include Replit, Lovable, Perplexity workspace, local repo, or other source URL.
+3. What is the target GitHub repo URL?
+4. Should the target branch be `main`, or is there another branch Rose wants used?
+5. Which version should be treated as the CLEAN, NEWEST version?
+6. Should the previous GitHub main be overwritten/replaced, or should a backup/new repo be created first?
+7. What is the temporarily published link or preview link for the latest version so Rose/Carmen can visually confirm it?
+8. What live or staging domain is intended, if any?
+9. Who should be listed as the person pushing/preparing the handoff?
+10. Are there any screenshots Rose specifically wants included?
+11. Are there any services expected to be live at launch, such as auth, database, storage, AI, email/SMS, payments, analytics, or webhooks?
+
+PRIVATE ROSE CODE WORD RULE
+Once this prompt is given, no further changes may be made to the project without Rose’s private code word.
+
+The app/tool must ask Rose for the code word only at the moment a change is being requested or approved.
+
+The code word is to be revealed to NO ONE.
+
+The code word must not be repeated, displayed, logged, stored in the chat, included in the DOCX, committed to GitHub, saved in notes, included in screenshots, or shared with Carmen or anyone else.
+
+If the platform cannot collect the code word through a private/secure one-time input that does not remain in chat, then do not ask Rose to type it. Instead, stop and tell Rose that a private confirmation method is needed.
+
+No code word = no changes.
+
+ABSOLUTE GUARDRAILS FROM ROSE
+Do not change ANY design, copy, layout, feature, function, workflow, data structure, routing, integration, dependency, or architecture without Rose’s explicit permission and private code word.
+
+This is a preservation, GitHub push, and handoff task only.
+
+If there is any conflict, uncertainty, Git issue, old-version risk, missing file, missing credential, build failure, destructive action, or question about what version is correct, STOP and ask Rose before continuing.
+
+Do not merge old branches, old data, old database records, stale exports, previous prototype leftovers, old assets, or old build folders into the clean newest version.
+
+The version pushed must be the newest clean source version only.
+
+Do not launch publicly, change DNS, connect production domains, connect payments, connect email/SMS, connect live AI/API services, migrate data, or wire production databases unless Rose explicitly approves that separate step and provides the private code word.
+
+PRIMARY OBJECTIVE
+Push the newest clean project version to GitHub main, overwriting/replacing any previous version only after confirming the target repo and branch are correct.
+
+The final GitHub main branch must contain only the intended newest clean source version, with no old data mixed in.
+
+STEP 1: READ-ONLY INVENTORY FIRST
+Before changing anything, document:
+
+- Project/app name
+- Current project URL
+- Temporarily published latest-version link
+- Target GitHub repo
+- Current Git remote
+- Current branch
+- Latest commit if any
+- Framework/build tool
+- Package manager and lockfile
+- App routes/pages
+- Required environment variables, with values redacted
+- Integrations referenced
+- Auth/database/storage/API/email/SMS/payment/AI status
+- Any secrets accidentally present
+- Any old data, exports, local databases, stale assets, or generated folders that must be excluded
+
+STEP 2: VISUAL CONFIRMATION
+Use the temporarily published latest-version link to visually confirm the current version.
+
+Capture screenshots of:
+
+- Home/first screen
+- Main dashboard or primary workflow
+- Key settings/integration screens if present
+- Any visible version marker if present
+
+If the visible version does not match the intended clean newest version, STOP and ask Rose.
+
+STEP 3: CLEAN SOURCE PREP
+Prepare only the clean source tree for GitHub.
+
+Include:
+- Source files
+- Public/static assets required by the app
+- Config files
+- Package manifest and lockfile
+- Required docs
+
+Exclude:
+- node_modules
+- build outputs
+- cache folders
+- local databases
+- old exports
+- .env files
+- secrets
+- test artifacts
+- private/team/client data
+- previous app leftovers
+
+Confirm `.gitignore` protects secrets, dependency folders, build outputs, caches, and local-only files.
+
+STEP 4: PUSH TO GITHUB MAIN
+Confirm the target repo and branch before pushing.
+
+If GitHub main already contains unrelated code, a different app, or conflicting history, STOP and ask Rose before replacing it.
+
+Before pushing or overwriting anything, request Rose’s private code word through a secure one-time method. Do not store or repeat the code word.
+
+Required final state:
+- GitHub main reflects the newest clean version
+- Working tree is clean
+- No secrets are committed
+- No old data is included
+- No design or function changes were made
+- Commit hash is recorded
+
+STEP 5: VERSION MARKING
+Create a version marker for the handoff.
+
+Use this format:
+YYYY-MM-DD-[project-slug]-clean-main-v1
+
+Record:
+- Project name
+- Source project URL
+- Temporarily published latest-version link
+- GitHub repo
+- Branch
+- Commit hash
+- Date/time pushed
+- Pushed by
+- Approval status: Clean handoff to Carmen, not live approval
+
+If adding a visible version label changes the app design, do not add it to the UI. Put it in the README, release notes, or Carmen handoff document instead.
+
+STEP 6: CREATE DOCX HANDOFF FOR CARMEN
+Create a DOCX titled:
+
+Rose to Carmen Project IT Spec Handoff and Go-Live Onboarding
+
+The DOCX must include:
+
+1. Project overview
+2. GitHub repo, branch, commit hash, and version ID
+3. Source project URL
+4. Temporarily published latest-version link
+5. Visual confirmation screenshots
+6. What was pushed
+7. What was intentionally excluded
+8. Build/start commands
+9. Framework, package manager, and runtime versions
+10. Required environment variables, with values redacted
+11. Auth status
+12. Database/storage status
+13. API/integration status
+14. Email/SMS/payment/AI status
+15. What is real vs simulated/demo/sample
+16. What still needs to be wired
+17. What needs to be connected and how
+18. Domain/DNS/SSL/live hosting status
+19. Screenshot evidence section with screenshots embedded
+20. Version marking section
+21. Known risks/blockers
+22. Open questions for Rose
+23. Carmen onboarding checklist
+24. Go-live readiness checklist
+25. Explicit Rose approval and code word guardrails
+
+The DOCX must clearly state:
+
+- This GitHub push is not approval to go live.
+- This GitHub push is not approval to redesign.
+- This GitHub push is not approval to change features.
+- This GitHub push is not approval to connect production data or live services.
+- Carmen must review technical wiring.
+- Rose must approve any design/function change and final live launch.
+- Rose’s code word is private and must never be documented, repeated, stored, or shared.
+
+FINAL RESPONSE
+Return a concise summary with:
+
+1. Whether the push was completed
+2. GitHub repo/branch/commit
+3. Version ID
+4. Temporarily published latest-version link reviewed
+5. Confirmation that no design or function changes were made
+6. Confirmation that old data was not brought over
+7. Link/path to the DOCX handoff
+8. List of screenshots included
+9. Any questions requiring Rose’s approval
