@@ -12,7 +12,6 @@ import {
   computeIntakeReadiness, detectIntakeFriction, generateBuildPrompt, detectIntakeDuplicates,
   canViewSensitive, canSubmit,
 } from "@/lib/helpers";
-import { projects as seedProjects } from "@/data/seed";
 import type {
   IntakeSource, IntakeDestination, IntakeSensitivity,
   IntakeDetectedType, IntakeStatus, IntakeDuplicateRisk, IntakeReviewOwner,
@@ -253,8 +252,8 @@ function IntegrationCard({ name, icon: Icon, mode, onModeChange, webhookPath, en
 
 export default function ExternalIntake() {
   const {
-    intakeItems, addIntakeItem, updateIntakeItem, routeIntakeItem, addMemoryCandidate,
-    currentRole, settings, updateSettings,
+    intakeItems, intakeLoading, addIntakeItem, updateIntakeItem, routeIntakeItem, addMemoryCandidate,
+    currentRole, settings, updateSettings, projects,
   } = useAppState();
   const { toast } = useToast();
 
@@ -378,7 +377,10 @@ export default function ExternalIntake() {
 
   const checkDuplicates = () => {
     if (!canAct || !selected) return;
-    const dup = detectIntakeDuplicates(selected.rawMessage, seedProjects);
+    const dup = detectIntakeDuplicates(
+      selected.rawMessage,
+      projects.map((p) => ({ name: p.name, keywords: p.tags })),
+    );
     updateIntakeItem(
       selected.id,
       { duplicateRisk: dup.risk, relatedProjectNames: dup.relatedNames },
@@ -437,6 +439,10 @@ export default function ExternalIntake() {
         accent="sky"
       />
 
+      {intakeLoading ? (
+        <p className="text-sm text-slate-500">Loading shared intake queue…</p>
+      ) : (
+      <>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           {(["queue", "constellation", "integrations"] as const).map((t) => (
@@ -967,6 +973,8 @@ export default function ExternalIntake() {
             </div>
           </div>
         </>
+      )}
+      </>
       )}
     </div>
   );

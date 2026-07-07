@@ -9,16 +9,16 @@ const CATEGORIES = ["all", "duplicate", "team-pulse", "automation", "market", "m
 const STATUS_TONE: Record<string, "amber" | "emerald" | "rose" | "sky"> = { pending: "amber", approved: "emerald", rejected: "rose", "needs-revision": "sky" };
 
 export default function ReviewQueue() {
-  const { recommendations, setRecommendationStatus, currentRole } = useAppState();
+  const { recommendations, recommendationsLoading, setRecommendationStatus, currentRole } = useAppState();
   const { toast } = useToast();
   const [category, setCategory] = useState("all");
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const filtered = recommendations.filter((r) => category === "all" || r.category === category);
 
-  const act = (id: string, status: "approved" | "rejected" | "needs-revision") => {
-    setRecommendationStatus(id, status, currentRole);
-    toast({ title: `Recommendation ${status.replace("-", " ")}`, description: "Audit history updated." });
+  const act = async (id: string, status: "approved" | "rejected" | "needs-revision") => {
+    await setRecommendationStatus(id, status, currentRole);
+    toast({ title: `Recommendation ${status.replace("-", " ")}`, description: "Saved to the shared review queue." });
   };
 
   return (
@@ -35,13 +35,16 @@ export default function ReviewQueue() {
       </div>
 
       <div className="space-y-3">
-        {filtered.length === 0 && (
+        {recommendationsLoading && (
+          <p className="py-10 text-center text-sm text-slate-400">Loading shared review queue...</p>
+        )}
+        {!recommendationsLoading && filtered.length === 0 && (
           <EmptyState
             message="Nothing in this category."
             hint="New recommendations arrive here from External Intake, Mockup Studio, Duplicate Radar, and the Mind Meld Room — and always wait for a human decision."
           />
         )}
-        {filtered.map((r) => {
+        {!recommendationsLoading && filtered.map((r) => {
           const allowed = canApprove(currentRole, r.requiredApprover);
           return (
             <div key={r.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

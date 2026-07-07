@@ -4,7 +4,6 @@ import {
   Library, History, Flag, HelpCircle, BookOpen,
 } from "lucide-react";
 import { PageHeader, SectionCard, ClassificationBadge, EmptyState } from "@/components/shared";
-import { companyRecords, projects } from "@/data/seed";
 import { findSolution, canSubmit, type SolutionResult } from "@/lib/helpers";
 import { useAppState } from "@/hooks/use-app-state";
 import { useToast } from "@/hooks/use-toast";
@@ -25,7 +24,7 @@ const CLASS_FILTERS: { value: Classification | "all"; label: string }[] = [
 ];
 
 export default function SolutionFinder() {
-  const { currentRole, addRecommendation } = useAppState();
+  const { currentRole, addRecommendation, projects, companyRecords } = useAppState();
   const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<SolutionResult | null>(null);

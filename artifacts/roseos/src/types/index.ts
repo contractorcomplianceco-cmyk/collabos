@@ -384,6 +384,54 @@ export interface Recommendation {
   history: AuditEntry[];
 }
 
+export type AgentWorkType = "bug" | "fix" | "improvement" | "ops" | "question" | "integration-prep";
+export type AgentWorkPriority = "low" | "medium" | "high" | "urgent";
+export type AgentWorkStatus =
+  | "new"
+  | "triaged"
+  | "approved-for-agent"
+  | "in-progress"
+  | "blocked"
+  | "ready-for-review"
+  | "done"
+  | "rejected";
+
+export interface AgentWorkEvent {
+  id: string;
+  timestamp: string;
+  actor: string;
+  action: string;
+  note?: string;
+}
+
+export interface AgentWorkItem {
+  id: string;
+  title: string;
+  description: string;
+  requestType: AgentWorkType;
+  priority: AgentWorkPriority;
+  affectedModule: string;
+  desiredOutcome: string;
+  status: AgentWorkStatus;
+  owner: string | null;
+  approvalRoute: ApprovalRoute;
+  risk: RiskLevel;
+  source: string;
+  relatedIntakeId: string | null;
+  relatedRecommendationId: string | null;
+  relatedProjectId: string | null;
+  branchName: string | null;
+  commitSha: string | null;
+  mergeRequestUrl: string | null;
+  verificationSteps: string[];
+  agentNotes: string;
+  finalOutcome: string | null;
+  events: AgentWorkEvent[];
+  createdByName: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface IntegrationStatus {
   name: string;
   status: string;

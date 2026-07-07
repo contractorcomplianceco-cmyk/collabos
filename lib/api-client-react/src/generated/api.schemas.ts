@@ -269,3 +269,1321 @@ export interface MockupVersionInput {
   notes?: string;
 }
 
+export type RecommendationCategory = typeof RecommendationCategory[keyof typeof RecommendationCategory];
+
+
+export const RecommendationCategory = {
+  duplicate: 'duplicate',
+  'team-pulse': 'team-pulse',
+  'sop-update': 'sop-update',
+  automation: 'automation',
+  'mockup-prompt': 'mockup-prompt',
+  market: 'market',
+  'mind-meld-handoff': 'mind-meld-handoff',
+  'company-record': 'company-record',
+  sensitive: 'sensitive',
+  'final-decision': 'final-decision',
+  'external-intake': 'external-intake',
+} as const;
+
+export type RecommendationClassification = typeof RecommendationClassification[keyof typeof RecommendationClassification];
+
+
+export const RecommendationClassification = {
+  'documented-fact': 'documented-fact',
+  'user-update': 'user-update',
+  'ai-recommendation': 'ai-recommendation',
+  'draft-idea': 'draft-idea',
+  'pending-approval': 'pending-approval',
+  'approved-decision': 'approved-decision',
+  sensitive: 'sensitive',
+} as const;
+
+export type RecommendationRiskLevel = typeof RecommendationRiskLevel[keyof typeof RecommendationRiskLevel];
+
+
+export const RecommendationRiskLevel = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export type RecommendationApprovalRoute = typeof RecommendationApprovalRoute[keyof typeof RecommendationApprovalRoute];
+
+
+export const RecommendationApprovalRoute = {
+  rose: 'rose',
+  carmen: 'carmen',
+  both: 'both',
+  none: 'none',
+} as const;
+
+export type RecommendationStatus = typeof RecommendationStatus[keyof typeof RecommendationStatus];
+
+
+export const RecommendationStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+  'needs-revision': 'needs-revision',
+} as const;
+
+export interface RecommendationHistoryEntry {
+  id: string;
+  timestamp: string;
+  actor: string;
+  action: string;
+}
+
+export interface RecommendationApprovals {
+  rose: boolean;
+  carmen: boolean;
+}
+
+export interface RecommendationRecord {
+  id: number;
+  source: string;
+  category: RecommendationCategory;
+  recommendation: string;
+  classification: RecommendationClassification;
+  risk: RecommendationRiskLevel;
+  requiredApprover: RecommendationApprovalRoute;
+  status: RecommendationStatus;
+  approvals: RecommendationApprovals;
+  history: RecommendationHistoryEntry[];
+  /** @nullable */
+  createdById?: number | null;
+  /** @nullable */
+  createdByName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RecommendationInput {
+  /** @minLength 1 */
+  source: string;
+  category: RecommendationCategory;
+  /** @minLength 1 */
+  recommendation: string;
+  classification: RecommendationClassification;
+  risk: RecommendationRiskLevel;
+  requiredApprover: RecommendationApprovalRoute;
+}
+
+export interface RecommendationStatusChange {
+  status: RecommendationStatus;
+}
+
+export type IdeaStatus = typeof IdeaStatus[keyof typeof IdeaStatus];
+
+
+export const IdeaStatus = {
+  'draft-idea': 'draft-idea',
+  'related-to-existing': 'related-to-existing',
+  'needs-research': 'needs-research',
+  'needs-carmen-review': 'needs-carmen-review',
+  'needs-rose-review': 'needs-rose-review',
+  'approved-for-build': 'approved-for-build',
+  parked: 'parked',
+} as const;
+
+export type IdeaApprovalRoute = typeof IdeaApprovalRoute[keyof typeof IdeaApprovalRoute];
+
+
+export const IdeaApprovalRoute = {
+  rose: 'rose',
+  carmen: 'carmen',
+  both: 'both',
+  none: 'none',
+} as const;
+
+export interface IdeaRecord {
+  id: number;
+  title: string;
+  description: string;
+  submittedBy: string;
+  status: IdeaStatus;
+  momentum: number;
+  /** @nullable */
+  cluster?: string | null;
+  benefits: string[];
+  risks: string[];
+  dependencies: string[];
+  approvalRoute: IdeaApprovalRoute;
+  createdAt: string;
+}
+
+export interface IdeaInput {
+  /** @minLength 1 */
+  title: string;
+  description: string;
+  /** @minLength 1 */
+  submittedBy: string;
+  status: IdeaStatus;
+  momentum: number;
+  /** @nullable */
+  cluster?: string | null;
+  benefits: string[];
+  risks: string[];
+  dependencies: string[];
+  approvalRoute: IdeaApprovalRoute;
+  createdAt: string;
+}
+
+export interface IdeaStatusChange {
+  status: IdeaStatus;
+}
+
+export interface MindMeldHistoryEntry {
+  id: string;
+  timestamp: string;
+  actor: string;
+  action: string;
+}
+
+export type MindMeldItemRecordOwner = typeof MindMeldItemRecordOwner[keyof typeof MindMeldItemRecordOwner];
+
+
+export const MindMeldItemRecordOwner = {
+  Rose: 'Rose',
+  Carmen: 'Carmen',
+} as const;
+
+export type MindMeldItemRecordAlignment = typeof MindMeldItemRecordAlignment[keyof typeof MindMeldItemRecordAlignment];
+
+
+export const MindMeldItemRecordAlignment = {
+  strong: 'strong',
+  partial: 'partial',
+  'needs-clarity': 'needs-clarity',
+} as const;
+
+export type MindMeldItemRecordRisk = typeof MindMeldItemRecordRisk[keyof typeof MindMeldItemRecordRisk];
+
+
+export const MindMeldItemRecordRisk = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export type MindMeldItemRecordPrivacy = typeof MindMeldItemRecordPrivacy[keyof typeof MindMeldItemRecordPrivacy];
+
+
+export const MindMeldItemRecordPrivacy = {
+  public: 'public',
+  internal: 'internal',
+  private: 'private',
+  'leadership-only': 'leadership-only',
+} as const;
+
+/**
+ * @nullable
+ */
+export type MindMeldItemRecordNextHandoff = typeof MindMeldItemRecordNextHandoff[keyof typeof MindMeldItemRecordNextHandoff] | null;
+
+
+export const MindMeldItemRecordNextHandoff = {
+  rose: 'rose',
+  carmen: 'carmen',
+} as const;
+
+export interface MindMeldItemRecord {
+  id: number;
+  title: string;
+  source: string;
+  owner: MindMeldItemRecordOwner;
+  status: string;
+  roseThoughts: string;
+  carmenThoughts: string;
+  synthesis: string;
+  openQuestions: string[];
+  alignment: MindMeldItemRecordAlignment;
+  alignmentScore: number;
+  risk: MindMeldItemRecordRisk;
+  privacy: MindMeldItemRecordPrivacy;
+  /** @nullable */
+  nextHandoff: MindMeldItemRecordNextHandoff;
+  /** @nullable */
+  finalOutcome: string | null;
+  layers: string[];
+  focusAreas: string[];
+  roseFeedback: string[];
+  carmenFeedback: string[];
+  sensitive: boolean;
+  history: MindMeldHistoryEntry[];
+}
+
+export type MindMeldItemInputOwner = typeof MindMeldItemInputOwner[keyof typeof MindMeldItemInputOwner];
+
+
+export const MindMeldItemInputOwner = {
+  Rose: 'Rose',
+  Carmen: 'Carmen',
+} as const;
+
+export type MindMeldItemInputAlignment = typeof MindMeldItemInputAlignment[keyof typeof MindMeldItemInputAlignment];
+
+
+export const MindMeldItemInputAlignment = {
+  strong: 'strong',
+  partial: 'partial',
+  'needs-clarity': 'needs-clarity',
+} as const;
+
+export type MindMeldItemInputRisk = typeof MindMeldItemInputRisk[keyof typeof MindMeldItemInputRisk];
+
+
+export const MindMeldItemInputRisk = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export type MindMeldItemInputPrivacy = typeof MindMeldItemInputPrivacy[keyof typeof MindMeldItemInputPrivacy];
+
+
+export const MindMeldItemInputPrivacy = {
+  public: 'public',
+  internal: 'internal',
+  private: 'private',
+  'leadership-only': 'leadership-only',
+} as const;
+
+/**
+ * @nullable
+ */
+export type MindMeldItemInputNextHandoff = typeof MindMeldItemInputNextHandoff[keyof typeof MindMeldItemInputNextHandoff] | null;
+
+
+export const MindMeldItemInputNextHandoff = {
+  rose: 'rose',
+  carmen: 'carmen',
+} as const;
+
+export interface MindMeldItemInput {
+  /** @minLength 1 */
+  title: string;
+  /** @minLength 1 */
+  source: string;
+  owner: MindMeldItemInputOwner;
+  status: string;
+  roseThoughts?: string;
+  carmenThoughts?: string;
+  synthesis: string;
+  openQuestions: string[];
+  alignment: MindMeldItemInputAlignment;
+  alignmentScore: number;
+  risk: MindMeldItemInputRisk;
+  privacy: MindMeldItemInputPrivacy;
+  /** @nullable */
+  nextHandoff?: MindMeldItemInputNextHandoff;
+  layers: string[];
+  focusAreas: string[];
+  roseFeedback?: string[];
+  carmenFeedback?: string[];
+  sensitive: boolean;
+  history?: MindMeldHistoryEntry[];
+}
+
+export type MindMeldHandoffRecordFrom = typeof MindMeldHandoffRecordFrom[keyof typeof MindMeldHandoffRecordFrom];
+
+
+export const MindMeldHandoffRecordFrom = {
+  Rose: 'Rose',
+  Carmen: 'Carmen',
+} as const;
+
+export type MindMeldHandoffRecordTo = typeof MindMeldHandoffRecordTo[keyof typeof MindMeldHandoffRecordTo];
+
+
+export const MindMeldHandoffRecordTo = {
+  Rose: 'Rose',
+  Carmen: 'Carmen',
+} as const;
+
+export interface MindMeldHandoffRecord {
+  id: number;
+  itemId: number;
+  itemTitle: string;
+  from: MindMeldHandoffRecordFrom;
+  to: MindMeldHandoffRecordTo;
+  layer: string;
+  timestamp: string;
+  note: string;
+}
+
+export type MindMeldTimelineRecordActor = typeof MindMeldTimelineRecordActor[keyof typeof MindMeldTimelineRecordActor];
+
+
+export const MindMeldTimelineRecordActor = {
+  Rose: 'Rose',
+  Carmen: 'Carmen',
+  Rose_OS: 'Rose OS',
+  System: 'System',
+} as const;
+
+/**
+ * @nullable
+ */
+export type MindMeldTimelineRecordNeeds = typeof MindMeldTimelineRecordNeeds[keyof typeof MindMeldTimelineRecordNeeds] | null;
+
+
+export const MindMeldTimelineRecordNeeds = {
+  rose: 'rose',
+  carmen: 'carmen',
+  both: 'both',
+} as const;
+
+/**
+ * @nullable
+ */
+export type MindMeldTimelineRecordReadyTo = typeof MindMeldTimelineRecordReadyTo[keyof typeof MindMeldTimelineRecordReadyTo] | null;
+
+
+export const MindMeldTimelineRecordReadyTo = {
+  carmenfy: 'carmenfy',
+  rosify: 'rosify',
+} as const;
+
+export interface MindMeldTimelineRecord {
+  id: number;
+  itemTitle: string;
+  type: string;
+  actor: MindMeldTimelineRecordActor;
+  text: string;
+  timestamp: string;
+  sensitive: boolean;
+  /** @nullable */
+  needs?: MindMeldTimelineRecordNeeds;
+  /** @nullable */
+  readyTo?: MindMeldTimelineRecordReadyTo;
+  finalized: boolean;
+}
+
+export type MindFeedRecordActor = typeof MindFeedRecordActor[keyof typeof MindFeedRecordActor];
+
+
+export const MindFeedRecordActor = {
+  Rose: 'Rose',
+  Carmen: 'Carmen',
+  Rose_OS: 'Rose OS',
+} as const;
+
+export interface MindFeedRecord {
+  id: number;
+  actor: MindFeedRecordActor;
+  action: string;
+  layer: string;
+  timestamp: string;
+}
+
+export interface MindMeldActionNote {
+  note?: string;
+}
+
+export type MindMeldThoughtInputOwner = typeof MindMeldThoughtInputOwner[keyof typeof MindMeldThoughtInputOwner];
+
+
+export const MindMeldThoughtInputOwner = {
+  Rose: 'Rose',
+  Carmen: 'Carmen',
+} as const;
+
+export interface MindMeldThoughtInput {
+  owner: MindMeldThoughtInputOwner;
+  /** @minLength 1 */
+  text: string;
+}
+
+export type IntakeSource = typeof IntakeSource[keyof typeof IntakeSource];
+
+
+export const IntakeSource = {
+  zoho_cliq: 'zoho_cliq',
+  whatsapp: 'whatsapp',
+  manual: 'manual',
+} as const;
+
+export type IntakeDetectedType = typeof IntakeDetectedType[keyof typeof IntakeDetectedType];
+
+
+export const IntakeDetectedType = {
+  idea: 'idea',
+  todo: 'todo',
+  build_request: 'build_request',
+  decision_candidate: 'decision_candidate',
+  blocker: 'blocker',
+  question: 'question',
+  process_update: 'process_update',
+  crm_or_zoho_request: 'crm_or_zoho_request',
+  automation_request: 'automation_request',
+  rose_carmen_mind_meld: 'rose_carmen_mind_meld',
+  company_brain_update_suggestion: 'company_brain_update_suggestion',
+  sensitive_private_item: 'sensitive_private_item',
+  ignore_or_noise: 'ignore_or_noise',
+} as const;
+
+export type IntakeDestination = typeof IntakeDestination[keyof typeof IntakeDestination];
+
+
+export const IntakeDestination = {
+  'mind-meld': 'mind-meld',
+  'review-queue': 'review-queue',
+  'command-center-task': 'command-center-task',
+  'idea-backlog': 'idea-backlog',
+  'build-registry': 'build-registry',
+  'requirements-registry': 'requirements-registry',
+  'automation-registry': 'automation-registry',
+  'decision-log': 'decision-log',
+  'company-brain-update': 'company-brain-update',
+  'no-action': 'no-action',
+} as const;
+
+export type IntakeSensitivity = typeof IntakeSensitivity[keyof typeof IntakeSensitivity];
+
+
+export const IntakeSensitivity = {
+  normal: 'normal',
+  private_leadership: 'private_leadership',
+  client_sensitive: 'client_sensitive',
+  hr_sensitive: 'hr_sensitive',
+  financial_sensitive: 'financial_sensitive',
+  legal_sensitive: 'legal_sensitive',
+  unclear: 'unclear',
+} as const;
+
+export type IntakeReviewOwner = typeof IntakeReviewOwner[keyof typeof IntakeReviewOwner];
+
+
+export const IntakeReviewOwner = {
+  Rose: 'Rose',
+  Carmen: 'Carmen',
+  Rose_and_Carmen: 'Rose and Carmen',
+  Assigned_team_member: 'Assigned team member',
+  Unassigned: 'Unassigned',
+} as const;
+
+export type IntakeStatus = typeof IntakeStatus[keyof typeof IntakeStatus];
+
+
+export const IntakeStatus = {
+  new: 'new',
+  needs_review: 'needs_review',
+  routed: 'routed',
+  approved: 'approved',
+  rejected: 'rejected',
+  archived: 'archived',
+} as const;
+
+export type IntakeDuplicateRisk = typeof IntakeDuplicateRisk[keyof typeof IntakeDuplicateRisk];
+
+
+export const IntakeDuplicateRisk = {
+  none: 'none',
+  possible: 'possible',
+  likely: 'likely',
+} as const;
+
+export interface IntakeAuditEntry {
+  id: string;
+  timestamp: string;
+  actor: string;
+  action: string;
+}
+
+export interface IntakeItemRecord {
+  id: number;
+  source: IntakeSource;
+  sourceChannel: string;
+  senderName: string;
+  senderHandle: string;
+  /** @nullable */
+  senderRole: string | null;
+  receivedAt: string;
+  rawMessage: string;
+  cleanedSummary: string;
+  detectedType: IntakeDetectedType;
+  suggestedDestination: IntakeDestination;
+  sensitivity: IntakeSensitivity;
+  reviewOwner: IntakeReviewOwner;
+  status: IntakeStatus;
+  duplicateRisk: IntakeDuplicateRisk;
+  relatedProjectNames: string[];
+  reviewerNotes: string;
+  /** @nullable */
+  finalActionTaken: string | null;
+  nextStep: string;
+  classificationReason: string;
+  auditLog: IntakeAuditEntry[];
+}
+
+export interface IntakeItemInput {
+  source: IntakeSource;
+  /** @minLength 1 */
+  sourceChannel: string;
+  /** @minLength 1 */
+  senderName: string;
+  /** @minLength 1 */
+  senderHandle: string;
+  /** @nullable */
+  senderRole?: string | null;
+  receivedAt?: string;
+  /** @minLength 1 */
+  rawMessage: string;
+  /** @minLength 1 */
+  cleanedSummary: string;
+  detectedType: IntakeDetectedType;
+  suggestedDestination: IntakeDestination;
+  sensitivity: IntakeSensitivity;
+  reviewOwner: IntakeReviewOwner;
+  status: IntakeStatus;
+  duplicateRisk: IntakeDuplicateRisk;
+  relatedProjectNames: string[];
+  reviewerNotes?: string;
+  nextStep: string;
+  classificationReason: string;
+  auditLog: IntakeAuditEntry[];
+}
+
+export type IntakeItemUpdateAuditEntry = {
+  /** @minLength 1 */
+  actor: string;
+  /** @minLength 1 */
+  action: string;
+};
+
+export interface IntakeItemUpdate {
+  status?: IntakeStatus;
+  reviewOwner?: IntakeReviewOwner;
+  reviewerNotes?: string;
+  /** @nullable */
+  finalActionTaken?: string | null;
+  auditEntry?: IntakeItemUpdateAuditEntry;
+}
+
+export type MemoryDestination = typeof MemoryDestination[keyof typeof MemoryDestination];
+
+
+export const MemoryDestination = {
+  'private-rose-carmen-memory': 'private-rose-carmen-memory',
+  'company-brain-suggestion': 'company-brain-suggestion',
+  'project-note': 'project-note',
+  'future-idea': 'future-idea',
+  'decision-candidate': 'decision-candidate',
+  'knowledge-gap-report': 'knowledge-gap-report',
+} as const;
+
+export type MemoryCandidateStatus = typeof MemoryCandidateStatus[keyof typeof MemoryCandidateStatus];
+
+
+export const MemoryCandidateStatus = {
+  proposed: 'proposed',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface MemoryCandidateRecord {
+  id: number;
+  /** @nullable */
+  sourceIntakeId: number | null;
+  summary: string;
+  destination: MemoryDestination;
+  status: MemoryCandidateStatus;
+  sensitive: boolean;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface MemoryCandidateInput {
+  /** @nullable */
+  sourceIntakeId?: number | null;
+  /** @minLength 1 */
+  summary: string;
+  destination: MemoryDestination;
+  sensitive: boolean;
+  /** @minLength 1 */
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface MemoryCandidateStatusChange {
+  status: MemoryCandidateStatus;
+}
+
+export type FeedbackType = typeof FeedbackType[keyof typeof FeedbackType];
+
+
+export const FeedbackType = {
+  'help-request': 'help-request',
+  blocker: 'blocker',
+  'repeated-question': 'repeated-question',
+  confusion: 'confusion',
+  workload: 'workload',
+  'missing-docs': 'missing-docs',
+  'training-need': 'training-need',
+  'tool-friction': 'tool-friction',
+} as const;
+
+export type FeedbackPrivacyLevel = typeof FeedbackPrivacyLevel[keyof typeof FeedbackPrivacyLevel];
+
+
+export const FeedbackPrivacyLevel = {
+  public: 'public',
+  internal: 'internal',
+  private: 'private',
+  'leadership-only': 'leadership-only',
+} as const;
+
+export type FeedbackApprovalRoute = typeof FeedbackApprovalRoute[keyof typeof FeedbackApprovalRoute];
+
+
+export const FeedbackApprovalRoute = {
+  rose: 'rose',
+  carmen: 'carmen',
+  both: 'both',
+  none: 'none',
+} as const;
+
+export interface FeedbackItemRecord {
+  id: number;
+  type: FeedbackType;
+  summary: string;
+  submittedBy: string;
+  department: string;
+  privacy: FeedbackPrivacyLevel;
+  supportNeed: string;
+  approvalRoute: FeedbackApprovalRoute;
+  count: number;
+}
+
+export interface FeedbackItemInput {
+  type: FeedbackType;
+  /** @minLength 1 */
+  summary: string;
+  /** @minLength 1 */
+  submittedBy: string;
+  /** @minLength 1 */
+  department: string;
+  privacy: FeedbackPrivacyLevel;
+  /** @minLength 1 */
+  supportNeed: string;
+  approvalRoute: FeedbackApprovalRoute;
+  /** @minimum 1 */
+  count?: number;
+}
+
+export type SentimentSignalRecordTrend = typeof SentimentSignalRecordTrend[keyof typeof SentimentSignalRecordTrend];
+
+
+export const SentimentSignalRecordTrend = {
+  up: 'up',
+  down: 'down',
+  flat: 'flat',
+} as const;
+
+export interface SentimentSignalRecord {
+  team: string;
+  score: number;
+  trend: SentimentSignalRecordTrend;
+  theme: string;
+}
+
+export type SopRecordStatus = typeof SopRecordStatus[keyof typeof SopRecordStatus];
+
+
+export const SopRecordStatus = {
+  current: 'current',
+  'needs-update': 'needs-update',
+  missing: 'missing',
+} as const;
+
+export interface SopRecord {
+  id: number;
+  title: string;
+  area: string;
+  status: SopRecordStatus;
+  /** @nullable */
+  owner: string | null;
+}
+
+export type ReportCadence = typeof ReportCadence[keyof typeof ReportCadence];
+
+
+export const ReportCadence = {
+  daily: 'daily',
+  weekly: 'weekly',
+  monthly: 'monthly',
+} as const;
+
+export type IntegrationMode = typeof IntegrationMode[keyof typeof IntegrationMode];
+
+
+export const IntegrationMode = {
+  off: 'off',
+  test: 'test',
+  live: 'live',
+} as const;
+
+export interface AppSettingsRecord {
+  duplicateSensitivity: number;
+  alertThreshold: number;
+  reportCadence: ReportCadence;
+  competitors: string[];
+  marketKeywords: string[];
+  mindMeldPrivate: boolean;
+  emailAlerts: boolean;
+  zohoCliqMode: IntegrationMode;
+  whatsappMode: IntegrationMode;
+  /** @nullable */
+  lastTestMessageAt: string | null;
+}
+
+export interface AppSettingsUpdate {
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  duplicateSensitivity?: number;
+  /**
+     * @minimum 1
+     * @maximum 10
+     */
+  alertThreshold?: number;
+  reportCadence?: ReportCadence;
+  competitors?: string[];
+  marketKeywords?: string[];
+  mindMeldPrivate?: boolean;
+  emailAlerts?: boolean;
+  zohoCliqMode?: IntegrationMode;
+  whatsappMode?: IntegrationMode;
+  /** @nullable */
+  lastTestMessageAt?: string | null;
+}
+
+export type ProjectStatus = typeof ProjectStatus[keyof typeof ProjectStatus];
+
+
+export const ProjectStatus = {
+  active: 'active',
+  'at-risk': 'at-risk',
+  blocked: 'blocked',
+  stale: 'stale',
+  complete: 'complete',
+  planning: 'planning',
+} as const;
+
+export type ProjectRecordRisk = typeof ProjectRecordRisk[keyof typeof ProjectRecordRisk];
+
+
+export const ProjectRecordRisk = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export interface ProjectRecord {
+  id: number;
+  name: string;
+  description: string;
+  department: string;
+  /** @nullable */
+  owner: string | null;
+  status: ProjectStatus;
+  risk: ProjectRecordRisk;
+  progress: number;
+  source: string;
+  classification: string;
+  lastActivity: string;
+  /** @nullable */
+  deadline: string | null;
+  tags: string[];
+}
+
+export type BlockerRecordRisk = typeof BlockerRecordRisk[keyof typeof BlockerRecordRisk];
+
+
+export const BlockerRecordRisk = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export interface BlockerRecord {
+  id: number;
+  projectId: number;
+  title: string;
+  /** @nullable */
+  owner: string | null;
+  risk: BlockerRecordRisk;
+  age: number;
+}
+
+export interface CompanyRecord {
+  id: number;
+  title: string;
+  type: string;
+  summary: string;
+  source: string;
+  classification: string;
+  keywords: string[];
+}
+
+export type DecisionRecordStatus = typeof DecisionRecordStatus[keyof typeof DecisionRecordStatus];
+
+
+export const DecisionRecordStatus = {
+  open: 'open',
+  decided: 'decided',
+  deferred: 'deferred',
+} as const;
+
+export type DecisionRecordApprovalRoute = typeof DecisionRecordApprovalRoute[keyof typeof DecisionRecordApprovalRoute];
+
+
+export const DecisionRecordApprovalRoute = {
+  rose: 'rose',
+  carmen: 'carmen',
+  both: 'both',
+  none: 'none',
+} as const;
+
+export type DecisionRecordRisk = typeof DecisionRecordRisk[keyof typeof DecisionRecordRisk];
+
+
+export const DecisionRecordRisk = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export interface DecisionRecord {
+  id: number;
+  title: string;
+  context: string;
+  status: DecisionRecordStatus;
+  /** @nullable */
+  owner: string | null;
+  approvalRoute: DecisionRecordApprovalRoute;
+  risk: DecisionRecordRisk;
+}
+
+export type AutomationRecordStatus = typeof AutomationRecordStatus[keyof typeof AutomationRecordStatus];
+
+
+export const AutomationRecordStatus = {
+  live: 'live',
+  draft: 'draft',
+  proposed: 'proposed',
+  paused: 'paused',
+} as const;
+
+export interface AutomationRecord {
+  id: number;
+  name: string;
+  system: string;
+  status: AutomationRecordStatus;
+  /** @nullable */
+  owner: string | null;
+  description: string;
+}
+
+export type DuplicateRiskRecordRisk = typeof DuplicateRiskRecordRisk[keyof typeof DuplicateRiskRecordRisk];
+
+
+export const DuplicateRiskRecordRisk = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export type DuplicateRiskRecordApprovalRoute = typeof DuplicateRiskRecordApprovalRoute[keyof typeof DuplicateRiskRecordApprovalRoute];
+
+
+export const DuplicateRiskRecordApprovalRoute = {
+  rose: 'rose',
+  carmen: 'carmen',
+  both: 'both',
+  none: 'none',
+} as const;
+
+export interface DuplicateRiskRecord {
+  id: number;
+  title: string;
+  similarity: number;
+  overlappingItems: string[];
+  reason: string;
+  sourceRecords: string[];
+  affectedOwners: string[];
+  risk: DuplicateRiskRecordRisk;
+  recommendation: string;
+  approvalRoute: DuplicateRiskRecordApprovalRoute;
+  category: string;
+}
+
+export type AlertRecordType = typeof AlertRecordType[keyof typeof AlertRecordType];
+
+
+export const AlertRecordType = {
+  overlap: 'overlap',
+  risk: 'risk',
+  blocker: 'blocker',
+  'missing-owner': 'missing-owner',
+  duplicate: 'duplicate',
+  stale: 'stale',
+} as const;
+
+export type AlertRecordRisk = typeof AlertRecordRisk[keyof typeof AlertRecordRisk];
+
+
+export const AlertRecordRisk = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export interface AlertRecord {
+  id: number;
+  type: AlertRecordType;
+  message: string;
+  risk: AlertRecordRisk;
+  source: string;
+  createdAt: string;
+}
+
+export type BuildItemRecordStatus = typeof BuildItemRecordStatus[keyof typeof BuildItemRecordStatus];
+
+
+export const BuildItemRecordStatus = {
+  scoping: 'scoping',
+  ready: 'ready',
+  'in-build': 'in-build',
+  blocked: 'blocked',
+  shipped: 'shipped',
+} as const;
+
+export interface BuildItemRecord {
+  id: number;
+  name: string;
+  projectId: number;
+  readiness: number;
+  status: BuildItemRecordStatus;
+  /** @nullable */
+  owner: string | null;
+  source: string;
+}
+
+export type ProjectTaskRecordStatus = typeof ProjectTaskRecordStatus[keyof typeof ProjectTaskRecordStatus];
+
+
+export const ProjectTaskRecordStatus = {
+  todo: 'todo',
+  'in-progress': 'in-progress',
+  review: 'review',
+  done: 'done',
+} as const;
+
+export interface ProjectTaskRecord {
+  id: number;
+  title: string;
+  projectId: number;
+  /** @nullable */
+  owner: string | null;
+  status: ProjectTaskRecordStatus;
+  /** @nullable */
+  due: string | null;
+}
+
+export type MarketSignalRecordRisk = typeof MarketSignalRecordRisk[keyof typeof MarketSignalRecordRisk];
+
+
+export const MarketSignalRecordRisk = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export type MarketSignalRecordReviewOwner = typeof MarketSignalRecordReviewOwner[keyof typeof MarketSignalRecordReviewOwner];
+
+
+export const MarketSignalRecordReviewOwner = {
+  rose: 'rose',
+  carmen: 'carmen',
+  both: 'both',
+  none: 'none',
+} as const;
+
+export interface MarketSignalRecord {
+  id: number;
+  source: string;
+  dateFound: string;
+  signalType: string;
+  summary: string;
+  opportunity: string;
+  risk: MarketSignalRecordRisk;
+  recommendedResponse: string;
+  reviewOwner: MarketSignalRecordReviewOwner;
+}
+
+export type MarketCompetitorRecordThreat = typeof MarketCompetitorRecordThreat[keyof typeof MarketCompetitorRecordThreat];
+
+
+export const MarketCompetitorRecordThreat = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  watch: 'watch',
+} as const;
+
+export type MarketCompetitorRecordTrend = typeof MarketCompetitorRecordTrend[keyof typeof MarketCompetitorRecordTrend];
+
+
+export const MarketCompetitorRecordTrend = {
+  up: 'up',
+  down: 'down',
+  flat: 'flat',
+} as const;
+
+export interface MarketCompetitorRecord {
+  id: number;
+  name: string;
+  threat: MarketCompetitorRecordThreat;
+  trend: MarketCompetitorRecordTrend;
+  newsCount: number;
+  movement: number;
+  series: number[];
+}
+
+export interface ReportTemplateRecord {
+  id: number;
+  type: string;
+  title: string;
+  date: string;
+  summary: string;
+  findings: string[];
+  sourceData: string[];
+  risks: string[];
+  recommendations: string[];
+  decisionsNeeded: string[];
+  owners: string[];
+  nextSteps: string[];
+}
+
+export type IntegrationStatusRecordState = typeof IntegrationStatusRecordState[keyof typeof IntegrationStatusRecordState];
+
+
+export const IntegrationStatusRecordState = {
+  simulated: 'simulated',
+  future: 'future',
+  planned: 'planned',
+  disabled: 'disabled',
+  sample: 'sample',
+} as const;
+
+export interface IntegrationStatusRecord {
+  name: string;
+  status: string;
+  state: IntegrationStatusRecordState;
+}
+
+export type AgentWorkType = typeof AgentWorkType[keyof typeof AgentWorkType];
+
+
+export const AgentWorkType = {
+  bug: 'bug',
+  fix: 'fix',
+  improvement: 'improvement',
+  ops: 'ops',
+  question: 'question',
+  'integration-prep': 'integration-prep',
+} as const;
+
+export type AgentWorkPriority = typeof AgentWorkPriority[keyof typeof AgentWorkPriority];
+
+
+export const AgentWorkPriority = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  urgent: 'urgent',
+} as const;
+
+export type AgentWorkStatus = typeof AgentWorkStatus[keyof typeof AgentWorkStatus];
+
+
+export const AgentWorkStatus = {
+  new: 'new',
+  triaged: 'triaged',
+  'approved-for-agent': 'approved-for-agent',
+  'in-progress': 'in-progress',
+  blocked: 'blocked',
+  'ready-for-review': 'ready-for-review',
+  done: 'done',
+  rejected: 'rejected',
+} as const;
+
+export interface AgentWorkEventRecord {
+  id: string;
+  timestamp: string;
+  actor: string;
+  action: string;
+  note?: string;
+}
+
+export type AgentWorkItemRecordApprovalRoute = typeof AgentWorkItemRecordApprovalRoute[keyof typeof AgentWorkItemRecordApprovalRoute];
+
+
+export const AgentWorkItemRecordApprovalRoute = {
+  rose: 'rose',
+  carmen: 'carmen',
+  both: 'both',
+  none: 'none',
+} as const;
+
+export type AgentWorkItemRecordRisk = typeof AgentWorkItemRecordRisk[keyof typeof AgentWorkItemRecordRisk];
+
+
+export const AgentWorkItemRecordRisk = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export interface AgentWorkItemRecord {
+  id: number;
+  title: string;
+  description: string;
+  requestType: AgentWorkType;
+  priority: AgentWorkPriority;
+  affectedModule: string;
+  desiredOutcome: string;
+  status: AgentWorkStatus;
+  /** @nullable */
+  owner: string | null;
+  approvalRoute: AgentWorkItemRecordApprovalRoute;
+  risk: AgentWorkItemRecordRisk;
+  source: string;
+  /** @nullable */
+  relatedIntakeId: number | null;
+  /** @nullable */
+  relatedRecommendationId: number | null;
+  /** @nullable */
+  relatedProjectId: number | null;
+  /** @nullable */
+  branchName: string | null;
+  /** @nullable */
+  commitSha: string | null;
+  /** @nullable */
+  mergeRequestUrl: string | null;
+  verificationSteps: string[];
+  agentNotes: string;
+  /** @nullable */
+  finalOutcome: string | null;
+  events: AgentWorkEventRecord[];
+  /** @nullable */
+  createdByName: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AgentWorkItemInputApprovalRoute = typeof AgentWorkItemInputApprovalRoute[keyof typeof AgentWorkItemInputApprovalRoute];
+
+
+export const AgentWorkItemInputApprovalRoute = {
+  rose: 'rose',
+  carmen: 'carmen',
+  both: 'both',
+  none: 'none',
+} as const;
+
+export type AgentWorkItemInputRisk = typeof AgentWorkItemInputRisk[keyof typeof AgentWorkItemInputRisk];
+
+
+export const AgentWorkItemInputRisk = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export interface AgentWorkItemInput {
+  /** @minLength 1 */
+  title: string;
+  /** @minLength 1 */
+  description: string;
+  requestType: AgentWorkType;
+  priority: AgentWorkPriority;
+  /** @minLength 1 */
+  affectedModule: string;
+  /** @minLength 1 */
+  desiredOutcome: string;
+  /** @nullable */
+  owner?: string | null;
+  approvalRoute: AgentWorkItemInputApprovalRoute;
+  risk: AgentWorkItemInputRisk;
+  source?: string;
+  /** @nullable */
+  relatedIntakeId?: number | null;
+  /** @nullable */
+  relatedRecommendationId?: number | null;
+  /** @nullable */
+  relatedProjectId?: number | null;
+  verificationSteps?: string[];
+}
+
+export type AgentWorkItemUpdateApprovalRoute = typeof AgentWorkItemUpdateApprovalRoute[keyof typeof AgentWorkItemUpdateApprovalRoute];
+
+
+export const AgentWorkItemUpdateApprovalRoute = {
+  rose: 'rose',
+  carmen: 'carmen',
+  both: 'both',
+  none: 'none',
+} as const;
+
+export type AgentWorkItemUpdateRisk = typeof AgentWorkItemUpdateRisk[keyof typeof AgentWorkItemUpdateRisk];
+
+
+export const AgentWorkItemUpdateRisk = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export interface AgentWorkItemUpdate {
+  priority?: AgentWorkPriority;
+  status?: AgentWorkStatus;
+  /** @nullable */
+  owner?: string | null;
+  approvalRoute?: AgentWorkItemUpdateApprovalRoute;
+  risk?: AgentWorkItemUpdateRisk;
+  /** @nullable */
+  branchName?: string | null;
+  /** @nullable */
+  commitSha?: string | null;
+  /** @nullable */
+  mergeRequestUrl?: string | null;
+  verificationSteps?: string[];
+  agentNotes?: string;
+  /** @nullable */
+  finalOutcome?: string | null;
+}
+
+export interface AgentWorkEventInput {
+  actor?: string;
+  /** @minLength 1 */
+  action: string;
+  note?: string;
+}
+

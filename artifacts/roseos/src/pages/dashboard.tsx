@@ -10,10 +10,6 @@ import { canApprove, canViewSensitive } from "@/lib/helpers";
 import {
   KpiWidget, SectionCard, StatusChip, ClassificationBadge,
 } from "@/components/shared";
-import {
-  projects, companyRecords, reports,
-  duplicateRisks, sentimentSignals, competitors,
-} from "@/data/seed";
 
 const POPULAR_SEARCHES = ["user onboarding", "qualifier scoring", "automation registry"];
 
@@ -92,7 +88,7 @@ function bubbleColor(score: number) {
 }
 
 export default function Dashboard() {
-  const { ideas, recommendations, currentRole, setRecommendationStatus, intakeItems, meldTimeline, memoryCandidates } = useAppState();
+  const { ideas, recommendations, currentRole, setRecommendationStatus, intakeItems, meldTimeline, memoryCandidates, projects, projectTasks, companyRecords, duplicateRisks, sentimentSignals, competitors, reports } = useAppState();
 
   const greeting =
     currentRole === "Carmen" ? "Carmen" : currentRole === "Rose" ? "Rose" : currentRole;
@@ -100,6 +96,8 @@ export default function Dashboard() {
   const topDuplicates = [...duplicateRisks].sort((a, b) => b.similarity - a.similarity).slice(0, 3);
   const topIdeas = [...ideas].sort((a, b) => b.momentum - a.momentum).slice(0, 3);
   const topCompetitors = competitors.slice(0, 3);
+  const openTasks = projectTasks.filter((t) => t.status !== "done").slice(0, 6);
+  const projectNameById = Object.fromEntries(projects.map((p) => [p.id, p.name]));
   const pendingRecs = recommendations.filter((r) => r.status === "pending");
   const queuePreview = pendingRecs.slice(0, 4);
   const topRec = recommendations[0];
@@ -185,6 +183,7 @@ export default function Dashboard() {
       {/* Stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiWidget label="Active Projects" value={projects.length} sub="across all departments" icon={FolderKanban} tone="blue" delta="+12%" />
+        <KpiWidget label="Open Tasks" value={projectTasks.filter((t) => t.status !== "done").length} sub="tracked in shared registry" icon={ClipboardCheck} tone="sky" />
         <KpiWidget label="Solutions Found" value={companyRecords.length} sub="in Company Brain" icon={Search} tone="emerald" delta="+18%" />
         <KpiWidget label="Ideas Generated" value={ideas.length} sub="in the innovation pipeline" icon={Lightbulb} tone="violet" delta="+24%" />
         <KpiWidget label="Dupes Avoided" value={duplicateRisks.length} sub="overlaps flagged early" icon={Target} tone="rose" delta="+15%" />
@@ -192,6 +191,25 @@ export default function Dashboard() {
 
       {/* Module grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {/* Project tasks */}
+        <SectionCard title="Project Tasks" icon={FolderKanban} accent="blue">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Shared project follow-up from the registry</p>
+          <ul className="space-y-2">
+            {openTasks.map((task) => (
+              <li key={task.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-slate-700">{task.title}</p>
+                  <p className="truncate text-[11px] text-slate-400">{projectNameById[task.projectId] ?? "Project"} · {task.owner ?? "Unassigned"}</p>
+                </div>
+                <StatusChip label={task.status.replace(/-/g, " ")} tone={task.status === "review" ? "amber" : task.status === "in-progress" ? "sky" : "slate"} />
+              </li>
+            ))}
+            {openTasks.length === 0 ? (
+              <li className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-400">No open project tasks in the shared registry.</li>
+            ) : null}
+          </ul>
+        </SectionCard>
+
         {/* Duplicate Effort Radar */}
         <SectionCard
           title="Duplicate Effort Radar"

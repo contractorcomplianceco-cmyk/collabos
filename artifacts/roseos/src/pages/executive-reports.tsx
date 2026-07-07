@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { FileBarChart, Download, Sparkles, AlertTriangle, ClipboardList, ArrowRight } from "lucide-react";
 import { PageHeader, SectionCard, EmptyState } from "@/components/shared";
-import { reports, projects, blockers, decisions } from "@/data/seed";
 import { generateReport, reportFromTemplate, type GeneratedReport } from "@/lib/helpers";
+import { useAppState } from "@/hooks/use-app-state";
 import { useToast } from "@/hooks/use-toast";
 
 const REPORT_TYPES = [
@@ -13,6 +13,7 @@ const REPORT_TYPES = [
 
 export default function ExecutiveReports() {
   const { toast } = useToast();
+  const { projects, blockers, decisions, reports } = useAppState();
   const [active, setActive] = useState<{ type: string; data: GeneratedReport } | null>(null);
 
   const generate = (type: string) => {

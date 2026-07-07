@@ -17,6 +17,8 @@ export const PERMISSIONS = [
   "brain_approve",
   "build_prompt_generate",
   "integration_settings_manage",
+  "agent_work_view",
+  "agent_work_manage",
   "user_management",
   "system_settings",
   "audit_logs_view",
@@ -43,6 +45,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "brain_approve",
     "build_prompt_generate",
     "integration_settings_manage",
+    "agent_work_view",
+    "agent_work_manage",
     "audit_logs_view",
   ],
   carmen_admin: [
@@ -61,6 +65,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "brain_approve",
     "build_prompt_generate",
     "integration_settings_manage",
+    "agent_work_view",
+    "agent_work_manage",
     "audit_logs_view",
   ],
   leadership_reviewer: [
@@ -75,6 +81,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "idea_constellation_view",
     "brain_suggest",
     "build_prompt_generate",
+    "agent_work_view",
+    "agent_work_manage",
   ],
   contributor: [
     "view_dashboard",

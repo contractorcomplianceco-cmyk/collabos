@@ -1,29 +1,30 @@
 import React, { useMemo, useState } from "react";
 import { Copy, Search, AlertTriangle, Users2, FileText, ArrowRight } from "lucide-react";
 import { PageHeader, SectionCard, RiskBadge, ApprovalRouteBadge, EmptyState } from "@/components/shared";
-import { duplicateRisks, projects, ideas as seedIdeas } from "@/data/seed";
 import { detectDuplicates } from "@/lib/helpers";
+import { useAppState } from "@/hooks/use-app-state";
 import { useToast } from "@/hooks/use-toast";
 
 const CATEGORIES = ["all", "projects", "ideas", "build-items", "automations"];
 
 export default function DuplicateRadar() {
   const { toast } = useToast();
+  const { projects, ideas, duplicateRisks } = useAppState();
   const [category, setCategory] = useState("all");
   const [input, setInput] = useState("");
   const [checked, setChecked] = useState(false);
 
   const filtered = useMemo(
     () => (category === "all" ? duplicateRisks : duplicateRisks.filter((d) => d.category === category)),
-    [category],
+    [category, duplicateRisks],
   );
 
   const candidates = useMemo(
     () => [
       ...projects.map((p) => ({ id: p.id, name: p.name, description: p.description })),
-      ...seedIdeas.map((i) => ({ id: i.id, name: i.title, description: i.description })),
+      ...ideas.map((i) => ({ id: i.id, name: i.title, description: i.description })),
     ],
-    [],
+    [projects, ideas],
   );
 
   const matches = useMemo(

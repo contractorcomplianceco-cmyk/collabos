@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Activity, TrendingUp, TrendingDown, Minus, Globe, ArrowRight } from "lucide-react";
 import { PageHeader, SectionCard, RiskBadge, ApprovalRouteBadge, StatusChip } from "@/components/shared";
-import { marketSignals, competitors } from "@/data/seed";
+import { useAppState } from "@/hooks/use-app-state";
 
 function Sparkline({ data, up }: { data: number[]; up: boolean }) {
   const max = Math.max(...data);
@@ -19,16 +19,17 @@ function Sparkline({ data, up }: { data: number[]; up: boolean }) {
 const THREAT_TONE: Record<string, "rose" | "amber" | "emerald" | "slate"> = { high: "rose", medium: "amber", low: "emerald", watch: "slate" };
 
 export default function MarketPulse() {
+  const { marketSignals, competitors } = useAppState();
   const [type, setType] = useState("all");
   const types = ["all", ...Array.from(new Set(marketSignals.map((m) => m.signalType)))];
   const filtered = type === "all" ? marketSignals : marketSignals.filter((m) => m.signalType === type);
 
   return (
     <div className="space-y-6 p-6">
-      <PageHeader title="Market Pulse" subtitle="Public-source market monitoring — sample data only." icon={Activity} accent="emerald" />
+      <PageHeader title="Market Pulse" subtitle="Shared public-source market signals. Live monitoring integrations are pending." icon={Activity} accent="emerald" />
 
       <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4 text-sm text-emerald-800">
-        <span className="font-semibold">Public-source monitoring.</span> All signals below are sample data drawn from public sources. No live external connections are active.
+        <span className="font-semibold">Public-source monitoring.</span> Signals are stored in the shared workspace database. No live external monitoring connection is active yet.
       </div>
 
       <SectionCard title="Competitor Watch" icon={Globe} accent="emerald">

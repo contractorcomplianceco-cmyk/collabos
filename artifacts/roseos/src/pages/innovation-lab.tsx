@@ -4,7 +4,6 @@ import { Lightbulb, Plus, Layers, TrendingUp, ArrowRight, Sparkles, Copy, PenToo
 import { PageHeader, SectionCard, StatusChip, ApprovalRouteBadge } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
 import { canSubmit, detectDuplicates, expandIdeaConcept, type IdeaExpansionKind } from "@/lib/helpers";
-import { projects } from "@/data/seed";
 import { useToast } from "@/hooks/use-toast";
 import type { IdeaStatus } from "@/types";
 
@@ -32,7 +31,7 @@ const NEXT_STATUS: Record<IdeaStatus, IdeaStatus> = {
 };
 
 export default function InnovationLab() {
-  const { ideas, submitIdea, updateIdeaStatus, currentRole } = useAppState();
+  const { ideas, ideasLoading, submitIdea, updateIdeaStatus, currentRole, projects } = useAppState();
   const { toast } = useToast();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -65,6 +64,9 @@ export default function InnovationLab() {
         accent="amber"
       />
 
+      {ideasLoading ? (
+        <p className="text-sm text-slate-500">Loading shared ideas…</p>
+      ) : (
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <SectionCard title="Submit an Idea" icon={Plus} accent="amber" className="lg:col-span-1">
           {canSubmit(currentRole) ? (
@@ -193,6 +195,7 @@ export default function InnovationLab() {
           </SectionCard>
         </div>
       </div>
+      )}
     </div>
   );
 }

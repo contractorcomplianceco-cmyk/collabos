@@ -4,6 +4,18 @@ import authRouter from "./auth";
 import usersRouter from "./users";
 import auditLogsRouter from "./auditLogs";
 import mockupsRouter from "./mockups";
+import recommendationsRouter from "./recommendations";
+import ideasRouter from "./ideas";
+import mindMeldRouter from "./mindMeld";
+import intakeRouter from "./intake";
+import memoryCandidatesRouter from "./memoryCandidates";
+import feedbackRouter from "./feedback";
+import settingsRouter from "./settings";
+import projectsRouter from "./projects";
+import registryRouter from "./registry";
+import marketRouter from "./market";
+import reportTemplatesRouter from "./reportTemplates";
+import agentWorkRouter from "./agentWork";
 
 const router: IRouter = Router();
 
@@ -12,5 +24,17 @@ router.use(authRouter);
 router.use(usersRouter);
 router.use(auditLogsRouter);
 router.use(mockupsRouter);
+router.use(recommendationsRouter);
+router.use(ideasRouter);
+router.use(mindMeldRouter);
+router.use(intakeRouter);
+router.use(memoryCandidatesRouter);
+router.use(feedbackRouter);
+router.use(settingsRouter);
+router.use(projectsRouter);
+router.use(registryRouter);
+router.use(marketRouter);
+router.use(reportTemplatesRouter);
+router.use(agentWorkRouter);
 
 export default router;

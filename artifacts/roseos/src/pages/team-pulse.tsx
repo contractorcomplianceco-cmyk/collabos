@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Users, HeartHandshake, BookOpen, GraduationCap, Wrench, Lock, Plus } from "lucide-react";
 import { PageHeader, SectionCard, StatusChip, ApprovalRouteBadge, Donut } from "@/components/shared";
-import { sentimentSignals, sops } from "@/data/seed";
 import { useAppState } from "@/hooks/use-app-state";
 import { canViewSensitive, canSubmit } from "@/lib/helpers";
 import { useToast } from "@/hooks/use-toast";
@@ -14,7 +13,7 @@ const TYPE_TONE: Record<string, "sky" | "rose" | "amber" | "violet" | "emerald" 
 };
 
 export default function TeamPulse() {
-  const { feedbackItems, addFeedback, currentRole } = useAppState();
+  const { feedbackItems, feedbackLoading, addFeedback, currentRole, sentimentSignals, sops } = useAppState();
   const { toast } = useToast();
   const [summary, setSummary] = useState("");
   const [type, setType] = useState<FeedbackType>("help-request");
@@ -35,6 +34,10 @@ export default function TeamPulse() {
         accent="sky"
       />
 
+      {feedbackLoading ? (
+        <p className="text-sm text-slate-500">Loading shared team feedback…</p>
+      ) : (
+      <>
       <div className="rounded-2xl border border-sky-100 bg-sky-50/60 p-4 text-sm text-sky-800">
         <span className="font-semibold">Supportive by design.</span> Team Pulse surfaces where teammates need documentation,
         training, tools, or leadership support. It does not score or rank individuals.
@@ -146,6 +149,8 @@ export default function TeamPulse() {
           </SectionCard>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

@@ -18,6 +18,30 @@ tags:
     description: Audit logs
   - name: mockups
     description: Mockup Studio
+  - name: recommendations
+    description: Review Queue recommendations
+  - name: ideas
+    description: Innovation Lab ideas
+  - name: mindMeld
+    description: Mind Meld Room shared state
+  - name: intake
+    description: External Intake items
+  - name: memory
+    description: Memory preservation candidates
+  - name: feedback
+    description: Team Pulse feedback items
+  - name: settings
+    description: Workspace app settings
+  - name: projects
+    description: Project registry and blockers
+  - name: registry
+    description: Company Brain records, decisions, automations, duplicate risks, alerts, build items, and tasks
+  - name: market
+    description: Market pulse signals and competitor watch
+  - name: reports
+    description: Executive report templates
+  - name: agentWork
+    description: Agent work requests and execution handoff
 paths:
   /healthz:
     get:
@@ -370,6 +394,802 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MockupVersionRecord"
+  /recommendations:
+    get:
+      operationId: listRecommendations
+      tags: [recommendations]
+      summary: List review queue recommendations
+      responses:
+        "200":
+          description: Recommendations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecommendationRecord"
+    post:
+      operationId: createRecommendation
+      tags: [recommendations]
+      summary: Create a pending recommendation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecommendationInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecommendationRecord"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /recommendations/{id}/status:
+    post:
+      operationId: changeRecommendationStatus
+      tags: [recommendations]
+      summary: Approve, reject, or revise a recommendation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecommendationStatusChange"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecommendationRecord"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /ideas:
+    get:
+      operationId: listIdeas
+      tags: [ideas]
+      summary: List innovation lab ideas
+      responses:
+        "200":
+          description: Ideas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IdeaRecord"
+    post:
+      operationId: createIdea
+      tags: [ideas]
+      summary: Submit a new idea
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdeaInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdeaRecord"
+  /ideas/{id}/status:
+    patch:
+      operationId: updateIdeaStatus
+      tags: [ideas]
+      summary: Update an idea status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdeaStatusChange"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdeaRecord"
+  /mind-meld/items:
+    get:
+      operationId: listMindMeldItems
+      tags: [mindMeld]
+      summary: List Mind Meld items
+      responses:
+        "200":
+          description: Items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MindMeldItemRecord"
+    post:
+      operationId: createMindMeldItem
+      tags: [mindMeld]
+      summary: Create a Mind Meld item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MindMeldItemInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MindMeldItemRecord"
+  /mind-meld/handoffs:
+    get:
+      operationId: listMindMeldHandoffs
+      tags: [mindMeld]
+      summary: List Mind Meld handoffs
+      responses:
+        "200":
+          description: Handoffs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MindMeldHandoffRecord"
+  /mind-meld/timeline:
+    get:
+      operationId: listMindMeldTimeline
+      tags: [mindMeld]
+      summary: List Mind Meld timeline events
+      responses:
+        "200":
+          description: Timeline
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MindMeldTimelineRecord"
+  /mind-meld/feed:
+    get:
+      operationId: listMindMeldFeed
+      tags: [mindMeld]
+      summary: List decorative Mind Meld feed entries
+      responses:
+        "200":
+          description: Mind feed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MindFeedRecord"
+  /mind-meld/items/{id}/carmenfy:
+    post:
+      operationId: carmenfyMindMeldItem
+      tags: [mindMeld]
+      summary: Route a Mind Meld item to Carmen
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MindMeldActionNote"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MindMeldItemRecord"
+  /mind-meld/items/{id}/rosify:
+    post:
+      operationId: rosifyMindMeldItem
+      tags: [mindMeld]
+      summary: Route a Mind Meld item to Rose
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MindMeldActionNote"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MindMeldItemRecord"
+  /mind-meld/items/{id}/thoughts:
+    post:
+      operationId: addMindMeldThought
+      tags: [mindMeld]
+      summary: Add or update a founder thought on a Mind Meld item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MindMeldThoughtInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MindMeldItemRecord"
+  /intake/items:
+    get:
+      operationId: listIntakeItems
+      tags: [intake]
+      summary: List external intake items
+      responses:
+        "200":
+          description: Intake items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IntakeItemRecord"
+    post:
+      operationId: createIntakeItem
+      tags: [intake]
+      summary: Capture a new external intake item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntakeItemInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntakeItemRecord"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /intake/items/{id}:
+    patch:
+      operationId: updateIntakeItem
+      tags: [intake]
+      summary: Update an intake item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntakeItemUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntakeItemRecord"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /memory-candidates:
+    get:
+      operationId: listMemoryCandidates
+      tags: [memory]
+      summary: List memory preservation candidates
+      responses:
+        "200":
+          description: Memory candidates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MemoryCandidateRecord"
+    post:
+      operationId: createMemoryCandidate
+      tags: [memory]
+      summary: Propose a memory preservation candidate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemoryCandidateInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryCandidateRecord"
+  /memory-candidates/{id}/status:
+    patch:
+      operationId: updateMemoryCandidateStatus
+      tags: [memory]
+      summary: Approve or reject a memory candidate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemoryCandidateStatusChange"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryCandidateRecord"
+  /feedback/items:
+    get:
+      operationId: listFeedbackItems
+      tags: [feedback]
+      summary: List team feedback items
+      responses:
+        "200":
+          description: Feedback items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FeedbackItemRecord"
+    post:
+      operationId: createFeedbackItem
+      tags: [feedback]
+      summary: Submit team feedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeedbackItemInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackItemRecord"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /feedback/sentiment-signals:
+    get:
+      operationId: listSentimentSignals
+      tags: [feedback]
+      summary: List team sentiment signals
+      responses:
+        "200":
+          description: Sentiment signals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SentimentSignalRecord"
+  /feedback/sops:
+    get:
+      operationId: listSops
+      tags: [feedback]
+      summary: List SOP library entries
+      responses:
+        "200":
+          description: SOPs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SopRecord"
+  /settings:
+    get:
+      operationId: getAppSettings
+      tags: [settings]
+      summary: Get workspace app settings
+      responses:
+        "200":
+          description: App settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettingsRecord"
+    patch:
+      operationId: updateAppSettings
+      tags: [settings]
+      summary: Update workspace app settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppSettingsUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettingsRecord"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /integrations/status:
+    get:
+      operationId: listIntegrationStatus
+      tags: [settings]
+      summary: List integration connection status
+      responses:
+        "200":
+          description: Integration status list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IntegrationStatusRecord"
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List workspace projects
+      responses:
+        "200":
+          description: Projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProjectRecord"
+  /projects/blockers:
+    get:
+      operationId: listProjectBlockers
+      tags: [projects]
+      summary: List project blockers
+      responses:
+        "200":
+          description: Blockers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BlockerRecord"
+  /company-records:
+    get:
+      operationId: listCompanyRecords
+      tags: [registry]
+      summary: List Company Brain records
+      responses:
+        "200":
+          description: Company records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CompanyRecord"
+  /decisions:
+    get:
+      operationId: listDecisions
+      tags: [registry]
+      summary: List open and deferred decisions
+      responses:
+        "200":
+          description: Decisions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DecisionRecord"
+  /automations:
+    get:
+      operationId: listAutomations
+      tags: [registry]
+      summary: List automation registry entries
+      responses:
+        "200":
+          description: Automations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AutomationRecord"
+  /duplicate-risks:
+    get:
+      operationId: listDuplicateRisks
+      tags: [registry]
+      summary: List duplicate work risks
+      responses:
+        "200":
+          description: Duplicate risks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DuplicateRiskRecord"
+  /alerts:
+    get:
+      operationId: listAlerts
+      tags: [registry]
+      summary: List dashboard alerts
+      responses:
+        "200":
+          description: Alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AlertRecord"
+  /build-items:
+    get:
+      operationId: listBuildItems
+      tags: [registry]
+      summary: List build registry items
+      responses:
+        "200":
+          description: Build items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BuildItemRecord"
+  /project-tasks:
+    get:
+      operationId: listProjectTasks
+      tags: [registry]
+      summary: List project tasks
+      responses:
+        "200":
+          description: Project tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProjectTaskRecord"
+  /market/signals:
+    get:
+      operationId: listMarketSignals
+      tags: [market]
+      summary: List market monitoring signals
+      responses:
+        "200":
+          description: Market signals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketSignalRecord"
+  /market/competitors:
+    get:
+      operationId: listMarketCompetitors
+      tags: [market]
+      summary: List competitor watch profiles
+      responses:
+        "200":
+          description: Competitors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketCompetitorRecord"
+  /report-templates:
+    get:
+      operationId: listReportTemplates
+      tags: [reports]
+      summary: List saved executive report templates
+      responses:
+        "200":
+          description: Report templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReportTemplateRecord"
+  /agent-work/items:
+    get:
+      operationId: listAgentWorkItems
+      tags: [agentWork]
+      summary: List agent work queue items
+      responses:
+        "200":
+          description: Agent work items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AgentWorkItemRecord"
+    post:
+      operationId: createAgentWorkItem
+      tags: [agentWork]
+      summary: Create an agent work request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentWorkItemInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentWorkItemRecord"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /agent-work/items/{id}:
+    patch:
+      operationId: updateAgentWorkItem
+      tags: [agentWork]
+      summary: Update an agent work item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentWorkItemUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentWorkItemRecord"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /agent-work/items/{id}/events:
+    post:
+      operationId: addAgentWorkEvent
+      tags: [agentWork]
+      summary: Add an agent work event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentWorkEventInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentWorkItemRecord"
 components:
   schemas:
     HealthStatus:
@@ -610,3 +1430,840 @@ components:
       properties:
         versionName: { type: string, minLength: 1 }
         notes: { type: string }
+    RecommendationCategory:
+      type: string
+      enum:
+        - duplicate
+        - team-pulse
+        - sop-update
+        - automation
+        - mockup-prompt
+        - market
+        - mind-meld-handoff
+        - company-record
+        - sensitive
+        - final-decision
+        - external-intake
+    RecommendationClassification:
+      type: string
+      enum:
+        - documented-fact
+        - user-update
+        - ai-recommendation
+        - draft-idea
+        - pending-approval
+        - approved-decision
+        - sensitive
+    RecommendationRiskLevel:
+      type: string
+      enum: [low, medium, high, critical]
+    RecommendationApprovalRoute:
+      type: string
+      enum: [rose, carmen, both, none]
+    RecommendationStatus:
+      type: string
+      enum: [pending, approved, rejected, needs-revision]
+    RecommendationHistoryEntry:
+      type: object
+      required: [id, timestamp, actor, action]
+      properties:
+        id: { type: string }
+        timestamp: { type: string }
+        actor: { type: string }
+        action: { type: string }
+    RecommendationApprovals:
+      type: object
+      required: [rose, carmen]
+      properties:
+        rose: { type: boolean }
+        carmen: { type: boolean }
+    RecommendationRecord:
+      type: object
+      required:
+        - id
+        - source
+        - category
+        - recommendation
+        - classification
+        - risk
+        - requiredApprover
+        - status
+        - approvals
+        - history
+        - createdAt
+        - updatedAt
+      properties:
+        id: { type: integer }
+        source: { type: string }
+        category: { $ref: "#/components/schemas/RecommendationCategory" }
+        recommendation: { type: string }
+        classification: { $ref: "#/components/schemas/RecommendationClassification" }
+        risk: { $ref: "#/components/schemas/RecommendationRiskLevel" }
+        requiredApprover: { $ref: "#/components/schemas/RecommendationApprovalRoute" }
+        status: { $ref: "#/components/schemas/RecommendationStatus" }
+        approvals: { $ref: "#/components/schemas/RecommendationApprovals" }
+        history:
+          type: array
+          items: { $ref: "#/components/schemas/RecommendationHistoryEntry" }
+        createdById: { type: ["integer", "null"] }
+        createdByName: { type: ["string", "null"] }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+    RecommendationInput:
+      type: object
+      required: [source, category, recommendation, classification, risk, requiredApprover]
+      properties:
+        source: { type: string, minLength: 1 }
+        category: { $ref: "#/components/schemas/RecommendationCategory" }
+        recommendation: { type: string, minLength: 1 }
+        classification: { $ref: "#/components/schemas/RecommendationClassification" }
+        risk: { $ref: "#/components/schemas/RecommendationRiskLevel" }
+        requiredApprover: { $ref: "#/components/schemas/RecommendationApprovalRoute" }
+    RecommendationStatusChange:
+      type: object
+      required: [status]
+      properties:
+        status: { $ref: "#/components/schemas/RecommendationStatus" }
+    IdeaStatus:
+      type: string
+      enum:
+        - draft-idea
+        - related-to-existing
+        - needs-research
+        - needs-carmen-review
+        - needs-rose-review
+        - approved-for-build
+        - parked
+    IdeaApprovalRoute:
+      type: string
+      enum: [rose, carmen, both, none]
+    IdeaRecord:
+      type: object
+      required: [id, title, description, submittedBy, status, momentum, benefits, risks, dependencies, approvalRoute, createdAt]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: string }
+        submittedBy: { type: string }
+        status: { $ref: "#/components/schemas/IdeaStatus" }
+        momentum: { type: integer }
+        cluster: { type: ["string", "null"] }
+        benefits: { type: array, items: { type: string } }
+        risks: { type: array, items: { type: string } }
+        dependencies: { type: array, items: { type: string } }
+        approvalRoute: { $ref: "#/components/schemas/IdeaApprovalRoute" }
+        createdAt: { type: string }
+    IdeaInput:
+      type: object
+      required: [title, description, submittedBy, status, momentum, benefits, risks, dependencies, approvalRoute, createdAt]
+      properties:
+        title: { type: string, minLength: 1 }
+        description: { type: string }
+        submittedBy: { type: string, minLength: 1 }
+        status: { $ref: "#/components/schemas/IdeaStatus" }
+        momentum: { type: integer }
+        cluster: { type: ["string", "null"] }
+        benefits: { type: array, items: { type: string } }
+        risks: { type: array, items: { type: string } }
+        dependencies: { type: array, items: { type: string } }
+        approvalRoute: { $ref: "#/components/schemas/IdeaApprovalRoute" }
+        createdAt: { type: string }
+    IdeaStatusChange:
+      type: object
+      required: [status]
+      properties:
+        status: { $ref: "#/components/schemas/IdeaStatus" }
+    MindMeldHistoryEntry:
+      type: object
+      required: [id, timestamp, actor, action]
+      properties:
+        id: { type: string }
+        timestamp: { type: string }
+        actor: { type: string }
+        action: { type: string }
+    MindMeldItemRecord:
+      type: object
+      required:
+        - id
+        - title
+        - source
+        - owner
+        - status
+        - roseThoughts
+        - carmenThoughts
+        - synthesis
+        - openQuestions
+        - alignment
+        - alignmentScore
+        - risk
+        - privacy
+        - nextHandoff
+        - finalOutcome
+        - layers
+        - focusAreas
+        - roseFeedback
+        - carmenFeedback
+        - sensitive
+        - history
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        source: { type: string }
+        owner: { type: string, enum: [Rose, Carmen] }
+        status: { type: string }
+        roseThoughts: { type: string }
+        carmenThoughts: { type: string }
+        synthesis: { type: string }
+        openQuestions: { type: array, items: { type: string } }
+        alignment: { type: string, enum: [strong, partial, needs-clarity] }
+        alignmentScore: { type: integer }
+        risk: { type: string, enum: [low, medium, high, critical] }
+        privacy: { type: string, enum: [public, internal, private, leadership-only] }
+        nextHandoff: { type: ["string", "null"], enum: [rose, carmen, null] }
+        finalOutcome: { type: ["string", "null"] }
+        layers: { type: array, items: { type: string } }
+        focusAreas: { type: array, items: { type: string } }
+        roseFeedback: { type: array, items: { type: string } }
+        carmenFeedback: { type: array, items: { type: string } }
+        sensitive: { type: boolean }
+        history:
+          type: array
+          items: { $ref: "#/components/schemas/MindMeldHistoryEntry" }
+    MindMeldItemInput:
+      type: object
+      required: [title, source, owner, status, synthesis, openQuestions, alignment, alignmentScore, risk, privacy, layers, focusAreas, sensitive]
+      properties:
+        title: { type: string, minLength: 1 }
+        source: { type: string, minLength: 1 }
+        owner: { type: string, enum: [Rose, Carmen] }
+        status: { type: string }
+        roseThoughts: { type: string }
+        carmenThoughts: { type: string }
+        synthesis: { type: string }
+        openQuestions: { type: array, items: { type: string } }
+        alignment: { type: string, enum: [strong, partial, needs-clarity] }
+        alignmentScore: { type: integer }
+        risk: { type: string, enum: [low, medium, high, critical] }
+        privacy: { type: string, enum: [public, internal, private, leadership-only] }
+        nextHandoff: { type: ["string", "null"], enum: [rose, carmen, null] }
+        layers: { type: array, items: { type: string } }
+        focusAreas: { type: array, items: { type: string } }
+        roseFeedback: { type: array, items: { type: string } }
+        carmenFeedback: { type: array, items: { type: string } }
+        sensitive: { type: boolean }
+        history:
+          type: array
+          items: { $ref: "#/components/schemas/MindMeldHistoryEntry" }
+    MindMeldHandoffRecord:
+      type: object
+      required: [id, itemId, itemTitle, from, to, layer, timestamp, note]
+      properties:
+        id: { type: integer }
+        itemId: { type: integer }
+        itemTitle: { type: string }
+        from: { type: string, enum: [Rose, Carmen] }
+        to: { type: string, enum: [Rose, Carmen] }
+        layer: { type: string }
+        timestamp: { type: string }
+        note: { type: string }
+    MindMeldTimelineRecord:
+      type: object
+      required: [id, itemTitle, type, actor, text, timestamp, sensitive, finalized]
+      properties:
+        id: { type: integer }
+        itemTitle: { type: string }
+        type: { type: string }
+        actor: { type: string, enum: [Rose, Carmen, "Rose OS", System] }
+        text: { type: string }
+        timestamp: { type: string }
+        sensitive: { type: boolean }
+        needs: { type: ["string", "null"], enum: [rose, carmen, both, null] }
+        readyTo: { type: ["string", "null"], enum: [carmenfy, rosify, null] }
+        finalized: { type: boolean }
+    MindFeedRecord:
+      type: object
+      required: [id, actor, action, layer, timestamp]
+      properties:
+        id: { type: integer }
+        actor: { type: string, enum: [Rose, Carmen, "Rose OS"] }
+        action: { type: string }
+        layer: { type: string }
+        timestamp: { type: string }
+    MindMeldActionNote:
+      type: object
+      properties:
+        note: { type: string }
+    MindMeldThoughtInput:
+      type: object
+      required: [owner, text]
+      properties:
+        owner: { type: string, enum: [Rose, Carmen] }
+        text: { type: string, minLength: 1 }
+    IntakeSource:
+      type: string
+      enum: [zoho_cliq, whatsapp, manual]
+    IntakeDetectedType:
+      type: string
+      enum:
+        - idea
+        - todo
+        - build_request
+        - decision_candidate
+        - blocker
+        - question
+        - process_update
+        - crm_or_zoho_request
+        - automation_request
+        - rose_carmen_mind_meld
+        - company_brain_update_suggestion
+        - sensitive_private_item
+        - ignore_or_noise
+    IntakeDestination:
+      type: string
+      enum:
+        - mind-meld
+        - review-queue
+        - command-center-task
+        - idea-backlog
+        - build-registry
+        - requirements-registry
+        - automation-registry
+        - decision-log
+        - company-brain-update
+        - no-action
+    IntakeSensitivity:
+      type: string
+      enum:
+        - normal
+        - private_leadership
+        - client_sensitive
+        - hr_sensitive
+        - financial_sensitive
+        - legal_sensitive
+        - unclear
+    IntakeReviewOwner:
+      type: string
+      enum: [Rose, Carmen, "Rose and Carmen", "Assigned team member", Unassigned]
+    IntakeStatus:
+      type: string
+      enum: [new, needs_review, routed, approved, rejected, archived]
+    IntakeDuplicateRisk:
+      type: string
+      enum: [none, possible, likely]
+    IntakeAuditEntry:
+      type: object
+      required: [id, timestamp, actor, action]
+      properties:
+        id: { type: string }
+        timestamp: { type: string }
+        actor: { type: string }
+        action: { type: string }
+    IntakeItemRecord:
+      type: object
+      required:
+        - id
+        - source
+        - sourceChannel
+        - senderName
+        - senderHandle
+        - senderRole
+        - receivedAt
+        - rawMessage
+        - cleanedSummary
+        - detectedType
+        - suggestedDestination
+        - sensitivity
+        - reviewOwner
+        - status
+        - duplicateRisk
+        - relatedProjectNames
+        - reviewerNotes
+        - finalActionTaken
+        - nextStep
+        - classificationReason
+        - auditLog
+      properties:
+        id: { type: integer }
+        source: { $ref: "#/components/schemas/IntakeSource" }
+        sourceChannel: { type: string }
+        senderName: { type: string }
+        senderHandle: { type: string }
+        senderRole: { type: ["string", "null"] }
+        receivedAt: { type: string }
+        rawMessage: { type: string }
+        cleanedSummary: { type: string }
+        detectedType: { $ref: "#/components/schemas/IntakeDetectedType" }
+        suggestedDestination: { $ref: "#/components/schemas/IntakeDestination" }
+        sensitivity: { $ref: "#/components/schemas/IntakeSensitivity" }
+        reviewOwner: { $ref: "#/components/schemas/IntakeReviewOwner" }
+        status: { $ref: "#/components/schemas/IntakeStatus" }
+        duplicateRisk: { $ref: "#/components/schemas/IntakeDuplicateRisk" }
+        relatedProjectNames: { type: array, items: { type: string } }
+        reviewerNotes: { type: string }
+        finalActionTaken: { type: ["string", "null"] }
+        nextStep: { type: string }
+        classificationReason: { type: string }
+        auditLog:
+          type: array
+          items: { $ref: "#/components/schemas/IntakeAuditEntry" }
+    IntakeItemInput:
+      type: object
+      required:
+        - source
+        - sourceChannel
+        - senderName
+        - senderHandle
+        - rawMessage
+        - cleanedSummary
+        - detectedType
+        - suggestedDestination
+        - sensitivity
+        - reviewOwner
+        - status
+        - duplicateRisk
+        - relatedProjectNames
+        - nextStep
+        - classificationReason
+        - auditLog
+      properties:
+        source: { $ref: "#/components/schemas/IntakeSource" }
+        sourceChannel: { type: string, minLength: 1 }
+        senderName: { type: string, minLength: 1 }
+        senderHandle: { type: string, minLength: 1 }
+        senderRole: { type: ["string", "null"] }
+        receivedAt: { type: string }
+        rawMessage: { type: string, minLength: 1 }
+        cleanedSummary: { type: string, minLength: 1 }
+        detectedType: { $ref: "#/components/schemas/IntakeDetectedType" }
+        suggestedDestination: { $ref: "#/components/schemas/IntakeDestination" }
+        sensitivity: { $ref: "#/components/schemas/IntakeSensitivity" }
+        reviewOwner: { $ref: "#/components/schemas/IntakeReviewOwner" }
+        status: { $ref: "#/components/schemas/IntakeStatus" }
+        duplicateRisk: { $ref: "#/components/schemas/IntakeDuplicateRisk" }
+        relatedProjectNames: { type: array, items: { type: string } }
+        reviewerNotes: { type: string }
+        nextStep: { type: string }
+        classificationReason: { type: string }
+        auditLog:
+          type: array
+          items: { $ref: "#/components/schemas/IntakeAuditEntry" }
+    IntakeItemUpdate:
+      type: object
+      properties:
+        status: { $ref: "#/components/schemas/IntakeStatus" }
+        reviewOwner: { $ref: "#/components/schemas/IntakeReviewOwner" }
+        reviewerNotes: { type: string }
+        finalActionTaken: { type: ["string", "null"] }
+        auditEntry:
+          type: object
+          required: [actor, action]
+          properties:
+            actor: { type: string, minLength: 1 }
+            action: { type: string, minLength: 1 }
+    MemoryDestination:
+      type: string
+      enum:
+        - private-rose-carmen-memory
+        - company-brain-suggestion
+        - project-note
+        - future-idea
+        - decision-candidate
+        - knowledge-gap-report
+    MemoryCandidateStatus:
+      type: string
+      enum: [proposed, approved, rejected]
+    MemoryCandidateRecord:
+      type: object
+      required: [id, sourceIntakeId, summary, destination, status, sensitive, createdBy, createdAt]
+      properties:
+        id: { type: integer }
+        sourceIntakeId: { type: ["integer", "null"] }
+        summary: { type: string }
+        destination: { $ref: "#/components/schemas/MemoryDestination" }
+        status: { $ref: "#/components/schemas/MemoryCandidateStatus" }
+        sensitive: { type: boolean }
+        createdBy: { type: string }
+        createdAt: { type: string }
+    MemoryCandidateInput:
+      type: object
+      required: [summary, destination, sensitive, createdBy, createdAt]
+      properties:
+        sourceIntakeId: { type: ["integer", "null"] }
+        summary: { type: string, minLength: 1 }
+        destination: { $ref: "#/components/schemas/MemoryDestination" }
+        sensitive: { type: boolean }
+        createdBy: { type: string, minLength: 1 }
+        createdAt: { type: string }
+    MemoryCandidateStatusChange:
+      type: object
+      required: [status]
+      properties:
+        status: { $ref: "#/components/schemas/MemoryCandidateStatus" }
+    FeedbackType:
+      type: string
+      enum:
+        - help-request
+        - blocker
+        - repeated-question
+        - confusion
+        - workload
+        - missing-docs
+        - training-need
+        - tool-friction
+    FeedbackPrivacyLevel:
+      type: string
+      enum: [public, internal, private, leadership-only]
+    FeedbackApprovalRoute:
+      type: string
+      enum: [rose, carmen, both, none]
+    FeedbackItemRecord:
+      type: object
+      required: [id, type, summary, submittedBy, department, privacy, supportNeed, approvalRoute, count]
+      properties:
+        id: { type: integer }
+        type: { $ref: "#/components/schemas/FeedbackType" }
+        summary: { type: string }
+        submittedBy: { type: string }
+        department: { type: string }
+        privacy: { $ref: "#/components/schemas/FeedbackPrivacyLevel" }
+        supportNeed: { type: string }
+        approvalRoute: { $ref: "#/components/schemas/FeedbackApprovalRoute" }
+        count: { type: integer }
+    FeedbackItemInput:
+      type: object
+      required: [type, summary, submittedBy, department, privacy, supportNeed, approvalRoute]
+      properties:
+        type: { $ref: "#/components/schemas/FeedbackType" }
+        summary: { type: string, minLength: 1 }
+        submittedBy: { type: string, minLength: 1 }
+        department: { type: string, minLength: 1 }
+        privacy: { $ref: "#/components/schemas/FeedbackPrivacyLevel" }
+        supportNeed: { type: string, minLength: 1 }
+        approvalRoute: { $ref: "#/components/schemas/FeedbackApprovalRoute" }
+        count: { type: integer, minimum: 1 }
+    SentimentSignalRecord:
+      type: object
+      required: [team, score, trend, theme]
+      properties:
+        team: { type: string }
+        score: { type: number }
+        trend: { type: string, enum: [up, down, flat] }
+        theme: { type: string }
+    SopRecord:
+      type: object
+      required: [id, title, area, status, owner]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        area: { type: string }
+        status: { type: string, enum: [current, needs-update, missing] }
+        owner: { type: ["string", "null"] }
+    ReportCadence:
+      type: string
+      enum: [daily, weekly, monthly]
+    IntegrationMode:
+      type: string
+      enum: [off, test, live]
+    AppSettingsRecord:
+      type: object
+      required:
+        - duplicateSensitivity
+        - alertThreshold
+        - reportCadence
+        - competitors
+        - marketKeywords
+        - mindMeldPrivate
+        - emailAlerts
+        - zohoCliqMode
+        - whatsappMode
+        - lastTestMessageAt
+      properties:
+        duplicateSensitivity: { type: integer }
+        alertThreshold: { type: integer }
+        reportCadence: { $ref: "#/components/schemas/ReportCadence" }
+        competitors: { type: array, items: { type: string } }
+        marketKeywords: { type: array, items: { type: string } }
+        mindMeldPrivate: { type: boolean }
+        emailAlerts: { type: boolean }
+        zohoCliqMode: { $ref: "#/components/schemas/IntegrationMode" }
+        whatsappMode: { $ref: "#/components/schemas/IntegrationMode" }
+        lastTestMessageAt: { type: ["string", "null"] }
+    AppSettingsUpdate:
+      type: object
+      properties:
+        duplicateSensitivity: { type: integer, minimum: 0, maximum: 100 }
+        alertThreshold: { type: integer, minimum: 1, maximum: 10 }
+        reportCadence: { $ref: "#/components/schemas/ReportCadence" }
+        competitors: { type: array, items: { type: string } }
+        marketKeywords: { type: array, items: { type: string } }
+        mindMeldPrivate: { type: boolean }
+        emailAlerts: { type: boolean }
+        zohoCliqMode: { $ref: "#/components/schemas/IntegrationMode" }
+        whatsappMode: { $ref: "#/components/schemas/IntegrationMode" }
+        lastTestMessageAt: { type: ["string", "null"] }
+    ProjectStatus:
+      type: string
+      enum: [active, at-risk, blocked, stale, complete, planning]
+    ProjectRecord:
+      type: object
+      required: [id, name, description, department, owner, status, risk, progress, source, classification, lastActivity, deadline, tags]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        description: { type: string }
+        department: { type: string }
+        owner: { type: ["string", "null"] }
+        status: { $ref: "#/components/schemas/ProjectStatus" }
+        risk: { type: string, enum: [low, medium, high, critical] }
+        progress: { type: integer }
+        source: { type: string }
+        classification: { type: string }
+        lastActivity: { type: string }
+        deadline: { type: ["string", "null"] }
+        tags: { type: array, items: { type: string } }
+    BlockerRecord:
+      type: object
+      required: [id, projectId, title, owner, risk, age]
+      properties:
+        id: { type: integer }
+        projectId: { type: integer }
+        title: { type: string }
+        owner: { type: ["string", "null"] }
+        risk: { type: string, enum: [low, medium, high, critical] }
+        age: { type: integer }
+    CompanyRecord:
+      type: object
+      required: [id, title, type, summary, source, classification, keywords]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        type: { type: string }
+        summary: { type: string }
+        source: { type: string }
+        classification: { type: string }
+        keywords: { type: array, items: { type: string } }
+    DecisionRecord:
+      type: object
+      required: [id, title, context, status, owner, approvalRoute, risk]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        context: { type: string }
+        status: { type: string, enum: [open, decided, deferred] }
+        owner: { type: ["string", "null"] }
+        approvalRoute: { type: string, enum: [rose, carmen, both, none] }
+        risk: { type: string, enum: [low, medium, high, critical] }
+    AutomationRecord:
+      type: object
+      required: [id, name, system, status, owner, description]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        system: { type: string }
+        status: { type: string, enum: [live, draft, proposed, paused] }
+        owner: { type: ["string", "null"] }
+        description: { type: string }
+    DuplicateRiskRecord:
+      type: object
+      required: [id, title, similarity, overlappingItems, reason, sourceRecords, affectedOwners, risk, recommendation, approvalRoute, category]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        similarity: { type: integer }
+        overlappingItems: { type: array, items: { type: string } }
+        reason: { type: string }
+        sourceRecords: { type: array, items: { type: string } }
+        affectedOwners: { type: array, items: { type: string } }
+        risk: { type: string, enum: [low, medium, high, critical] }
+        recommendation: { type: string }
+        approvalRoute: { type: string, enum: [rose, carmen, both, none] }
+        category: { type: string }
+    AlertRecord:
+      type: object
+      required: [id, type, message, risk, source, createdAt]
+      properties:
+        id: { type: integer }
+        type: { type: string, enum: [overlap, risk, blocker, missing-owner, duplicate, stale] }
+        message: { type: string }
+        risk: { type: string, enum: [low, medium, high, critical] }
+        source: { type: string }
+        createdAt: { type: string }
+    BuildItemRecord:
+      type: object
+      required: [id, name, projectId, readiness, status, owner, source]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        projectId: { type: integer }
+        readiness: { type: integer }
+        status: { type: string, enum: [scoping, ready, in-build, blocked, shipped] }
+        owner: { type: ["string", "null"] }
+        source: { type: string }
+    ProjectTaskRecord:
+      type: object
+      required: [id, title, projectId, owner, status, due]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        projectId: { type: integer }
+        owner: { type: ["string", "null"] }
+        status: { type: string, enum: [todo, in-progress, review, done] }
+        due: { type: ["string", "null"] }
+    MarketSignalRecord:
+      type: object
+      required: [id, source, dateFound, signalType, summary, opportunity, risk, recommendedResponse, reviewOwner]
+      properties:
+        id: { type: integer }
+        source: { type: string }
+        dateFound: { type: string }
+        signalType: { type: string }
+        summary: { type: string }
+        opportunity: { type: string }
+        risk: { type: string, enum: [low, medium, high, critical] }
+        recommendedResponse: { type: string }
+        reviewOwner: { type: string, enum: [rose, carmen, both, none] }
+    MarketCompetitorRecord:
+      type: object
+      required: [id, name, threat, trend, newsCount, movement, series]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        threat: { type: string, enum: [low, medium, high, watch] }
+        trend: { type: string, enum: [up, down, flat] }
+        newsCount: { type: integer }
+        movement: { type: integer }
+        series: { type: array, items: { type: number } }
+    ReportTemplateRecord:
+      type: object
+      required: [id, type, title, date, summary, findings, sourceData, risks, recommendations, decisionsNeeded, owners, nextSteps]
+      properties:
+        id: { type: integer }
+        type: { type: string }
+        title: { type: string }
+        date: { type: string }
+        summary: { type: string }
+        findings: { type: array, items: { type: string } }
+        sourceData: { type: array, items: { type: string } }
+        risks: { type: array, items: { type: string } }
+        recommendations: { type: array, items: { type: string } }
+        decisionsNeeded: { type: array, items: { type: string } }
+        owners: { type: array, items: { type: string } }
+        nextSteps: { type: array, items: { type: string } }
+    IntegrationStatusRecord:
+      type: object
+      required: [name, status, state]
+      properties:
+        name: { type: string }
+        status: { type: string }
+        state: { type: string, enum: [simulated, future, planned, disabled, sample] }
+    AgentWorkType:
+      type: string
+      enum: [bug, fix, improvement, ops, question, integration-prep]
+    AgentWorkPriority:
+      type: string
+      enum: [low, medium, high, urgent]
+    AgentWorkStatus:
+      type: string
+      enum: [new, triaged, approved-for-agent, in-progress, blocked, ready-for-review, done, rejected]
+    AgentWorkEventRecord:
+      type: object
+      required: [id, timestamp, actor, action]
+      properties:
+        id: { type: string }
+        timestamp: { type: string }
+        actor: { type: string }
+        action: { type: string }
+        note: { type: string }
+    AgentWorkItemRecord:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - requestType
+        - priority
+        - affectedModule
+        - desiredOutcome
+        - status
+        - owner
+        - approvalRoute
+        - risk
+        - source
+        - relatedIntakeId
+        - relatedRecommendationId
+        - relatedProjectId
+        - branchName
+        - commitSha
+        - mergeRequestUrl
+        - verificationSteps
+        - agentNotes
+        - finalOutcome
+        - events
+        - createdByName
+        - createdAt
+        - updatedAt
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: string }
+        requestType: { $ref: "#/components/schemas/AgentWorkType" }
+        priority: { $ref: "#/components/schemas/AgentWorkPriority" }
+        affectedModule: { type: string }
+        desiredOutcome: { type: string }
+        status: { $ref: "#/components/schemas/AgentWorkStatus" }
+        owner: { type: ["string", "null"] }
+        approvalRoute: { type: string, enum: [rose, carmen, both, none] }
+        risk: { type: string, enum: [low, medium, high, critical] }
+        source: { type: string }
+        relatedIntakeId: { type: ["integer", "null"] }
+        relatedRecommendationId: { type: ["integer", "null"] }
+        relatedProjectId: { type: ["integer", "null"] }
+        branchName: { type: ["string", "null"] }
+        commitSha: { type: ["string", "null"] }
+        mergeRequestUrl: { type: ["string", "null"] }
+        verificationSteps: { type: array, items: { type: string } }
+        agentNotes: { type: string }
+        finalOutcome: { type: ["string", "null"] }
+        events: { type: array, items: { $ref: "#/components/schemas/AgentWorkEventRecord" } }
+        createdByName: { type: ["string", "null"] }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+    AgentWorkItemInput:
+      type: object
+      required: [title, description, requestType, priority, affectedModule, desiredOutcome, approvalRoute, risk]
+      properties:
+        title: { type: string, minLength: 1 }
+        description: { type: string, minLength: 1 }
+        requestType: { $ref: "#/components/schemas/AgentWorkType" }
+        priority: { $ref: "#/components/schemas/AgentWorkPriority" }
+        affectedModule: { type: string, minLength: 1 }
+        desiredOutcome: { type: string, minLength: 1 }
+        owner: { type: ["string", "null"] }
+        approvalRoute: { type: string, enum: [rose, carmen, both, none] }
+        risk: { type: string, enum: [low, medium, high, critical] }
+        source: { type: string }
+        relatedIntakeId: { type: ["integer", "null"] }
+        relatedRecommendationId: { type: ["integer", "null"] }
+        relatedProjectId: { type: ["integer", "null"] }
+        verificationSteps: { type: array, items: { type: string } }
+    AgentWorkItemUpdate:
+      type: object
+      properties:
+        priority: { $ref: "#/components/schemas/AgentWorkPriority" }
+        status: { $ref: "#/components/schemas/AgentWorkStatus" }
+        owner: { type: ["string", "null"] }
+        approvalRoute: { type: string, enum: [rose, carmen, both, none] }
+        risk: { type: string, enum: [low, medium, high, critical] }
+        branchName: { type: ["string", "null"] }
+        commitSha: { type: ["string", "null"] }
+        mergeRequestUrl: { type: ["string", "null"] }
+        verificationSteps: { type: array, items: { type: string } }
+        agentNotes: { type: string }
+        finalOutcome: { type: ["string", "null"] }
+    AgentWorkEventInput:
+      type: object
+      required: [action]
+      properties:
+        actor: { type: string }
+        action: { type: string, minLength: 1 }
+        note: { type: string }

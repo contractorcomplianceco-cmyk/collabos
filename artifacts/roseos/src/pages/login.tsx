@@ -3,16 +3,6 @@ import { Lock, LogIn, ShieldCheck, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import collabosLogo from "@/assets/collabos-logo.png";
 
-const DEMO_ACCOUNTS = [
-  { label: "Rose · Founder Admin", email: "rose@collabos.demo", password: "rose-demo-2026" },
-  { label: "Carmen · Systems Admin", email: "carmen@collabos.demo", password: "carmen-demo-2026" },
-  { label: "Super Admin", email: "admin@collabos.demo", password: "admin-demo-2026" },
-  { label: "Leadership Reviewer", email: "lena@collabos.demo", password: "lena-demo-2026" },
-  { label: "Contributor", email: "devon@collabos.demo", password: "devon-demo-2026" },
-  { label: "Viewer", email: "viewer@collabos.demo", password: "viewer-demo-2026" },
-  { label: "Guest", email: "guest@collabos.demo", password: "guest-demo-2026" },
-];
-
 export default function LoginPage() {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
@@ -70,7 +60,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="field-input w-full"
-                placeholder="you@company.com"
+                placeholder="you@ccacontact.com"
               />
             </div>
             <div>
@@ -94,25 +84,16 @@ export default function LoginPage() {
               <LogIn className="h-4 w-4" /> {busy ? "Signing in..." : "Sign in"}
             </button>
           </form>
-          <div className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-3">
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Demo workspace — preloaded demo accounts
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              Staff access
             </p>
-            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-              {DEMO_ACCOUNTS.map((a) => (
-                <button
-                  key={a.email}
-                  type="button"
-                  onClick={() => { setEmail(a.email); setPassword(a.password); setError(null); }}
-                  className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-left text-[11px] text-slate-600 transition hover:border-rose-200 hover:text-rose-600"
-                >
-                  <span className="block font-semibold">{a.label}</span>
-                  <span className="block truncate text-[10px] text-slate-400">{a.email}</span>
-                </button>
-              ))}
-            </div>
-            <p className="mt-2 text-[10px] text-slate-400">
-              Click an account to fill the form. These are demo credentials for exploring role-based access.
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Sign in with your approved <span className="font-medium">@ccacontact.com</span> staff email.
+              First-time passwords require a change after login.
+            </p>
+            <p className="mt-2 text-xs text-slate-500">
+              Need access or a password reset? Contact Carmen.
             </p>
           </div>
         </div>

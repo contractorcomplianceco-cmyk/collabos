@@ -8,7 +8,6 @@ import {
 import { SectionCard, StatusChip, RiskBadge, Donut, LockedState } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
 import { canAccessMindMeld } from "@/lib/helpers";
-import { mindFeed, duplicateRisks, sentimentSignals, competitors, reports } from "@/data/seed";
 import { useToast } from "@/hooks/use-toast";
 import type { MindMeldItem, ThoughtLayer } from "@/types";
 
@@ -41,7 +40,7 @@ const FUNCTIONS = [
 ];
 
 export default function MindMeldRoom() {
-  const { currentRole, mindMeldItems, handoffs, carmenfy, rosify, addMindMeldThought, ideas, recommendations, meldTimeline } = useAppState();
+  const { currentRole, mindMeldItems, handoffs, carmenfy, rosify, addMindMeldThought, ideas, recommendations, meldTimeline, mindMeldLoading, duplicateRisks, sentimentSignals, competitors, reports, mindFeed } = useAppState();
   const { toast } = useToast();
   const [view, setView] = useState("room");
   const [selectedId, setSelectedId] = useState(mindMeldItems[0]?.id ?? "");
@@ -89,6 +88,14 @@ export default function MindMeldRoom() {
         title="Private space for Rose & Carmen only"
         message="The Mind Meld Room is an end-to-end private alignment space. Switch to the Rose or Carmen role to enter."
       />
+    );
+  }
+
+  if (mindMeldLoading) {
+    return (
+      <div className="p-6">
+        <p className="text-sm text-slate-500">Loading shared Mind Meld state…</p>
+      </div>
     );
   }
 

@@ -9,9 +9,8 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import {
   LayoutDashboard, Target, Users, Search, Lightbulb, PenTool, FileBarChart,
   Activity, Brain, ClipboardCheck, Settings as SettingsIcon, Bell, Lock, Menu, X,
-  Sparkles, Send, AlertTriangle, Inbox, LogOut, UserCog, ScrollText, Wand2,
+  Sparkles, Send, AlertTriangle, Inbox, LogOut, UserCog, ScrollText, Wand2, Bot,
 } from "lucide-react";
-import { alerts, projects } from "@/data/seed";
 import { canAccessMindMeld, canViewModule, mapServerRole, canSubmit, classifyIntakeMessage, detectDuplicates } from "@/lib/helpers";
 import collabosLogo from "@/assets/collabos-logo.png";
 import LoginPage from "@/pages/login";
@@ -26,6 +25,7 @@ import ExecutiveReports from "@/pages/executive-reports";
 import MarketPulse from "@/pages/market-pulse";
 import MindMeldRoom from "@/pages/mind-meld";
 import ReviewQueue from "@/pages/review-queue";
+import AgentQueue from "@/pages/agent-queue";
 import ExternalIntake from "@/pages/external-intake";
 import SettingsPage from "@/pages/settings";
 import UserManagement from "@/pages/user-management";
@@ -52,6 +52,7 @@ const NAV: NavItem[] = [
   { href: "/market-pulse", label: "Market Pulse", icon: Activity, ctx: "Market Pulse" },
   { href: "/mind-meld", label: "Mind Meld Room", icon: Brain, ctx: "Mind Meld Room", gated: true },
   { href: "/review-queue", label: "Review Queue", icon: ClipboardCheck, ctx: "Review Queue" },
+  { href: "/agent-queue", label: "Cursor Direct Requests", icon: Bot, ctx: "Cursor Direct Requests" },
   { href: "/external-intake", label: "External Intake", icon: Inbox, ctx: "External Intake" },
   { href: "/settings", label: "Settings", icon: SettingsIcon, ctx: "Settings" },
 ];
@@ -67,7 +68,8 @@ const ROSE_BRAIN_TIPS: Record<string, string[]> = {
   "Market Pulse": ["All signals are public-source sample data.", "Acme Corp launched an AI intake assistant.", "I can suggest a recommended response per signal."],
   "Mind Meld Room": ["This space is private to Rose and Carmen.", "Carmenfy routes to systems; Rosify routes to direction.", "Handoffs never auto-create official decisions."],
   "Review Queue": ["AI recommendations are never auto-approved.", "Pricing decision needs both Rose and Carmen.", "Each action is logged to audit history."],
-  "Settings": ["Adjust duplicate sensitivity and alert thresholds.", "All integrations are recommend-only.", "Reset sample data anytime."],
+  "Cursor Direct Requests": ["Only approved items are ready for Cursor execution.", "Use this lane for fixes, bugs, ops, and integration prep.", "Every Cursor update needs evidence."],
+  "Settings": ["Adjust duplicate sensitivity and alert thresholds.", "All integrations are recommend-only until connected.", "Shared workspace data stays server-backed."],
 };
 
 const ROLE_IDENTITY: Record<string, { name: string; title: string; initials: string }> = {
@@ -164,13 +166,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </div>
       <div className="border-t border-slate-100 px-4 py-3 text-[11px] text-slate-400">
-        Local-first prototype · no live data
+        Shared workspace data · integrations pending
       </div>
     </>
   );
 }
 
 function AlertsBell() {
+  const { alerts } = useAppState();
   const [open, setOpen] = useState(false);
   const high = alerts.filter((a) => a.risk === "high" || a.risk === "critical").length;
   return (
@@ -203,7 +206,7 @@ function AlertsBell() {
 }
 
 function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { currentRole, submitIdea } = useAppState();
+  const { currentRole, submitIdea, projects } = useAppState();
   const [, navigate] = useLocation();
   const [query, setQuery] = useState("");
   const [smartResult, setSmartResult] = useState<{ title: string; lines: string[] } | null>(null);
@@ -525,6 +528,7 @@ function Router() {
         <Route path="/market-pulse">{() => <Guarded href="/market-pulse"><MarketPulse /></Guarded>}</Route>
         <Route path="/mind-meld">{() => <Guarded href="/mind-meld"><MindMeldRoom /></Guarded>}</Route>
         <Route path="/review-queue">{() => <Guarded href="/review-queue"><ReviewQueue /></Guarded>}</Route>
+        <Route path="/agent-queue">{() => <Guarded href="/agent-queue"><AgentQueue /></Guarded>}</Route>
         <Route path="/external-intake">{() => <Guarded href="/external-intake"><ExternalIntake /></Guarded>}</Route>
         <Route path="/settings">{() => <Guarded href="/settings"><SettingsPage /></Guarded>}</Route>
         <Route path="/user-management">{() => <AdminGuarded permission="user_management"><UserManagement /></AdminGuarded>}</Route>

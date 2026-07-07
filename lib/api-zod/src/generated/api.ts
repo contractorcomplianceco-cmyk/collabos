@@ -564,3 +564,1074 @@ export const CreateMockupVersionBody = zod.object({
 })
 
 
+/**
+ * @summary List review queue recommendations
+ */
+export const ListRecommendationsResponseItem = zod.object({
+  "id": zod.number(),
+  "source": zod.string(),
+  "category": zod.enum(['duplicate', 'team-pulse', 'sop-update', 'automation', 'mockup-prompt', 'market', 'mind-meld-handoff', 'company-record', 'sensitive', 'final-decision', 'external-intake']),
+  "recommendation": zod.string(),
+  "classification": zod.enum(['documented-fact', 'user-update', 'ai-recommendation', 'draft-idea', 'pending-approval', 'approved-decision', 'sensitive']),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "requiredApprover": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "status": zod.enum(['pending', 'approved', 'rejected', 'needs-revision']),
+  "approvals": zod.object({
+  "rose": zod.boolean(),
+  "carmen": zod.boolean()
+}),
+  "history": zod.array(zod.object({
+  "id": zod.string(),
+  "timestamp": zod.string(),
+  "actor": zod.string(),
+  "action": zod.string()
+})),
+  "createdById": zod.number().nullish(),
+  "createdByName": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const ListRecommendationsResponse = zod.array(ListRecommendationsResponseItem)
+
+
+/**
+ * @summary Create a pending recommendation
+ */
+
+
+
+
+export const CreateRecommendationBody = zod.object({
+  "source": zod.string().min(1),
+  "category": zod.enum(['duplicate', 'team-pulse', 'sop-update', 'automation', 'mockup-prompt', 'market', 'mind-meld-handoff', 'company-record', 'sensitive', 'final-decision', 'external-intake']),
+  "recommendation": zod.string().min(1),
+  "classification": zod.enum(['documented-fact', 'user-update', 'ai-recommendation', 'draft-idea', 'pending-approval', 'approved-decision', 'sensitive']),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "requiredApprover": zod.enum(['rose', 'carmen', 'both', 'none'])
+})
+
+
+/**
+ * @summary Approve, reject, or revise a recommendation
+ */
+export const ChangeRecommendationStatusParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ChangeRecommendationStatusBody = zod.object({
+  "status": zod.enum(['pending', 'approved', 'rejected', 'needs-revision'])
+})
+
+export const ChangeRecommendationStatusResponse = zod.object({
+  "id": zod.number(),
+  "source": zod.string(),
+  "category": zod.enum(['duplicate', 'team-pulse', 'sop-update', 'automation', 'mockup-prompt', 'market', 'mind-meld-handoff', 'company-record', 'sensitive', 'final-decision', 'external-intake']),
+  "recommendation": zod.string(),
+  "classification": zod.enum(['documented-fact', 'user-update', 'ai-recommendation', 'draft-idea', 'pending-approval', 'approved-decision', 'sensitive']),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "requiredApprover": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "status": zod.enum(['pending', 'approved', 'rejected', 'needs-revision']),
+  "approvals": zod.object({
+  "rose": zod.boolean(),
+  "carmen": zod.boolean()
+}),
+  "history": zod.array(zod.object({
+  "id": zod.string(),
+  "timestamp": zod.string(),
+  "actor": zod.string(),
+  "action": zod.string()
+})),
+  "createdById": zod.number().nullish(),
+  "createdByName": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary List innovation lab ideas
+ */
+export const ListIdeasResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "submittedBy": zod.string(),
+  "status": zod.enum(['draft-idea', 'related-to-existing', 'needs-research', 'needs-carmen-review', 'needs-rose-review', 'approved-for-build', 'parked']),
+  "momentum": zod.number(),
+  "cluster": zod.string().nullish(),
+  "benefits": zod.array(zod.string()),
+  "risks": zod.array(zod.string()),
+  "dependencies": zod.array(zod.string()),
+  "approvalRoute": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "createdAt": zod.string()
+})
+export const ListIdeasResponse = zod.array(ListIdeasResponseItem)
+
+
+/**
+ * @summary Submit a new idea
+ */
+
+
+
+
+export const CreateIdeaBody = zod.object({
+  "title": zod.string().min(1),
+  "description": zod.string(),
+  "submittedBy": zod.string().min(1),
+  "status": zod.enum(['draft-idea', 'related-to-existing', 'needs-research', 'needs-carmen-review', 'needs-rose-review', 'approved-for-build', 'parked']),
+  "momentum": zod.number(),
+  "cluster": zod.string().nullish(),
+  "benefits": zod.array(zod.string()),
+  "risks": zod.array(zod.string()),
+  "dependencies": zod.array(zod.string()),
+  "approvalRoute": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Update an idea status
+ */
+export const UpdateIdeaStatusParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateIdeaStatusBody = zod.object({
+  "status": zod.enum(['draft-idea', 'related-to-existing', 'needs-research', 'needs-carmen-review', 'needs-rose-review', 'approved-for-build', 'parked'])
+})
+
+export const UpdateIdeaStatusResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "submittedBy": zod.string(),
+  "status": zod.enum(['draft-idea', 'related-to-existing', 'needs-research', 'needs-carmen-review', 'needs-rose-review', 'approved-for-build', 'parked']),
+  "momentum": zod.number(),
+  "cluster": zod.string().nullish(),
+  "benefits": zod.array(zod.string()),
+  "risks": zod.array(zod.string()),
+  "dependencies": zod.array(zod.string()),
+  "approvalRoute": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary List Mind Meld items
+ */
+export const ListMindMeldItemsResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "source": zod.string(),
+  "owner": zod.enum(['Rose', 'Carmen']),
+  "status": zod.string(),
+  "roseThoughts": zod.string(),
+  "carmenThoughts": zod.string(),
+  "synthesis": zod.string(),
+  "openQuestions": zod.array(zod.string()),
+  "alignment": zod.enum(['strong', 'partial', 'needs-clarity']),
+  "alignmentScore": zod.number(),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "privacy": zod.enum(['public', 'internal', 'private', 'leadership-only']),
+  "nextHandoff": zod.union([zod.literal('rose'),zod.literal('carmen'),zod.literal(null)]).nullable(),
+  "finalOutcome": zod.string().nullable(),
+  "layers": zod.array(zod.string()),
+  "focusAreas": zod.array(zod.string()),
+  "roseFeedback": zod.array(zod.string()),
+  "carmenFeedback": zod.array(zod.string()),
+  "sensitive": zod.boolean(),
+  "history": zod.array(zod.object({
+  "id": zod.string(),
+  "timestamp": zod.string(),
+  "actor": zod.string(),
+  "action": zod.string()
+}))
+})
+export const ListMindMeldItemsResponse = zod.array(ListMindMeldItemsResponseItem)
+
+
+/**
+ * @summary Create a Mind Meld item
+ */
+
+
+
+
+export const CreateMindMeldItemBody = zod.object({
+  "title": zod.string().min(1),
+  "source": zod.string().min(1),
+  "owner": zod.enum(['Rose', 'Carmen']),
+  "status": zod.string(),
+  "roseThoughts": zod.string().optional(),
+  "carmenThoughts": zod.string().optional(),
+  "synthesis": zod.string(),
+  "openQuestions": zod.array(zod.string()),
+  "alignment": zod.enum(['strong', 'partial', 'needs-clarity']),
+  "alignmentScore": zod.number(),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "privacy": zod.enum(['public', 'internal', 'private', 'leadership-only']),
+  "nextHandoff": zod.union([zod.literal('rose'),zod.literal('carmen'),zod.literal(null)]).nullish(),
+  "layers": zod.array(zod.string()),
+  "focusAreas": zod.array(zod.string()),
+  "roseFeedback": zod.array(zod.string()).optional(),
+  "carmenFeedback": zod.array(zod.string()).optional(),
+  "sensitive": zod.boolean(),
+  "history": zod.array(zod.object({
+  "id": zod.string(),
+  "timestamp": zod.string(),
+  "actor": zod.string(),
+  "action": zod.string()
+})).optional()
+})
+
+
+/**
+ * @summary List Mind Meld handoffs
+ */
+export const ListMindMeldHandoffsResponseItem = zod.object({
+  "id": zod.number(),
+  "itemId": zod.number(),
+  "itemTitle": zod.string(),
+  "from": zod.enum(['Rose', 'Carmen']),
+  "to": zod.enum(['Rose', 'Carmen']),
+  "layer": zod.string(),
+  "timestamp": zod.string(),
+  "note": zod.string()
+})
+export const ListMindMeldHandoffsResponse = zod.array(ListMindMeldHandoffsResponseItem)
+
+
+/**
+ * @summary List Mind Meld timeline events
+ */
+export const ListMindMeldTimelineResponseItem = zod.object({
+  "id": zod.number(),
+  "itemTitle": zod.string(),
+  "type": zod.string(),
+  "actor": zod.enum(['Rose', 'Carmen', 'Rose OS', 'System']),
+  "text": zod.string(),
+  "timestamp": zod.string(),
+  "sensitive": zod.boolean(),
+  "needs": zod.union([zod.literal('rose'),zod.literal('carmen'),zod.literal('both'),zod.literal(null)]).nullish(),
+  "readyTo": zod.union([zod.literal('carmenfy'),zod.literal('rosify'),zod.literal(null)]).nullish(),
+  "finalized": zod.boolean()
+})
+export const ListMindMeldTimelineResponse = zod.array(ListMindMeldTimelineResponseItem)
+
+
+/**
+ * @summary List decorative Mind Meld feed entries
+ */
+export const ListMindMeldFeedResponseItem = zod.object({
+  "id": zod.number(),
+  "actor": zod.enum(['Rose', 'Carmen', 'Rose OS']),
+  "action": zod.string(),
+  "layer": zod.string(),
+  "timestamp": zod.string()
+})
+export const ListMindMeldFeedResponse = zod.array(ListMindMeldFeedResponseItem)
+
+
+/**
+ * @summary Route a Mind Meld item to Carmen
+ */
+export const CarmenfyMindMeldItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CarmenfyMindMeldItemBody = zod.object({
+  "note": zod.string().optional()
+})
+
+export const CarmenfyMindMeldItemResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "source": zod.string(),
+  "owner": zod.enum(['Rose', 'Carmen']),
+  "status": zod.string(),
+  "roseThoughts": zod.string(),
+  "carmenThoughts": zod.string(),
+  "synthesis": zod.string(),
+  "openQuestions": zod.array(zod.string()),
+  "alignment": zod.enum(['strong', 'partial', 'needs-clarity']),
+  "alignmentScore": zod.number(),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "privacy": zod.enum(['public', 'internal', 'private', 'leadership-only']),
+  "nextHandoff": zod.union([zod.literal('rose'),zod.literal('carmen'),zod.literal(null)]).nullable(),
+  "finalOutcome": zod.string().nullable(),
+  "layers": zod.array(zod.string()),
+  "focusAreas": zod.array(zod.string()),
+  "roseFeedback": zod.array(zod.string()),
+  "carmenFeedback": zod.array(zod.string()),
+  "sensitive": zod.boolean(),
+  "history": zod.array(zod.object({
+  "id": zod.string(),
+  "timestamp": zod.string(),
+  "actor": zod.string(),
+  "action": zod.string()
+}))
+})
+
+
+/**
+ * @summary Route a Mind Meld item to Rose
+ */
+export const RosifyMindMeldItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RosifyMindMeldItemBody = zod.object({
+  "note": zod.string().optional()
+})
+
+export const RosifyMindMeldItemResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "source": zod.string(),
+  "owner": zod.enum(['Rose', 'Carmen']),
+  "status": zod.string(),
+  "roseThoughts": zod.string(),
+  "carmenThoughts": zod.string(),
+  "synthesis": zod.string(),
+  "openQuestions": zod.array(zod.string()),
+  "alignment": zod.enum(['strong', 'partial', 'needs-clarity']),
+  "alignmentScore": zod.number(),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "privacy": zod.enum(['public', 'internal', 'private', 'leadership-only']),
+  "nextHandoff": zod.union([zod.literal('rose'),zod.literal('carmen'),zod.literal(null)]).nullable(),
+  "finalOutcome": zod.string().nullable(),
+  "layers": zod.array(zod.string()),
+  "focusAreas": zod.array(zod.string()),
+  "roseFeedback": zod.array(zod.string()),
+  "carmenFeedback": zod.array(zod.string()),
+  "sensitive": zod.boolean(),
+  "history": zod.array(zod.object({
+  "id": zod.string(),
+  "timestamp": zod.string(),
+  "actor": zod.string(),
+  "action": zod.string()
+}))
+})
+
+
+/**
+ * @summary Add or update a founder thought on a Mind Meld item
+ */
+export const AddMindMeldThoughtParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const AddMindMeldThoughtBody = zod.object({
+  "owner": zod.enum(['Rose', 'Carmen']),
+  "text": zod.string().min(1)
+})
+
+export const AddMindMeldThoughtResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "source": zod.string(),
+  "owner": zod.enum(['Rose', 'Carmen']),
+  "status": zod.string(),
+  "roseThoughts": zod.string(),
+  "carmenThoughts": zod.string(),
+  "synthesis": zod.string(),
+  "openQuestions": zod.array(zod.string()),
+  "alignment": zod.enum(['strong', 'partial', 'needs-clarity']),
+  "alignmentScore": zod.number(),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "privacy": zod.enum(['public', 'internal', 'private', 'leadership-only']),
+  "nextHandoff": zod.union([zod.literal('rose'),zod.literal('carmen'),zod.literal(null)]).nullable(),
+  "finalOutcome": zod.string().nullable(),
+  "layers": zod.array(zod.string()),
+  "focusAreas": zod.array(zod.string()),
+  "roseFeedback": zod.array(zod.string()),
+  "carmenFeedback": zod.array(zod.string()),
+  "sensitive": zod.boolean(),
+  "history": zod.array(zod.object({
+  "id": zod.string(),
+  "timestamp": zod.string(),
+  "actor": zod.string(),
+  "action": zod.string()
+}))
+})
+
+
+/**
+ * @summary List external intake items
+ */
+export const ListIntakeItemsResponseItem = zod.object({
+  "id": zod.number(),
+  "source": zod.enum(['zoho_cliq', 'whatsapp', 'manual']),
+  "sourceChannel": zod.string(),
+  "senderName": zod.string(),
+  "senderHandle": zod.string(),
+  "senderRole": zod.string().nullable(),
+  "receivedAt": zod.string(),
+  "rawMessage": zod.string(),
+  "cleanedSummary": zod.string(),
+  "detectedType": zod.enum(['idea', 'todo', 'build_request', 'decision_candidate', 'blocker', 'question', 'process_update', 'crm_or_zoho_request', 'automation_request', 'rose_carmen_mind_meld', 'company_brain_update_suggestion', 'sensitive_private_item', 'ignore_or_noise']),
+  "suggestedDestination": zod.enum(['mind-meld', 'review-queue', 'command-center-task', 'idea-backlog', 'build-registry', 'requirements-registry', 'automation-registry', 'decision-log', 'company-brain-update', 'no-action']),
+  "sensitivity": zod.enum(['normal', 'private_leadership', 'client_sensitive', 'hr_sensitive', 'financial_sensitive', 'legal_sensitive', 'unclear']),
+  "reviewOwner": zod.enum(['Rose', 'Carmen', 'Rose and Carmen', 'Assigned team member', 'Unassigned']),
+  "status": zod.enum(['new', 'needs_review', 'routed', 'approved', 'rejected', 'archived']),
+  "duplicateRisk": zod.enum(['none', 'possible', 'likely']),
+  "relatedProjectNames": zod.array(zod.string()),
+  "reviewerNotes": zod.string(),
+  "finalActionTaken": zod.string().nullable(),
+  "nextStep": zod.string(),
+  "classificationReason": zod.string(),
+  "auditLog": zod.array(zod.object({
+  "id": zod.string(),
+  "timestamp": zod.string(),
+  "actor": zod.string(),
+  "action": zod.string()
+}))
+})
+export const ListIntakeItemsResponse = zod.array(ListIntakeItemsResponseItem)
+
+
+/**
+ * @summary Capture a new external intake item
+ */
+
+
+
+
+
+
+
+export const CreateIntakeItemBody = zod.object({
+  "source": zod.enum(['zoho_cliq', 'whatsapp', 'manual']),
+  "sourceChannel": zod.string().min(1),
+  "senderName": zod.string().min(1),
+  "senderHandle": zod.string().min(1),
+  "senderRole": zod.string().nullish(),
+  "receivedAt": zod.string().optional(),
+  "rawMessage": zod.string().min(1),
+  "cleanedSummary": zod.string().min(1),
+  "detectedType": zod.enum(['idea', 'todo', 'build_request', 'decision_candidate', 'blocker', 'question', 'process_update', 'crm_or_zoho_request', 'automation_request', 'rose_carmen_mind_meld', 'company_brain_update_suggestion', 'sensitive_private_item', 'ignore_or_noise']),
+  "suggestedDestination": zod.enum(['mind-meld', 'review-queue', 'command-center-task', 'idea-backlog', 'build-registry', 'requirements-registry', 'automation-registry', 'decision-log', 'company-brain-update', 'no-action']),
+  "sensitivity": zod.enum(['normal', 'private_leadership', 'client_sensitive', 'hr_sensitive', 'financial_sensitive', 'legal_sensitive', 'unclear']),
+  "reviewOwner": zod.enum(['Rose', 'Carmen', 'Rose and Carmen', 'Assigned team member', 'Unassigned']),
+  "status": zod.enum(['new', 'needs_review', 'routed', 'approved', 'rejected', 'archived']),
+  "duplicateRisk": zod.enum(['none', 'possible', 'likely']),
+  "relatedProjectNames": zod.array(zod.string()),
+  "reviewerNotes": zod.string().optional(),
+  "nextStep": zod.string(),
+  "classificationReason": zod.string(),
+  "auditLog": zod.array(zod.object({
+  "id": zod.string(),
+  "timestamp": zod.string(),
+  "actor": zod.string(),
+  "action": zod.string()
+}))
+})
+
+
+/**
+ * @summary Update an intake item
+ */
+export const UpdateIntakeItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+
+export const UpdateIntakeItemBody = zod.object({
+  "status": zod.enum(['new', 'needs_review', 'routed', 'approved', 'rejected', 'archived']).optional(),
+  "reviewOwner": zod.enum(['Rose', 'Carmen', 'Rose and Carmen', 'Assigned team member', 'Unassigned']).optional(),
+  "reviewerNotes": zod.string().optional(),
+  "finalActionTaken": zod.string().nullish(),
+  "auditEntry": zod.object({
+  "actor": zod.string().min(1),
+  "action": zod.string().min(1)
+}).optional()
+})
+
+export const UpdateIntakeItemResponse = zod.object({
+  "id": zod.number(),
+  "source": zod.enum(['zoho_cliq', 'whatsapp', 'manual']),
+  "sourceChannel": zod.string(),
+  "senderName": zod.string(),
+  "senderHandle": zod.string(),
+  "senderRole": zod.string().nullable(),
+  "receivedAt": zod.string(),
+  "rawMessage": zod.string(),
+  "cleanedSummary": zod.string(),
+  "detectedType": zod.enum(['idea', 'todo', 'build_request', 'decision_candidate', 'blocker', 'question', 'process_update', 'crm_or_zoho_request', 'automation_request', 'rose_carmen_mind_meld', 'company_brain_update_suggestion', 'sensitive_private_item', 'ignore_or_noise']),
+  "suggestedDestination": zod.enum(['mind-meld', 'review-queue', 'command-center-task', 'idea-backlog', 'build-registry', 'requirements-registry', 'automation-registry', 'decision-log', 'company-brain-update', 'no-action']),
+  "sensitivity": zod.enum(['normal', 'private_leadership', 'client_sensitive', 'hr_sensitive', 'financial_sensitive', 'legal_sensitive', 'unclear']),
+  "reviewOwner": zod.enum(['Rose', 'Carmen', 'Rose and Carmen', 'Assigned team member', 'Unassigned']),
+  "status": zod.enum(['new', 'needs_review', 'routed', 'approved', 'rejected', 'archived']),
+  "duplicateRisk": zod.enum(['none', 'possible', 'likely']),
+  "relatedProjectNames": zod.array(zod.string()),
+  "reviewerNotes": zod.string(),
+  "finalActionTaken": zod.string().nullable(),
+  "nextStep": zod.string(),
+  "classificationReason": zod.string(),
+  "auditLog": zod.array(zod.object({
+  "id": zod.string(),
+  "timestamp": zod.string(),
+  "actor": zod.string(),
+  "action": zod.string()
+}))
+})
+
+
+/**
+ * @summary List memory preservation candidates
+ */
+export const ListMemoryCandidatesResponseItem = zod.object({
+  "id": zod.number(),
+  "sourceIntakeId": zod.number().nullable(),
+  "summary": zod.string(),
+  "destination": zod.enum(['private-rose-carmen-memory', 'company-brain-suggestion', 'project-note', 'future-idea', 'decision-candidate', 'knowledge-gap-report']),
+  "status": zod.enum(['proposed', 'approved', 'rejected']),
+  "sensitive": zod.boolean(),
+  "createdBy": zod.string(),
+  "createdAt": zod.string()
+})
+export const ListMemoryCandidatesResponse = zod.array(ListMemoryCandidatesResponseItem)
+
+
+/**
+ * @summary Propose a memory preservation candidate
+ */
+
+
+
+
+export const CreateMemoryCandidateBody = zod.object({
+  "sourceIntakeId": zod.number().nullish(),
+  "summary": zod.string().min(1),
+  "destination": zod.enum(['private-rose-carmen-memory', 'company-brain-suggestion', 'project-note', 'future-idea', 'decision-candidate', 'knowledge-gap-report']),
+  "sensitive": zod.boolean(),
+  "createdBy": zod.string().min(1),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Approve or reject a memory candidate
+ */
+export const UpdateMemoryCandidateStatusParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateMemoryCandidateStatusBody = zod.object({
+  "status": zod.enum(['proposed', 'approved', 'rejected'])
+})
+
+export const UpdateMemoryCandidateStatusResponse = zod.object({
+  "id": zod.number(),
+  "sourceIntakeId": zod.number().nullable(),
+  "summary": zod.string(),
+  "destination": zod.enum(['private-rose-carmen-memory', 'company-brain-suggestion', 'project-note', 'future-idea', 'decision-candidate', 'knowledge-gap-report']),
+  "status": zod.enum(['proposed', 'approved', 'rejected']),
+  "sensitive": zod.boolean(),
+  "createdBy": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary List team feedback items
+ */
+export const ListFeedbackItemsResponseItem = zod.object({
+  "id": zod.number(),
+  "type": zod.enum(['help-request', 'blocker', 'repeated-question', 'confusion', 'workload', 'missing-docs', 'training-need', 'tool-friction']),
+  "summary": zod.string(),
+  "submittedBy": zod.string(),
+  "department": zod.string(),
+  "privacy": zod.enum(['public', 'internal', 'private', 'leadership-only']),
+  "supportNeed": zod.string(),
+  "approvalRoute": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "count": zod.number()
+})
+export const ListFeedbackItemsResponse = zod.array(ListFeedbackItemsResponseItem)
+
+
+/**
+ * @summary Submit team feedback
+ */
+
+
+
+
+
+
+
+export const CreateFeedbackItemBody = zod.object({
+  "type": zod.enum(['help-request', 'blocker', 'repeated-question', 'confusion', 'workload', 'missing-docs', 'training-need', 'tool-friction']),
+  "summary": zod.string().min(1),
+  "submittedBy": zod.string().min(1),
+  "department": zod.string().min(1),
+  "privacy": zod.enum(['public', 'internal', 'private', 'leadership-only']),
+  "supportNeed": zod.string().min(1),
+  "approvalRoute": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "count": zod.number().min(1).optional()
+})
+
+
+/**
+ * @summary List team sentiment signals
+ */
+export const ListSentimentSignalsResponseItem = zod.object({
+  "team": zod.string(),
+  "score": zod.number(),
+  "trend": zod.enum(['up', 'down', 'flat']),
+  "theme": zod.string()
+})
+export const ListSentimentSignalsResponse = zod.array(ListSentimentSignalsResponseItem)
+
+
+/**
+ * @summary List SOP library entries
+ */
+export const ListSopsResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "area": zod.string(),
+  "status": zod.enum(['current', 'needs-update', 'missing']),
+  "owner": zod.string().nullable()
+})
+export const ListSopsResponse = zod.array(ListSopsResponseItem)
+
+
+/**
+ * @summary Get workspace app settings
+ */
+export const GetAppSettingsResponse = zod.object({
+  "duplicateSensitivity": zod.number(),
+  "alertThreshold": zod.number(),
+  "reportCadence": zod.enum(['daily', 'weekly', 'monthly']),
+  "competitors": zod.array(zod.string()),
+  "marketKeywords": zod.array(zod.string()),
+  "mindMeldPrivate": zod.boolean(),
+  "emailAlerts": zod.boolean(),
+  "zohoCliqMode": zod.enum(['off', 'test', 'live']),
+  "whatsappMode": zod.enum(['off', 'test', 'live']),
+  "lastTestMessageAt": zod.string().nullable()
+})
+
+
+/**
+ * @summary Update workspace app settings
+ */
+export const updateAppSettingsBodyDuplicateSensitivityMin = 0;
+export const updateAppSettingsBodyDuplicateSensitivityMax = 100;
+
+export const updateAppSettingsBodyAlertThresholdMax = 10;
+
+
+
+export const UpdateAppSettingsBody = zod.object({
+  "duplicateSensitivity": zod.number().min(updateAppSettingsBodyDuplicateSensitivityMin).max(updateAppSettingsBodyDuplicateSensitivityMax).optional(),
+  "alertThreshold": zod.number().min(1).max(updateAppSettingsBodyAlertThresholdMax).optional(),
+  "reportCadence": zod.enum(['daily', 'weekly', 'monthly']).optional(),
+  "competitors": zod.array(zod.string()).optional(),
+  "marketKeywords": zod.array(zod.string()).optional(),
+  "mindMeldPrivate": zod.boolean().optional(),
+  "emailAlerts": zod.boolean().optional(),
+  "zohoCliqMode": zod.enum(['off', 'test', 'live']).optional(),
+  "whatsappMode": zod.enum(['off', 'test', 'live']).optional(),
+  "lastTestMessageAt": zod.string().nullish()
+})
+
+export const UpdateAppSettingsResponse = zod.object({
+  "duplicateSensitivity": zod.number(),
+  "alertThreshold": zod.number(),
+  "reportCadence": zod.enum(['daily', 'weekly', 'monthly']),
+  "competitors": zod.array(zod.string()),
+  "marketKeywords": zod.array(zod.string()),
+  "mindMeldPrivate": zod.boolean(),
+  "emailAlerts": zod.boolean(),
+  "zohoCliqMode": zod.enum(['off', 'test', 'live']),
+  "whatsappMode": zod.enum(['off', 'test', 'live']),
+  "lastTestMessageAt": zod.string().nullable()
+})
+
+
+/**
+ * @summary List integration connection status
+ */
+export const ListIntegrationStatusResponseItem = zod.object({
+  "name": zod.string(),
+  "status": zod.string(),
+  "state": zod.enum(['simulated', 'future', 'planned', 'disabled', 'sample'])
+})
+export const ListIntegrationStatusResponse = zod.array(ListIntegrationStatusResponseItem)
+
+
+/**
+ * @summary List workspace projects
+ */
+export const ListProjectsResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "department": zod.string(),
+  "owner": zod.string().nullable(),
+  "status": zod.enum(['active', 'at-risk', 'blocked', 'stale', 'complete', 'planning']),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "progress": zod.number(),
+  "source": zod.string(),
+  "classification": zod.string(),
+  "lastActivity": zod.string(),
+  "deadline": zod.string().nullable(),
+  "tags": zod.array(zod.string())
+})
+export const ListProjectsResponse = zod.array(ListProjectsResponseItem)
+
+
+/**
+ * @summary List project blockers
+ */
+export const ListProjectBlockersResponseItem = zod.object({
+  "id": zod.number(),
+  "projectId": zod.number(),
+  "title": zod.string(),
+  "owner": zod.string().nullable(),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "age": zod.number()
+})
+export const ListProjectBlockersResponse = zod.array(ListProjectBlockersResponseItem)
+
+
+/**
+ * @summary List Company Brain records
+ */
+export const ListCompanyRecordsResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "type": zod.string(),
+  "summary": zod.string(),
+  "source": zod.string(),
+  "classification": zod.string(),
+  "keywords": zod.array(zod.string())
+})
+export const ListCompanyRecordsResponse = zod.array(ListCompanyRecordsResponseItem)
+
+
+/**
+ * @summary List open and deferred decisions
+ */
+export const ListDecisionsResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "context": zod.string(),
+  "status": zod.enum(['open', 'decided', 'deferred']),
+  "owner": zod.string().nullable(),
+  "approvalRoute": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical'])
+})
+export const ListDecisionsResponse = zod.array(ListDecisionsResponseItem)
+
+
+/**
+ * @summary List automation registry entries
+ */
+export const ListAutomationsResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "system": zod.string(),
+  "status": zod.enum(['live', 'draft', 'proposed', 'paused']),
+  "owner": zod.string().nullable(),
+  "description": zod.string()
+})
+export const ListAutomationsResponse = zod.array(ListAutomationsResponseItem)
+
+
+/**
+ * @summary List duplicate work risks
+ */
+export const ListDuplicateRisksResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "similarity": zod.number(),
+  "overlappingItems": zod.array(zod.string()),
+  "reason": zod.string(),
+  "sourceRecords": zod.array(zod.string()),
+  "affectedOwners": zod.array(zod.string()),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "recommendation": zod.string(),
+  "approvalRoute": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "category": zod.string()
+})
+export const ListDuplicateRisksResponse = zod.array(ListDuplicateRisksResponseItem)
+
+
+/**
+ * @summary List dashboard alerts
+ */
+export const ListAlertsResponseItem = zod.object({
+  "id": zod.number(),
+  "type": zod.enum(['overlap', 'risk', 'blocker', 'missing-owner', 'duplicate', 'stale']),
+  "message": zod.string(),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "source": zod.string(),
+  "createdAt": zod.string()
+})
+export const ListAlertsResponse = zod.array(ListAlertsResponseItem)
+
+
+/**
+ * @summary List build registry items
+ */
+export const ListBuildItemsResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "projectId": zod.number(),
+  "readiness": zod.number(),
+  "status": zod.enum(['scoping', 'ready', 'in-build', 'blocked', 'shipped']),
+  "owner": zod.string().nullable(),
+  "source": zod.string()
+})
+export const ListBuildItemsResponse = zod.array(ListBuildItemsResponseItem)
+
+
+/**
+ * @summary List project tasks
+ */
+export const ListProjectTasksResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "projectId": zod.number(),
+  "owner": zod.string().nullable(),
+  "status": zod.enum(['todo', 'in-progress', 'review', 'done']),
+  "due": zod.string().nullable()
+})
+export const ListProjectTasksResponse = zod.array(ListProjectTasksResponseItem)
+
+
+/**
+ * @summary List market monitoring signals
+ */
+export const ListMarketSignalsResponseItem = zod.object({
+  "id": zod.number(),
+  "source": zod.string(),
+  "dateFound": zod.string(),
+  "signalType": zod.string(),
+  "summary": zod.string(),
+  "opportunity": zod.string(),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "recommendedResponse": zod.string(),
+  "reviewOwner": zod.enum(['rose', 'carmen', 'both', 'none'])
+})
+export const ListMarketSignalsResponse = zod.array(ListMarketSignalsResponseItem)
+
+
+/**
+ * @summary List competitor watch profiles
+ */
+export const ListMarketCompetitorsResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "threat": zod.enum(['low', 'medium', 'high', 'watch']),
+  "trend": zod.enum(['up', 'down', 'flat']),
+  "newsCount": zod.number(),
+  "movement": zod.number(),
+  "series": zod.array(zod.number())
+})
+export const ListMarketCompetitorsResponse = zod.array(ListMarketCompetitorsResponseItem)
+
+
+/**
+ * @summary List saved executive report templates
+ */
+export const ListReportTemplatesResponseItem = zod.object({
+  "id": zod.number(),
+  "type": zod.string(),
+  "title": zod.string(),
+  "date": zod.string(),
+  "summary": zod.string(),
+  "findings": zod.array(zod.string()),
+  "sourceData": zod.array(zod.string()),
+  "risks": zod.array(zod.string()),
+  "recommendations": zod.array(zod.string()),
+  "decisionsNeeded": zod.array(zod.string()),
+  "owners": zod.array(zod.string()),
+  "nextSteps": zod.array(zod.string())
+})
+export const ListReportTemplatesResponse = zod.array(ListReportTemplatesResponseItem)
+
+
+/**
+ * @summary List agent work queue items
+ */
+export const ListAgentWorkItemsResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "requestType": zod.enum(['bug', 'fix', 'improvement', 'ops', 'question', 'integration-prep']),
+  "priority": zod.enum(['low', 'medium', 'high', 'urgent']),
+  "affectedModule": zod.string(),
+  "desiredOutcome": zod.string(),
+  "status": zod.enum(['new', 'triaged', 'approved-for-agent', 'in-progress', 'blocked', 'ready-for-review', 'done', 'rejected']),
+  "owner": zod.string().nullable(),
+  "approvalRoute": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "source": zod.string(),
+  "relatedIntakeId": zod.number().nullable(),
+  "relatedRecommendationId": zod.number().nullable(),
+  "relatedProjectId": zod.number().nullable(),
+  "branchName": zod.string().nullable(),
+  "commitSha": zod.string().nullable(),
+  "mergeRequestUrl": zod.string().nullable(),
+  "verificationSteps": zod.array(zod.string()),
+  "agentNotes": zod.string(),
+  "finalOutcome": zod.string().nullable(),
+  "events": zod.array(zod.object({
+  "id": zod.string(),
+  "timestamp": zod.string(),
+  "actor": zod.string(),
+  "action": zod.string(),
+  "note": zod.string().optional()
+})),
+  "createdByName": zod.string().nullable(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const ListAgentWorkItemsResponse = zod.array(ListAgentWorkItemsResponseItem)
+
+
+/**
+ * @summary Create an agent work request
+ */
+
+
+
+
+
+
+export const CreateAgentWorkItemBody = zod.object({
+  "title": zod.string().min(1),
+  "description": zod.string().min(1),
+  "requestType": zod.enum(['bug', 'fix', 'improvement', 'ops', 'question', 'integration-prep']),
+  "priority": zod.enum(['low', 'medium', 'high', 'urgent']),
+  "affectedModule": zod.string().min(1),
+  "desiredOutcome": zod.string().min(1),
+  "owner": zod.string().nullish(),
+  "approvalRoute": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "source": zod.string().optional(),
+  "relatedIntakeId": zod.number().nullish(),
+  "relatedRecommendationId": zod.number().nullish(),
+  "relatedProjectId": zod.number().nullish(),
+  "verificationSteps": zod.array(zod.string()).optional()
+})
+
+
+/**
+ * @summary Update an agent work item
+ */
+export const UpdateAgentWorkItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateAgentWorkItemBody = zod.object({
+  "priority": zod.enum(['low', 'medium', 'high', 'urgent']).optional(),
+  "status": zod.enum(['new', 'triaged', 'approved-for-agent', 'in-progress', 'blocked', 'ready-for-review', 'done', 'rejected']).optional(),
+  "owner": zod.string().nullish(),
+  "approvalRoute": zod.enum(['rose', 'carmen', 'both', 'none']).optional(),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']).optional(),
+  "branchName": zod.string().nullish(),
+  "commitSha": zod.string().nullish(),
+  "mergeRequestUrl": zod.string().nullish(),
+  "verificationSteps": zod.array(zod.string()).optional(),
+  "agentNotes": zod.string().optional(),
+  "finalOutcome": zod.string().nullish()
+})
+
+export const UpdateAgentWorkItemResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "requestType": zod.enum(['bug', 'fix', 'improvement', 'ops', 'question', 'integration-prep']),
+  "priority": zod.enum(['low', 'medium', 'high', 'urgent']),
+  "affectedModule": zod.string(),
+  "desiredOutcome": zod.string(),
+  "status": zod.enum(['new', 'triaged', 'approved-for-agent', 'in-progress', 'blocked', 'ready-for-review', 'done', 'rejected']),
+  "owner": zod.string().nullable(),
+  "approvalRoute": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "source": zod.string(),
+  "relatedIntakeId": zod.number().nullable(),
+  "relatedRecommendationId": zod.number().nullable(),
+  "relatedProjectId": zod.number().nullable(),
+  "branchName": zod.string().nullable(),
+  "commitSha": zod.string().nullable(),
+  "mergeRequestUrl": zod.string().nullable(),
+  "verificationSteps": zod.array(zod.string()),
+  "agentNotes": zod.string(),
+  "finalOutcome": zod.string().nullable(),
+  "events": zod.array(zod.object({
+  "id": zod.string(),
+  "timestamp": zod.string(),
+  "actor": zod.string(),
+  "action": zod.string(),
+  "note": zod.string().optional()
+})),
+  "createdByName": zod.string().nullable(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Add an agent work event
+ */
+export const AddAgentWorkEventParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const AddAgentWorkEventBody = zod.object({
+  "actor": zod.string().optional(),
+  "action": zod.string().min(1),
+  "note": zod.string().optional()
+})
+
+export const AddAgentWorkEventResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "requestType": zod.enum(['bug', 'fix', 'improvement', 'ops', 'question', 'integration-prep']),
+  "priority": zod.enum(['low', 'medium', 'high', 'urgent']),
+  "affectedModule": zod.string(),
+  "desiredOutcome": zod.string(),
+  "status": zod.enum(['new', 'triaged', 'approved-for-agent', 'in-progress', 'blocked', 'ready-for-review', 'done', 'rejected']),
+  "owner": zod.string().nullable(),
+  "approvalRoute": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "source": zod.string(),
+  "relatedIntakeId": zod.number().nullable(),
+  "relatedRecommendationId": zod.number().nullable(),
+  "relatedProjectId": zod.number().nullable(),
+  "branchName": zod.string().nullable(),
+  "commitSha": zod.string().nullable(),
+  "mergeRequestUrl": zod.string().nullable(),
+  "verificationSteps": zod.array(zod.string()),
+  "agentNotes": zod.string(),
+  "finalOutcome": zod.string().nullable(),
+  "events": zod.array(zod.object({
+  "id": zod.string(),
+  "timestamp": zod.string(),
+  "actor": zod.string(),
+  "action": zod.string(),
+  "note": zod.string().optional()
+})),
+  "createdByName": zod.string().nullable(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+

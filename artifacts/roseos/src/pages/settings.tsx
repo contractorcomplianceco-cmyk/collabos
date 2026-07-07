@@ -2,7 +2,6 @@ import React from "react";
 import { Settings as SettingsIcon, Database, ShieldCheck, Bell, Plug, Lock, RotateCcw } from "lucide-react";
 import { PageHeader, SectionCard, StatusChip } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
-import { integrations, companyRecords } from "@/data/seed";
 import { useToast } from "@/hooks/use-toast";
 
 const STATE_TONE: Record<string, "emerald" | "amber" | "violet" | "slate" | "sky"> = {
@@ -19,19 +18,22 @@ const ROLE_MATRIX = [
 ];
 
 export default function SettingsPage() {
-  const { settings, updateSettings, resetData } = useAppState();
+  const { settings, settingsLoading, updateSettings, resetData, companyRecords, integrations } = useAppState();
   const { toast } = useToast();
 
   return (
     <div className="space-y-6 p-6">
       <PageHeader title="Settings, Sources & Permissions" subtitle="Configure data sources, thresholds, permissions, and privacy." icon={SettingsIcon} accent="sky"
         actions={
-          <button onClick={() => { resetData(); toast({ title: "Sample data reset", description: "Restored the original Rose OS sample data." }); }} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
-            <RotateCcw className="h-4 w-4" /> Reset sample data
+          <button onClick={() => { resetData(); toast({ title: "Local demo state reset", description: "Your local role preference was refreshed. Shared workspace data is unchanged." }); }} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
+            <RotateCcw className="h-4 w-4" /> Reset local demo state
           </button>
         }
       />
 
+      {settingsLoading ? (
+        <p className="text-sm text-slate-500">Loading workspace settings…</p>
+      ) : (
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <SectionCard title="Detection & Alerts" icon={Bell} accent="rose">
           <div className="space-y-5">
@@ -50,7 +52,7 @@ export default function SettingsPage() {
 
         <SectionCard title="Privacy" icon={Lock} accent="violet">
           <Toggle label="Mind Meld Room private (Rose & Carmen only)" checked={settings.mindMeldPrivate} onChange={(v) => updateSettings({ mindMeldPrivate: v })} />
-          <Toggle label="Email alerts" checked={settings.emailAlerts} onChange={(v) => { updateSettings({ emailAlerts: v }); toast({ title: v ? "Email alerts noted" : "Email alerts off", description: "Email delivery is simulated in this prototype." }); }} />
+          <Toggle label="Email alerts" checked={settings.emailAlerts} onChange={(v) => { updateSettings({ emailAlerts: v }); toast({ title: v ? "Email alerts enabled" : "Email alerts disabled", description: "Preference saved. Live email delivery will activate when the email integration is approved." }); }} />
           <p className="mt-3 rounded-xl bg-violet-50/60 p-3 text-xs text-slate-600">Mind Meld content is end-to-end private to Rose and Carmen. Handoffs create private items and never auto-create official company decisions.</p>
         </SectionCard>
 
@@ -74,7 +76,7 @@ export default function SettingsPage() {
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-xs text-slate-400">All integrations are recommend-only. No live external connections are active in this prototype.</p>
+          <p className="mt-3 text-xs text-slate-400">Integration status is stored in the shared database. Live external connections are not active yet — approvals are required before each integration goes live.</p>
         </SectionCard>
 
         <SectionCard title="Roles & Permissions" icon={ShieldCheck} accent="rose" className="lg:col-span-2">
@@ -100,6 +102,7 @@ export default function SettingsPage() {
           </div>
         </SectionCard>
       </div>
+      )}
     </div>
   );
 }
