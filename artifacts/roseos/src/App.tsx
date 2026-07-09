@@ -497,6 +497,7 @@ function RoseBrainDrawer() {
 function Layout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -527,6 +528,12 @@ function Layout({ children }: { children: React.ReactNode }) {
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopBar onMenu={() => setMobileOpen(true)} onOpenPalette={() => setPaletteOpen(true)} />
+        {user?.mustChangePassword && (
+          <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-800">
+            Temporary password active —{" "}
+            <Link href="/settings" className="font-semibold underline">change your password in Settings</Link>.
+          </div>
+        )}
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />

@@ -429,28 +429,42 @@ export interface GeneratedReport {
 /** Report generation helper from live data. */
 export function generateReport(
   type: string,
-  ctx: { projects: Project[]; blockers: Blocker[]; decisions: Decision[] },
+  ctx: {
+    projects: Project[];
+    blockers: Blocker[];
+    decisions: Decision[];
+    recommendations?: { status: string }[];
+    projectTasks?: { status: string }[];
+  },
 ): GeneratedReport {
   const atRisk = ctx.projects.filter((p) => p.risk === "high" || p.status === "at-risk" || p.status === "blocked");
   const unowned = ctx.projects.filter((p) => !p.owner);
   const stale = ctx.projects.filter((p) => p.status === "stale");
   const openDecisions = ctx.decisions.filter((d) => d.status === "open");
+  const openRecs = (ctx.recommendations ?? []).filter((r) => r.status === "pending");
+  const openTasks = (ctx.projectTasks ?? []).filter((t) => t.status === "open" || t.status === "in-progress");
 
   return {
-    summary: `${type}: ${ctx.projects.length} projects tracked, ${atRisk.length} need attention, ${openDecisions.length} open decisions.`,
+    summary: `${type}: ${ctx.projects.length} projects, ${openTasks.length} open tasks, ${openRecs.length} items in review queue, ${openDecisions.length} open decisions.`,
     findings: [
       `${atRisk.length} project(s) flagged at-risk, blocked, or high risk`,
       `${unowned.length} project(s) currently unowned`,
       `${stale.length} project(s) stale and losing momentum`,
       `${ctx.blockers.length} active blocker(s)`,
+      openRecs.length ? `${openRecs.length} recommendation(s) awaiting review` : "Review queue is clear",
     ],
     risks: atRisk.map((p) => `${p.name} — ${p.status} (${p.risk} risk)`),
     recommendations: [
       unowned.length ? `Assign owners to ${unowned.map((p) => p.name).join(", ")}` : "All projects have owners",
       openDecisions.length ? `Resolve ${openDecisions.length} open decision(s)` : "No open decisions",
+      openRecs.length ? `Review ${openRecs.length} queued recommendation(s)` : "No pending review items",
     ],
     decisionsNeeded: openDecisions.map((d) => d.title),
-    nextSteps: ["Review with leadership", "Re-baseline timelines", "Update Company Brain"],
+    nextSteps: [
+      openTasks.length ? `Close or re-prioritize ${openTasks.length} open task(s)` : "No open tasks blocking progress",
+      "Review with leadership",
+      "Update Company Brain",
+    ],
   };
 }
 

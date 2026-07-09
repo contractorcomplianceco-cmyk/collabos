@@ -10,14 +10,11 @@ import {
   getCurrentUser,
   login as apiLogin,
   logout as apiLogout,
-  setAuthTokenGetter,
   ApiError,
   type UserProfile,
 } from "@workspace/api-client-react";
 
-const TOKEN_KEY = "roseos_auth_token";
-
-setAuthTokenGetter(() => localStorage.getItem(TOKEN_KEY));
+const LEGACY_TOKEN_KEY = "roseos_auth_token";
 
 export type AuthStatus = "loading" | "anon" | "authed";
 
@@ -38,18 +35,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) {
-      setStatus("anon");
-      return;
-    }
+    localStorage.removeItem(LEGACY_TOKEN_KEY);
     getCurrentUser()
       .then((u) => {
         setUser(u);
         setStatus("authed");
       })
       .catch(() => {
-        localStorage.removeItem(TOKEN_KEY);
         setUser(null);
         setStatus("anon");
       });
@@ -58,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     try {
       const session = await apiLogin({ email, password });
-      localStorage.setItem(TOKEN_KEY, session.token);
+      localStorage.removeItem(LEGACY_TOKEN_KEY);
       setUser(session.user);
       setStatus("authed");
     } catch (err) {
@@ -76,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // session may already be gone; still clear locally
     }
-    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(LEGACY_TOKEN_KEY);
     setUser(null);
     setStatus("anon");
   }, []);

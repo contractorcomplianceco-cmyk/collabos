@@ -2,9 +2,18 @@ import { Router, type IRouter } from "express";
 import { LoginBody, MarkModuleSeenBody } from "@workspace/api-zod";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { createSession, destroySession, toUserProfile, verifyPassword } from "../lib/auth";
+import { createSession, destroySession, hashPassword, toUserProfile, verifyPassword } from "../lib/auth";
 import { logAudit } from "../lib/audit";
 import { requireAuth } from "../middlewares/auth";
+import { clearSessionCookie, setSessionCookie } from "../lib/session-cookie";
+
+function parseChangePasswordBody(body: unknown): { currentPassword: string; newPassword: string } | null {
+  if (!body || typeof body !== "object") return null;
+  const { currentPassword, newPassword } = body as Record<string, unknown>;
+  if (typeof currentPassword !== "string" || currentPassword.length < 1) return null;
+  if (typeof newPassword !== "string" || newPassword.length < 8) return null;
+  return { currentPassword, newPassword };
+}
 
 const VALID_MODULES = new Set([
   "dashboard",
@@ -52,6 +61,7 @@ router.post("/auth/login", async (req, res) => {
     return;
   }
   const token = await createSession(user.id);
+  setSessionCookie(res, token);
   await db.update(usersTable).set({ lastLoginAt: new Date() }).where(eq(usersTable.id, user.id));
   await logAudit({
     actorId: user.id,
@@ -61,12 +71,14 @@ router.post("/auth/login", async (req, res) => {
     targetId: String(user.id),
     sourceArea: "auth",
   });
+  // Token in JSON kept for one-deploy backward compat; browser should use httpOnly cookie.
   res.json({ token, user: toUserProfile({ ...user, lastLoginAt: new Date() }) });
 });
 
 router.post("/auth/logout", requireAuth, async (req, res) => {
   const user = req.user!;
   if (req.sessionToken) await destroySession(req.sessionToken);
+  clearSessionCookie(res);
   await logAudit({
     actorId: user.id,
     actorName: user.name,
@@ -80,6 +92,35 @@ router.post("/auth/logout", requireAuth, async (req, res) => {
 
 router.get("/auth/me", requireAuth, (req, res) => {
   res.json(toUserProfile(req.user!));
+});
+
+router.post("/auth/change-password", requireAuth, async (req, res) => {
+  const parsed = parseChangePasswordBody(req.body);
+  if (!parsed) {
+    res.status(400).json({ message: "Current password and a new password of at least 8 characters are required" });
+    return;
+  }
+  const user = req.user!;
+  const [row] = await db.select().from(usersTable).where(eq(usersTable.id, user.id)).limit(1);
+  if (!row || !verifyPassword(parsed.currentPassword, row.passwordHash)) {
+    res.status(401).json({ message: "Current password is incorrect" });
+    return;
+  }
+  const [updated] = await db
+    .update(usersTable)
+    .set({ passwordHash: hashPassword(parsed.newPassword), mustChangePassword: false })
+    .where(eq(usersTable.id, user.id))
+    .returning();
+  await logAudit({
+    actorId: user.id,
+    actorName: user.name,
+    action: "user_updated",
+    targetType: "user",
+    targetId: String(user.id),
+    sourceArea: "auth",
+    details: "Password changed by user",
+  });
+  res.json(toUserProfile(updated));
 });
 
 router.patch("/auth/module-seen", requireAuth, async (req, res) => {

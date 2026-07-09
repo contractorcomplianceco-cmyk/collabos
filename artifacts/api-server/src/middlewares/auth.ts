@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from "express";
 import type { User } from "@workspace/db";
 import { getUserForToken } from "../lib/auth";
 import { hasPermission, type Permission } from "../lib/permissions";
+import { readSessionToken } from "../lib/session-cookie";
 
 const COMMAND_CENTER_SERVICE_USER: User = {
   id: 0,
@@ -29,8 +30,7 @@ function matchesCommandCenterServiceToken(token: string): boolean {
 }
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
-  const header = req.headers.authorization;
-  const token = header?.startsWith("Bearer ") ? header.slice(7) : null;
+  const token = readSessionToken(req);
   if (!token) {
     res.status(401).json({ message: "Not authenticated" });
     return;

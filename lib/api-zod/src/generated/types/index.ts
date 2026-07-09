@@ -36,6 +36,7 @@ export * from './blockerRecord';
 export * from './blockerRecordRisk';
 export * from './buildItemRecord';
 export * from './buildItemRecordStatus';
+export * from './changePasswordInput';
 export * from './companyRecord';
 export * from './companyRecordInput';
 export * from './companyRecordUpdate';

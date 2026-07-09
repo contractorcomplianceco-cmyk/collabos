@@ -96,6 +96,34 @@ export const MarkModuleSeenResponse = zod.object({
 
 
 /**
+ * @summary Change password for the current user
+ */
+
+export const changePasswordBodyNewPasswordMin = 8;
+
+
+
+export const ChangePasswordBody = zod.object({
+  "currentPassword": zod.string().min(1),
+  "newPassword": zod.string().min(changePasswordBodyNewPasswordMin)
+})
+
+export const ChangePasswordResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.enum(['super_admin', 'rose_admin', 'carmen_admin', 'leadership_reviewer', 'contributor', 'viewer', 'guest']),
+  "status": zod.enum(['active', 'inactive']),
+  "isDemo": zod.boolean(),
+  "mustChangePassword": zod.boolean().optional(),
+  "permissions": zod.array(zod.string()),
+  "lastLoginAt": zod.string().nullish(),
+  "moduleLastSeen": zod.record(zod.string(), zod.string()).optional(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary List all users (admin only)
  */
 export const ListUsersResponseItem = zod.object({

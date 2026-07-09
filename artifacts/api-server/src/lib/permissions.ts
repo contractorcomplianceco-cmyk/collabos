@@ -47,6 +47,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "integration_settings_manage",
     "agent_work_view",
     "agent_work_manage",
+    "user_management",
     "audit_logs_view",
   ],
   carmen_admin: [
@@ -67,6 +68,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "integration_settings_manage",
     "agent_work_view",
     "agent_work_manage",
+    "user_management",
     "audit_logs_view",
   ],
   leadership_reviewer: [

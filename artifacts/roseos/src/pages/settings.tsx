@@ -1,8 +1,10 @@
-import React from "react";
-import { Settings as SettingsIcon, Database, ShieldCheck, Bell, Plug, Lock, RotateCcw } from "lucide-react";
+import React, { useState } from "react";
+import { Settings as SettingsIcon, Database, ShieldCheck, Bell, Plug, Lock, RotateCcw, KeyRound } from "lucide-react";
 import { PageHeader, SectionCard, StatusChip } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useChangePassword, ApiError } from "@workspace/api-client-react";
 
 const STATE_TONE: Record<string, "emerald" | "amber" | "violet" | "slate" | "sky"> = {
   simulated: "emerald", future: "amber", planned: "violet", disabled: "slate", sample: "sky",
@@ -19,7 +21,39 @@ const ROLE_MATRIX = [
 
 export default function SettingsPage() {
   const { settings, settingsLoading, updateSettings, resetData, companyRecords, integrations } = useAppState();
+  const { user, refreshUser } = useAuth();
   const { toast } = useToast();
+  const changePassword = useChangePassword();
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const submitPasswordChange = () => {
+    if (newPassword.length < 8) {
+      toast({ title: "Password too short", description: "Use at least 8 characters.", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Passwords do not match", description: "Confirm password must match the new password.", variant: "destructive" });
+      return;
+    }
+    changePassword.mutate(
+      { data: { currentPassword, newPassword } },
+      {
+        onSuccess: (updated) => {
+          refreshUser(updated);
+          setCurrentPassword("");
+          setNewPassword("");
+          setConfirmPassword("");
+          toast({ title: "Password updated", description: "Your new password is active." });
+        },
+        onError: (err) => {
+          const msg = err instanceof ApiError ? (err.data as { message?: string })?.message ?? "Could not change password" : "Could not change password";
+          toast({ title: "Password change failed", description: msg, variant: "destructive" });
+        },
+      },
+    );
+  };
 
   return (
     <div className="space-y-6 p-6">
@@ -35,6 +69,27 @@ export default function SettingsPage() {
         <p className="text-sm text-slate-500">Loading workspace settings…</p>
       ) : (
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <SectionCard title="Account Security" icon={KeyRound} accent="sky" className="lg:col-span-2">
+          {user?.mustChangePassword && (
+            <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+              Your account has a temporary password. Choose a new password below to continue securely.
+            </p>
+          )}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <input className="field-input" type="password" placeholder="Current password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+            <input className="field-input" type="password" placeholder="New password (min 8)" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+            <input className="field-input" type="password" placeholder="Confirm new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+          </div>
+          <button
+            onClick={submitPasswordChange}
+            disabled={changePassword.isPending || !currentPassword || newPassword.length < 8}
+            className="mt-3 rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {changePassword.isPending ? "Updating…" : "Change password"}
+          </button>
+          <p className="mt-2 text-xs text-slate-400">Optional for staff bootstrap accounts. Required when an admin issues a temporary password.</p>
+        </SectionCard>
+
         <SectionCard title="Detection & Alerts" icon={Bell} accent="rose">
           <div className="space-y-5">
             <Slider label="Duplicate sensitivity" value={settings.duplicateSensitivity} onChange={(v) => updateSettings({ duplicateSensitivity: v })} suffix="%" />

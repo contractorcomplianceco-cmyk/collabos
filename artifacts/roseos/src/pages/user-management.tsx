@@ -25,6 +25,18 @@ const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
   { value: "guest", label: "Guest" },
 ];
 
+const ELEVATED_ROLES: UserRole[] = ["super_admin", "rose_admin", "carmen_admin"];
+
+function assignableRoles(actorRole?: string): { value: UserRole; label: string }[] {
+  if (actorRole === "super_admin") return ROLE_OPTIONS;
+  return ROLE_OPTIONS.filter((r) => !ELEVATED_ROLES.includes(r.value));
+}
+
+function canManageUser(actorRole: string | undefined, targetRole: string): boolean {
+  if (actorRole === "super_admin") return true;
+  return !ELEVATED_ROLES.includes(targetRole as UserRole);
+}
+
 function roleLabel(role: string): string {
   return ROLE_OPTIONS.find((r) => r.value === role)?.label ?? role;
 }
@@ -57,6 +69,8 @@ export default function UserManagement() {
     const list = users ?? [];
     return roleFilter === "all" ? list : list.filter((u) => u.role === roleFilter);
   }, [users, roleFilter]);
+
+  const rolesForCreate = assignableRoles(me?.role);
 
   const submitCreate = () => {
     setProblem(null);
@@ -107,7 +121,7 @@ export default function UserManagement() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-xl font-bold text-slate-800"><UserCog className="h-5 w-5 text-rose-500" /> User Management</h1>
-          <p className="text-sm text-slate-500">Admin-only — create accounts, assign roles, and reset passwords. Every change is written to the audit log.</p>
+          <p className="text-sm text-slate-500">Create contributor accounts, assign team roles, and reset passwords. Rose and Carmen can manage team members but cannot create or modify admin accounts.</p>
         </div>
         <button onClick={() => { setShowCreate((v) => !v); setProblem(null); }} className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-blue-500 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-95">
           {showCreate ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />} {showCreate ? "Cancel" : "Add user"}
@@ -130,7 +144,7 @@ export default function UserManagement() {
             <input className="field-input" placeholder="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             <input className="field-input" placeholder="Password (min 8 characters)" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
             <select className="field-input" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as UserRole })}>
-              {ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+              {rolesForCreate.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
             </select>
           </div>
           <button
@@ -169,6 +183,8 @@ export default function UserManagement() {
               <tbody>
                 {filtered.map((u) => {
                   const self = me?.id === u.id;
+                  const manageable = canManageUser(me?.role, u.role) || self;
+                  const roleChoices = self ? ROLE_OPTIONS : assignableRoles(me?.role);
                   return (
                     <tr key={u.id} className="border-b border-slate-50">
                       <td className="py-2.5 pr-3">
@@ -179,10 +195,10 @@ export default function UserManagement() {
                         <select
                           className="field-input !w-auto text-xs"
                           value={u.role}
-                          disabled={self || updateUser.isPending}
+                          disabled={self || !manageable || updateUser.isPending}
                           onChange={(e) => patchUser(u, { role: e.target.value as UserRole })}
                         >
-                          {ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                          {roleChoices.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
                         </select>
                         <p className="mt-0.5 text-[10px] text-slate-400">Appears in app as: {mapServerRole(u.role)}</p>
                       </td>
@@ -195,7 +211,7 @@ export default function UserManagement() {
                         <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => patchUser(u, { status: u.status === "active" ? "inactive" : "active" })}
-                            disabled={self || updateUser.isPending}
+                            disabled={self || !manageable || updateUser.isPending}
                             title={u.status === "active" ? "Deactivate" : "Activate"}
                             className="rounded-lg border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50 disabled:opacity-40"
                           >
@@ -203,7 +219,7 @@ export default function UserManagement() {
                           </button>
                           <button
                             onClick={() => doReset(u)}
-                            disabled={resetPassword.isPending}
+                            disabled={resetPassword.isPending || (!manageable && !self)}
                             title="Reset password"
                             className="rounded-lg border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50 disabled:opacity-40"
                           >

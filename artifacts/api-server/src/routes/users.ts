@@ -9,6 +9,14 @@ import { requireAuth, requirePermission } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
+const ELEVATED_ROLES = new Set(["super_admin", "rose_admin", "carmen_admin"]);
+
+function canAssignRole(actorRole: string, targetRole: string): boolean {
+  if (actorRole === "super_admin") return true;
+  if (ELEVATED_ROLES.has(targetRole)) return false;
+  return true;
+}
+
 router.use("/users", requireAuth, requirePermission("user_management"));
 
 router.get("/users", async (_req, res) => {
@@ -24,6 +32,10 @@ router.post("/users", async (req, res) => {
   }
   const actor = req.user!;
   const email = parsed.data.email.trim().toLowerCase();
+  if (!canAssignRole(actor.role, parsed.data.role)) {
+    res.status(403).json({ message: "You cannot assign that role" });
+    return;
+  }
   const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
   if (existing) {
     res.status(400).json({ message: "A user with this email already exists" });
@@ -70,6 +82,14 @@ router.patch("/users/:id", async (req, res) => {
   }
   if (before.id === actor.id && parsed.data.role && parsed.data.role !== actor.role) {
     res.status(400).json({ message: "You cannot change your own role" });
+    return;
+  }
+  if (parsed.data.role && !canAssignRole(actor.role, parsed.data.role)) {
+    res.status(403).json({ message: "You cannot assign that role" });
+    return;
+  }
+  if (parsed.data.role && ELEVATED_ROLES.has(before.role) && actor.role !== "super_admin") {
+    res.status(403).json({ message: "You cannot change roles for admin accounts" });
     return;
   }
   const updates: Partial<typeof usersTable.$inferInsert> = {};
@@ -124,6 +144,10 @@ router.post("/users/:id/reset-password", async (req, res) => {
   const [target] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
   if (!target) {
     res.status(404).json({ message: "User not found" });
+    return;
+  }
+  if (ELEVATED_ROLES.has(target.role) && actor.role !== "super_admin" && target.id !== actor.id) {
+    res.status(403).json({ message: "You cannot reset passwords for admin accounts" });
     return;
   }
   const tempPassword = `temp-${randomBytes(6).toString("hex")}`;

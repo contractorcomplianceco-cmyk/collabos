@@ -380,6 +380,9 @@ export default function Dashboard() {
 
         {/* Executive Reports */}
         <SectionCard title="Executive Reports" icon={FileBarChart} accent="violet" action={<Link href="/executive-reports" className="text-xs font-semibold text-violet-500 hover:underline">All</Link>}>
+          {reports.length === 0 ? (
+            <EmptyState message="No saved reports yet." hint="Generate leadership summaries from live project and task counts." action={<Link href="/executive-reports" className="text-xs font-semibold text-violet-600 hover:underline">Generate a report</Link>} />
+          ) : (
           <ul className="space-y-2.5">
             {reports.map((r) => (
               <li key={r.id} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 p-2.5">
@@ -394,11 +397,15 @@ export default function Dashboard() {
               </li>
             ))}
           </ul>
+          )}
         </SectionCard>
 
         {/* Market Pulse */}
         <SectionCard title="Market Pulse" icon={Activity} accent="emerald" action={<Link href="/market-pulse" className="text-xs font-semibold text-emerald-500 hover:underline">View market</Link>}>
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Competitor &amp; market movement</p>
+          {topCompetitors.length === 0 ? (
+            <EmptyState message="No competitors tracked." hint="Add competitors in Settings to start market monitoring." action={<Link href="/settings" className="text-xs font-semibold text-emerald-600 hover:underline">Open Settings</Link>} />
+          ) : (
           <div className="grid grid-cols-3 gap-2">
             {topCompetitors.map((c) => {
               const up = c.movement >= 0;
@@ -418,6 +425,7 @@ export default function Dashboard() {
               );
             })}
           </div>
+          )}
         </SectionCard>
 
         {/* Review Queue */}

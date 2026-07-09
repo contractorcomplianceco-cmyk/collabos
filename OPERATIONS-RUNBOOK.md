@@ -19,8 +19,8 @@ This deployment is based on Rose's approved source commit:
 - Frontend: React/Vite static build served by nginx.
 - API: Express server managed by PM2.
 - Database: local PostgreSQL database for CollabOS staging/live operation.
-- Auth: app-owned users and database-backed bearer session tokens.
-- Shared module state: PostgreSQL + Express API backed for the main CollabOS workspace modules. Browser `localStorage` is limited to the demo role preference and auth token storage.
+- Auth: app-owned users and database-backed sessions via httpOnly cookie (`collabos_session`). Bearer header still accepted for one-deploy backward compatibility and Command Center service token.
+- Shared module state: PostgreSQL + Express API backed for the main CollabOS workspace modules. Browser `localStorage` is limited to the demo role preference only (auth token removed).
 
 ## Runtime Inventory
 
@@ -106,18 +106,15 @@ Alerts go to Carmen by default. A controlled test was sent to Rose and Carmen wi
 
 ## Auth Recommendation
 
-Recommended path for now: keep the current app-owned auth and bearer sessions.
+Current auth uses httpOnly secure cookies for browser sessions (preferred). Login sets `collabos_session`; logout clears it. The login JSON still includes a bearer token for one-deploy backward compatibility — clients should rely on cookies and `credentials: include`.
 
-Why:
+Rose and Carmen have scoped user management: create contributor/viewer/guest accounts and reset team passwords. They cannot create or modify admin roles. Super admin retains full user management.
 
-- It is already working and verified.
-- It is cheapest because it uses the existing Express API and PostgreSQL database.
-- It is fastest because there is no new auth vendor, no migration, and no extra integration surface.
-- It keeps future Command Center merge simpler because users, roles, sessions, and audit logs already live in the app database.
+Password change: `POST /api/auth/change-password` with `{ currentPassword, newPassword }`. UI in Settings → Account Security. Staff bootstrap accounts (`mustChangePassword=false`) may change optionally; admin-issued temp passwords require change.
 
 Do not move to Supabase Auth right now unless there is a specific requirement for hosted auth, magic links, SSO, or managed user administration. Supabase Auth would be useful later if CollabOS becomes a standalone SaaS-style app, but adding it now would duplicate the current auth layer.
 
-Security improvement to consider next: move the bearer token out of browser `localStorage` into an httpOnly secure cookie. That is better against token theft from browser script, but it is a code change and should be approved as an auth-hardening task.
+Legacy note: bearer tokens in browser `localStorage` were removed 2026-07-09. If an old tab fails to authenticate, sign out and sign in again.
 
 ## Shared Data Recommendation
 
@@ -228,6 +225,22 @@ gunzip -c /var/backups/collabos/db/<backup-file> | psql "$DATABASE_URL"
 
 Test restore on a non-production database before relying on backups for live operations.
 
+### Restore drill log
+
+| Date (UTC) | Result | Notes |
+|------------|--------|-------|
+| 2026-07-09 | **Success (partial scope)** | Restored `collabos_staging-20260709T031501Z.sql.gz` into temp DB `collabos_restore_drill` via `gunzip -c … \| sudo -u postgres psql collabos_restore_drill`. Verified row counts: 10 users, 43 projects, 48 sessions. Live DB untouched. Temp DB dropped after verification is optional — remove when done. |
+
+Drill command used:
+
+```bash
+LATEST=$(ls -t /var/backups/collabos/db/*.sql.gz | head -1)
+sudo -u postgres psql -c "DROP DATABASE IF EXISTS collabos_restore_drill;"
+sudo -u postgres psql -c "CREATE DATABASE collabos_restore_drill;"
+gunzip -c "$LATEST" | sudo -u postgres psql collabos_restore_drill
+sudo -u postgres psql collabos_restore_drill -c "SELECT count(*) FROM users;"
+```
+
 ## Project Registry Sync
 
 CollabOS project registry is refreshed nightly from live server state (git repos, PM2, HTTP health, Command Center cockpits).
@@ -264,8 +277,8 @@ Seed modules remain in `artifacts/api-server/src/lib/seed-*.ts` for reference bu
 ## Known Caveats
 
 - Staff sign-in uses `@ccacontact.com` accounts when `COLLABOS_PROMOTE_STAFF_ACCOUNTS=true` is set in the server env. Demo `@collabos.demo` logins are deactivated after promotion.
-- Shared module state is PostgreSQL-backed; browser storage remains for auth token and demo role preference.
-- Auth currently uses bearer tokens in browser `localStorage`.
+- Shared module state is PostgreSQL-backed; browser storage remains for demo role preference only.
+- Auth uses httpOnly session cookies; bearer header retained for service integrations.
 - Integrations are not live.
 - This app may later merge into Command Center, but Command Center is not ready for that attachment yet.
 
