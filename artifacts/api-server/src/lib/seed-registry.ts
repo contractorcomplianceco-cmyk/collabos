@@ -112,7 +112,16 @@ export function serializeBuildItem(row: BuildItemRow) {
 }
 
 export function serializeProjectTask(row: ProjectTaskRow) {
-  return { id: row.id, title: row.title, projectId: row.projectId, owner: row.owner, status: row.status, due: row.dueDate, source: row.source };
+  return {
+    id: row.id,
+    title: row.title,
+    projectId: row.projectId,
+    owner: row.owner,
+    status: row.status,
+    due: row.dueDate,
+    source: row.source,
+    createdAt: row.createdAt.toISOString(),
+  };
 }
 
 export async function seedRegistryIfEmpty(): Promise<void> {

@@ -28,6 +28,7 @@ interface AuthContextValue {
   hasPermission: (permission: string) => boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: (user: UserProfile) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -86,8 +87,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [permissions],
   );
 
+  const refreshUser = useCallback((next: UserProfile) => {
+    setUser(next);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ status, user, permissions, hasPermission, login, logout }}>
+    <AuthContext.Provider value={{ status, user, permissions, hasPermission, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -14,6 +14,7 @@ import {
   decisionsTable,
   duplicateRisksTable,
   projectTasksTable,
+  type CompanyRecordRow,
 } from "@workspace/db";
 import { asc, desc, eq } from "drizzle-orm";
 import { logAudit } from "../lib/audit";
@@ -62,7 +63,7 @@ router.post("/company-records", requireAuth, requireDashboard, async (req, res) 
       type: parsed.data.type.trim(),
       summary: parsed.data.summary.trim(),
       source: parsed.data.source?.trim() || "User entry",
-      classification: parsed.data.classification,
+      classification: parsed.data.classification as (typeof companyRecordsTable.$inferInsert)["classification"],
       keywords: parsed.data.keywords,
     })
     .returning();
@@ -99,7 +100,9 @@ router.patch("/company-records/:id", requireAuth, requireDashboard, async (req, 
   if (parsed.data.title !== undefined) patch.title = parsed.data.title.trim();
   if (parsed.data.type !== undefined) patch.type = parsed.data.type.trim();
   if (parsed.data.summary !== undefined) patch.summary = parsed.data.summary.trim();
-  if (parsed.data.classification !== undefined) patch.classification = parsed.data.classification;
+  if (parsed.data.classification !== undefined) {
+    patch.classification = parsed.data.classification as CompanyRecordRow["classification"];
+  }
   if (parsed.data.keywords !== undefined) patch.keywords = parsed.data.keywords;
   const [updated] = await db.update(companyRecordsTable).set(patch).where(eq(companyRecordsTable.id, id)).returning();
   await logAudit({

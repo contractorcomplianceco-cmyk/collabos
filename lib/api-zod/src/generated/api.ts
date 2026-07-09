@@ -41,6 +41,7 @@ export const LoginResponse = zod.object({
   "mustChangePassword": zod.boolean().optional(),
   "permissions": zod.array(zod.string()),
   "lastLoginAt": zod.string().nullish(),
+  "moduleLastSeen": zod.record(zod.string(), zod.string()).optional(),
   "createdAt": zod.string()
 })
 })
@@ -67,6 +68,29 @@ export const GetCurrentUserResponse = zod.object({
   "mustChangePassword": zod.boolean().optional(),
   "permissions": zod.array(zod.string()),
   "lastLoginAt": zod.string().nullish(),
+  "moduleLastSeen": zod.record(zod.string(), zod.string()).optional(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Record that the user visited a workspace module
+ */
+export const MarkModuleSeenBody = zod.object({
+  "module": zod.enum(['dashboard', 'review-queue', 'mind-meld', 'agent-queue', 'external-intake', 'project-tasks'])
+})
+
+export const MarkModuleSeenResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.enum(['super_admin', 'rose_admin', 'carmen_admin', 'leadership_reviewer', 'contributor', 'viewer', 'guest']),
+  "status": zod.enum(['active', 'inactive']),
+  "isDemo": zod.boolean(),
+  "mustChangePassword": zod.boolean().optional(),
+  "permissions": zod.array(zod.string()),
+  "lastLoginAt": zod.string().nullish(),
+  "moduleLastSeen": zod.record(zod.string(), zod.string()).optional(),
   "createdAt": zod.string()
 })
 
@@ -84,6 +108,7 @@ export const ListUsersResponseItem = zod.object({
   "mustChangePassword": zod.boolean().optional(),
   "permissions": zod.array(zod.string()),
   "lastLoginAt": zod.string().nullish(),
+  "moduleLastSeen": zod.record(zod.string(), zod.string()).optional(),
   "createdAt": zod.string()
 })
 export const ListUsersResponse = zod.array(ListUsersResponseItem)
@@ -137,6 +162,7 @@ export const UpdateUserResponse = zod.object({
   "mustChangePassword": zod.boolean().optional(),
   "permissions": zod.array(zod.string()),
   "lastLoginAt": zod.string().nullish(),
+  "moduleLastSeen": zod.record(zod.string(), zod.string()).optional(),
   "createdAt": zod.string()
 })
 
@@ -160,6 +186,7 @@ export const ResetUserPasswordResponse = zod.object({
   "mustChangePassword": zod.boolean().optional(),
   "permissions": zod.array(zod.string()),
   "lastLoginAt": zod.string().nullish(),
+  "moduleLastSeen": zod.record(zod.string(), zod.string()).optional(),
   "createdAt": zod.string()
 })
 })
@@ -1456,7 +1483,8 @@ export const ListProjectTasksResponseItem = zod.object({
   "owner": zod.string().nullable(),
   "status": zod.enum(['todo', 'in-progress', 'review', 'done']),
   "due": zod.string().nullable(),
-  "source": zod.enum(['manual', 'sync'])
+  "source": zod.enum(['manual', 'sync']),
+  "createdAt": zod.string()
 })
 export const ListProjectTasksResponse = zod.array(ListProjectTasksResponseItem)
 
@@ -1502,7 +1530,8 @@ export const UpdateProjectTaskResponse = zod.object({
   "owner": zod.string().nullable(),
   "status": zod.enum(['todo', 'in-progress', 'review', 'done']),
   "due": zod.string().nullable(),
-  "source": zod.enum(['manual', 'sync'])
+  "source": zod.enum(['manual', 'sync']),
+  "createdAt": zod.string()
 })
 
 

@@ -55,6 +55,7 @@ export function toUserProfile(user: User) {
     mustChangePassword: user.mustChangePassword,
     permissions: permissionsForRole(user.role),
     lastLoginAt: user.lastLoginAt ? user.lastLoginAt.toISOString() : null,
+    moduleLastSeen: user.moduleLastSeen ?? {},
     createdAt: user.createdAt.toISOString(),
   };
 }

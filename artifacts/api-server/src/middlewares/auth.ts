@@ -14,6 +14,7 @@ const COMMAND_CENTER_SERVICE_USER: User = {
   isDemo: false,
   mustChangePassword: false,
   lastLoginAt: null,
+  moduleLastSeen: {},
   createdAt: new Date(0),
   updatedAt: new Date(0),
 };

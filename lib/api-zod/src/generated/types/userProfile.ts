@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { UserProfileModuleLastSeen } from './userProfileModuleLastSeen';
 import type { UserRole } from './userRole';
 import type { UserStatus } from './userStatus';
 
@@ -19,5 +20,6 @@ export interface UserProfile {
   permissions: string[];
   /** @nullable */
   lastLoginAt?: string | null;
+  moduleLastSeen?: UserProfileModuleLastSeen;
   createdAt: string;
 }

@@ -339,6 +339,8 @@ function toRecommendation(rec: RecommendationRecord): Recommendation {
     status: rec.status,
     approvals: rec.approvals,
     history: rec.history,
+    createdAt: rec.createdAt,
+    updatedAt: rec.updatedAt,
   };
 }
 
@@ -538,6 +540,7 @@ function toProjectTask(row: ProjectTaskRecord): Task {
     owner: row.owner,
     status: row.status,
     due: row.due,
+    createdAt: row.createdAt,
   };
 }
 

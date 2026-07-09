@@ -18,4 +18,5 @@ export interface ProjectTaskRecord {
   /** @nullable */
   due: string | null;
   source: ProjectTaskRecordSource;
+  createdAt: string;
 }

@@ -68,6 +68,7 @@ import type {
   MockupUpdate,
   MockupVersionInput,
   MockupVersionRecord,
+  ModuleSeenInput,
   ProjectRecord,
   ProjectTaskInput,
   ProjectTaskRecord,
@@ -391,6 +392,77 @@ export function useGetCurrentUser<TData = Awaited<ReturnType<typeof getCurrentUs
 
 
 
+
+export const getMarkModuleSeenUrl = () => {
+
+
+
+
+  return `/api/auth/module-seen`
+}
+
+/**
+ * @summary Record that the user visited a workspace module
+ */
+export const markModuleSeen = async (moduleSeenInput: ModuleSeenInput, options?: RequestInit): Promise<UserProfile> => {
+
+  return customFetch<UserProfile>(getMarkModuleSeenUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      moduleSeenInput,)
+  }
+);}
+
+
+
+
+export const getMarkModuleSeenMutationOptions = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markModuleSeen>>, TError,{data: BodyType<ModuleSeenInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof markModuleSeen>>, TError,{data: BodyType<ModuleSeenInput>}, TContext> => {
+
+const mutationKey = ['markModuleSeen'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markModuleSeen>>, {data: BodyType<ModuleSeenInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  markModuleSeen(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkModuleSeenMutationResult = NonNullable<Awaited<ReturnType<typeof markModuleSeen>>>
+    export type MarkModuleSeenMutationBody = BodyType<ModuleSeenInput>
+    export type MarkModuleSeenMutationError = ErrorType<ApiMessage>
+
+    /**
+ * @summary Record that the user visited a workspace module
+ */
+export const useMarkModuleSeen = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markModuleSeen>>, TError,{data: BodyType<ModuleSeenInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof markModuleSeen>>,
+        TError,
+        {data: BodyType<ModuleSeenInput>},
+        TContext
+      > => {
+      return useMutation(getMarkModuleSeenMutationOptions(options));
+    }
 
 export const getListUsersUrl = () => {
 

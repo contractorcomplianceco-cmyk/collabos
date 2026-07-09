@@ -6,6 +6,7 @@ import {
   Heart, FileText, Check, X,
 } from "lucide-react";
 import { useAppState } from "@/hooks/use-app-state";
+import { useActivityNotifications } from "@/hooks/use-activity-notifications";
 import { canApprove, canViewSensitive } from "@/lib/helpers";
 import {
   KpiWidget, SectionCard, StatusChip, ClassificationBadge, EmptyState,
@@ -83,6 +84,7 @@ function bubbleColor(score: number) {
 
 export default function Dashboard() {
   const { ideas, recommendations, currentRole, setRecommendationStatus, intakeItems, meldTimeline, memoryCandidates, projects, projectTasks, companyRecords, duplicateRisks, sentimentSignals, competitors, reports } = useAppState();
+  const { sinceLastVisit, lastVisitLabel } = useActivityNotifications();
 
   const greeting =
     currentRole === "Carmen" ? "Carmen" : currentRole === "Rose" ? "Rose" : currentRole;
@@ -172,6 +174,35 @@ export default function Dashboard() {
         <Link href="/agent-queue" className="font-semibold text-violet-600 hover:underline">Cursor Direct Requests</Link> once per day.
       </div>
 
+      {/* Since your last visit */}
+      <SectionCard
+        title="Since Your Last Visit"
+        icon={Activity}
+        accent="sky"
+        action={lastVisitLabel ? <StatusChip label={`Last check ${lastVisitLabel}`} tone="sky" /> : null}
+      >
+        {sinceLastVisit.length === 0 ? (
+          <p className="rounded-xl bg-emerald-50 p-3 text-xs text-emerald-700">
+            Nothing new in your key collaboration areas{lastVisitLabel ? ` since ${lastVisitLabel}` : ""}.
+          </p>
+        ) : (
+          <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+            {sinceLastVisit.map((item) => (
+              <Link key={item.id} href={item.href} className={`rounded-xl border p-3 transition hover:shadow-sm ${ATT_TONE[item.tone]}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold">{item.label}</p>
+                  <StatusChip label={`+${item.count}`} tone={item.tone === "slate" ? "slate" : item.tone} />
+                </div>
+                <p className="mt-1 line-clamp-2 text-[11px] opacity-80">{item.detail}</p>
+              </Link>
+            ))}
+          </div>
+        )}
+        <p className="mt-2.5 text-[11px] text-slate-400">
+          In-app activity only — no push or email. Visiting each module marks it as seen for your account.
+        </p>
+      </SectionCard>
+
       {/* What Needs My Attention */}
       <SectionCard
         title="What Needs My Attention?"
@@ -192,7 +223,7 @@ export default function Dashboard() {
           </div>
         )}
         <p className="mt-2.5 text-[11px] text-slate-400">
-          Personalized for your role. No push notifications yet — check Review Queue, Mind Meld, and Cursor Direct Requests when your teammate acts.
+          Personalized for your role — items that need action right now, not just since your last visit.
         </p>
       </SectionCard>
 

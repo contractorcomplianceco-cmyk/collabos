@@ -13,6 +13,8 @@ import {
   FolderKanban, ListChecks,
 } from "lucide-react";
 import { canAccessMindMeld, canViewModule, mapServerRole, canSubmit, classifyIntakeMessage, detectDuplicates } from "@/lib/helpers";
+import { useActivityNotifications } from "@/hooks/use-activity-notifications";
+import { pathToActivityModule } from "@/lib/activity-notifications";
 import collabosLogo from "@/assets/collabos-logo.png";
 import LoginPage from "@/pages/login";
 
@@ -181,35 +183,79 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 function AlertsBell() {
   const { alerts } = useAppState();
+  const { sinceLastVisit, totalNew, lastVisitLabel } = useActivityNotifications();
   const [open, setOpen] = useState(false);
   const high = alerts.filter((a) => a.risk === "high" || a.risk === "critical").length;
+  const badge = high > 0 ? high : totalNew;
   return (
     <div className="relative">
-      <button onClick={() => setOpen((o) => !o)} className="relative rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
+      <button onClick={() => setOpen((o) => !o)} className="relative rounded-full p-2 text-slate-500 transition hover:bg-slate-100" title="Activity since your last visit">
         <Bell className="h-5 w-5" />
-        {high > 0 && <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">{high}</span>}
+        {badge > 0 && <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">{badge > 9 ? "9+" : badge}</span>}
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
           <div className="absolute right-0 z-40 mt-2 w-80 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl">
-            <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Alerts</p>
-            <ul className="max-h-96 space-y-1.5 overflow-y-auto">
-              {alerts.map((a) => (
-                <li key={a.id} className="flex items-start gap-2 rounded-xl p-2 hover:bg-slate-50">
-                  <AlertTriangle className={`mt-0.5 h-4 w-4 shrink-0 ${a.risk === "high" ? "text-rose-500" : "text-amber-500"}`} />
-                  <div>
-                    <p className="text-xs text-slate-700">{a.message}</p>
-                    <p className="text-[10px] text-slate-400">{a.source} · {a.createdAt}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <p className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Since last visit</p>
+            {lastVisitLabel ? <p className="mb-2 px-1 text-[10px] text-slate-400">Last check: {lastVisitLabel}</p> : null}
+            {sinceLastVisit.length > 0 ? (
+              <ul className="max-h-96 space-y-1.5 overflow-y-auto">
+                {sinceLastVisit.map((item) => (
+                  <li key={item.id}>
+                    <Link href={item.href} onClick={() => setOpen(false)} className="flex items-start gap-2 rounded-xl p-2 hover:bg-slate-50">
+                      <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+                      <div>
+                        <p className="text-xs font-medium text-slate-700">{item.label}</p>
+                        <p className="line-clamp-2 text-[10px] text-slate-400">{item.detail}</p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="rounded-xl bg-emerald-50 p-2.5 text-xs text-emerald-700">You're caught up since your last visit.</p>
+            )}
+            {alerts.length > 0 ? (
+              <>
+                <p className="mb-2 mt-3 px-1 text-xs font-semibold uppercase tracking-wide text-slate-400">System alerts</p>
+                <ul className="max-h-48 space-y-1.5 overflow-y-auto">
+                  {alerts.map((a) => (
+                    <li key={a.id} className="flex items-start gap-2 rounded-xl p-2 hover:bg-slate-50">
+                      <AlertTriangle className={`mt-0.5 h-4 w-4 shrink-0 ${a.risk === "high" ? "text-rose-500" : "text-amber-500"}`} />
+                      <div>
+                        <p className="text-xs text-slate-700">{a.message}</p>
+                        <p className="text-[10px] text-slate-400">{a.source} · {a.createdAt}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
           </div>
         </>
       )}
     </div>
   );
+}
+
+function ModuleSeenTracker() {
+  const [location] = useLocation();
+  const { markModuleSeen } = useActivityNotifications();
+
+  useEffect(() => {
+    const mod = pathToActivityModule(location);
+    if (!mod || mod === "dashboard") return;
+    void markModuleSeen(mod);
+  }, [location, markModuleSeen]);
+
+  useEffect(() => {
+    const mod = pathToActivityModule(location);
+    if (mod !== "dashboard") return;
+    return () => { void markModuleSeen("dashboard"); };
+  }, [location, markModuleSeen]);
+
+  return null;
 }
 
 function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -586,6 +632,7 @@ function AuthenticatedApp() {
   return (
     <AppStateProvider>
       <RoleSync />
+      <ModuleSeenTracker />
       <TooltipProvider>
         <Router />
         <Toaster />

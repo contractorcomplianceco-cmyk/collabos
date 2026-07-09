@@ -74,6 +74,7 @@ export interface Task {
   owner: string | null;
   status: "todo" | "in-progress" | "review" | "done";
   due: string | null;
+  createdAt?: string;
 }
 
 export type IdeaStatus =
@@ -383,6 +384,8 @@ export interface Recommendation {
   status: ApprovalStatus;
   approvals?: { rose: boolean; carmen: boolean };
   history: AuditEntry[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type AgentWorkType = "bug" | "fix" | "improvement" | "ops" | "question" | "integration-prep";

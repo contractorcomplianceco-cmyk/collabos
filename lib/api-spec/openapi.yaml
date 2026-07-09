@@ -110,6 +110,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiMessage"
+  /auth/module-seen:
+    patch:
+      operationId: markModuleSeen
+      tags: [auth]
+      summary: Record that the user visited a workspace module
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModuleSeenInput"
+      responses:
+        "200":
+          description: Updated user profile with module timestamps
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          description: Invalid module
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
   /users:
     get:
       operationId: listUsers
@@ -1319,7 +1343,23 @@ components:
           type: array
           items: { type: string }
         lastLoginAt: { type: ["string", "null"] }
+        moduleLastSeen:
+          type: object
+          additionalProperties: { type: string }
         createdAt: { type: string }
+    ModuleSeenInput:
+      type: object
+      required: [module]
+      properties:
+        module:
+          type: string
+          enum:
+            - dashboard
+            - review-queue
+            - mind-meld
+            - agent-queue
+            - external-intake
+            - project-tasks
     LoginInput:
       type: object
       required: [email, password]
@@ -2206,7 +2246,7 @@ components:
         source: { type: string }
     ProjectTaskRecord:
       type: object
-      required: [id, title, projectId, owner, status, due, source]
+      required: [id, title, projectId, owner, status, due, source, createdAt]
       properties:
         id: { type: integer }
         title: { type: string }
@@ -2215,6 +2255,7 @@ components:
         status: { type: string, enum: [todo, in-progress, review, done] }
         due: { type: ["string", "null"] }
         source: { type: string, enum: [manual, sync] }
+        createdAt: { type: string }
     ProjectTaskInput:
       type: object
       required: [title, projectId]

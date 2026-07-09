@@ -34,6 +34,8 @@ export const UserStatus = {
   inactive: 'inactive',
 } as const;
 
+export type UserProfileModuleLastSeen = {[key: string]: string};
+
 export interface UserProfile {
   id: number;
   name: string;
@@ -45,7 +47,24 @@ export interface UserProfile {
   permissions: string[];
   /** @nullable */
   lastLoginAt?: string | null;
+  moduleLastSeen?: UserProfileModuleLastSeen;
   createdAt: string;
+}
+
+export type ModuleSeenInputModule = typeof ModuleSeenInputModule[keyof typeof ModuleSeenInputModule];
+
+
+export const ModuleSeenInputModule = {
+  dashboard: 'dashboard',
+  'review-queue': 'review-queue',
+  'mind-meld': 'mind-meld',
+  'agent-queue': 'agent-queue',
+  'external-intake': 'external-intake',
+  'project-tasks': 'project-tasks',
+} as const;
+
+export interface ModuleSeenInput {
+  module: ModuleSeenInputModule;
 }
 
 export interface LoginInput {
@@ -1334,6 +1353,7 @@ export interface ProjectTaskRecord {
   /** @nullable */
   due: string | null;
   source: ProjectTaskRecordSource;
+  createdAt: string;
 }
 
 export type ProjectTaskInputStatus = typeof ProjectTaskInputStatus[keyof typeof ProjectTaskInputStatus];

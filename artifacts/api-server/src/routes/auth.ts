@@ -1,10 +1,19 @@
 import { Router, type IRouter } from "express";
-import { LoginBody } from "@workspace/api-zod";
+import { LoginBody, MarkModuleSeenBody } from "@workspace/api-zod";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { createSession, destroySession, toUserProfile, verifyPassword } from "../lib/auth";
 import { logAudit } from "../lib/audit";
 import { requireAuth } from "../middlewares/auth";
+
+const VALID_MODULES = new Set([
+  "dashboard",
+  "review-queue",
+  "mind-meld",
+  "agent-queue",
+  "external-intake",
+  "project-tasks",
+]);
 
 const router: IRouter = Router();
 
@@ -71,6 +80,25 @@ router.post("/auth/logout", requireAuth, async (req, res) => {
 
 router.get("/auth/me", requireAuth, (req, res) => {
   res.json(toUserProfile(req.user!));
+});
+
+router.patch("/auth/module-seen", requireAuth, async (req, res) => {
+  const parsed = MarkModuleSeenBody.safeParse(req.body);
+  if (!parsed.success || !VALID_MODULES.has(parsed.data.module)) {
+    res.status(400).json({ message: "Invalid module" });
+    return;
+  }
+  const user = req.user!;
+  const moduleLastSeen = {
+    ...(user.moduleLastSeen ?? {}),
+    [parsed.data.module]: new Date().toISOString(),
+  };
+  const [updated] = await db
+    .update(usersTable)
+    .set({ moduleLastSeen })
+    .where(eq(usersTable.id, user.id))
+    .returning();
+  res.json(toUserProfile(updated));
 });
 
 export default router;
