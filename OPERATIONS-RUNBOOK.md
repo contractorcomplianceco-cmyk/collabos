@@ -56,9 +56,33 @@ pm2 save
 Reload nginx after config changes:
 
 ```bash
+sudo cp deploy/nginx/ccacollab.com.conf /etc/nginx/sites-available/ccacollab.com
 sudo nginx -t
 sudo systemctl reload nginx
 ```
+
+## SPA Cache Busting (no hard refresh)
+
+CollabOS is a Vite SPA. Users must see new deploys on a normal browser refresh (F5), not Ctrl+Shift+R.
+
+**Root cause if stale UI appears:** the browser cached `index.html`, which still points at old `/assets/*` hashes. Hashed JS/CSS are intentionally cached for one year; only the HTML shell must stay uncached.
+
+**Nginx policy** (`deploy/nginx/ccacollab.com.conf`):
+
+- `/` and `/index.html`: `Cache-Control: no-store, no-cache, must-revalidate` (plus `Pragma: no-cache`)
+- `/assets/*` and other hashed static files: `Cache-Control: public, max-age=31536000, immutable`
+- No service worker — do not add one without a cache-busting update strategy
+
+**Verify headers after deploy:**
+
+```bash
+curl -sI https://ccacollab.com/ | grep -i cache-control
+curl -sI https://ccacollab.com/index.html | grep -i cache-control
+JS=$(curl -s https://ccacollab.com/ | grep -oE '/assets/[^"]+\.js' | head -1)
+curl -sI "https://ccacollab.com${JS}" | grep -i cache-control
+```
+
+Expected: `no-store` on `/` and `/index.html`; `immutable` on `/assets/*.js`.
 
 Run monitor manually:
 
@@ -82,9 +106,11 @@ pnpm run build
 sudo rsync -a --delete artifacts/roseos/dist/public/ /var/www/ccacollab.com/
 pm2 restart collabos-api --update-env
 pm2 save
+sudo cp deploy/nginx/ccacollab.com.conf /etc/nginx/sites-available/ccacollab.com
 sudo nginx -t
 sudo systemctl reload nginx
 curl -sf https://ccacollab.com/api/healthz
+curl -sI https://ccacollab.com/ | grep -i cache-control
 ```
 
 ## Monitoring And Alerts
