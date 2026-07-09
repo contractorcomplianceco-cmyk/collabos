@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Brain, Lock, ShieldCheck, Languages, Grid3x3, MessageCircleQuestion,
   Combine, BadgeCheck, Timer, Activity, ArrowRightLeft, Send, History,
   Sparkles, AlertTriangle, Radio, TrendingUp, Target, FileText, Heart,
-  ArrowRight, ArrowLeft, Lightbulb, ClipboardCheck, Users,
+  ArrowRight, ArrowLeft, Lightbulb, ClipboardCheck, Users, Plus,
 } from "lucide-react";
 import { SectionCard, StatusChip, RiskBadge, Donut, LockedState } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
@@ -40,7 +40,7 @@ const FUNCTIONS = [
 ];
 
 export default function MindMeldRoom() {
-  const { currentRole, mindMeldItems, handoffs, carmenfy, rosify, addMindMeldThought, ideas, recommendations, meldTimeline, mindMeldLoading, duplicateRisks, sentimentSignals, competitors, reports, mindFeed } = useAppState();
+  const { currentRole, mindMeldItems, handoffs, carmenfy, rosify, addMindMeldThought, createMindMeldThread, ideas, recommendations, meldTimeline, mindMeldLoading, duplicateRisks, sentimentSignals, competitors, reports, mindFeed } = useAppState();
   const { toast } = useToast();
   const [view, setView] = useState("room");
   const [selectedId, setSelectedId] = useState(mindMeldItems[0]?.id ?? "");
@@ -52,6 +52,40 @@ export default function MindMeldRoom() {
   const [tlReadyTo, setTlReadyTo] = useState("all");
   const [tlSensitiveOnly, setTlSensitiveOnly] = useState(false);
   const [tlFinalizedOnly, setTlFinalizedOnly] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newThought, setNewThought] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  const defaultOwner: "Rose" | "Carmen" = currentRole === "Carmen" ? "Carmen" : "Rose";
+
+  useEffect(() => {
+    if (mindMeldItems.length === 0) {
+      setSelectedId("");
+      return;
+    }
+    if (!mindMeldItems.some((m) => m.id === selectedId)) {
+      setSelectedId(mindMeldItems[0].id);
+    }
+  }, [mindMeldItems, selectedId]);
+
+  const handleCreateThread = async () => {
+    if (!newTitle.trim() || creating) return;
+    setCreating(true);
+    const titleTrimmed = newTitle.trim();
+    const id = await createMindMeldThread({ title: titleTrimmed, owner: defaultOwner, initialThought: newThought });
+    setCreating(false);
+    if (id) {
+      setSelectedId(id);
+      setNewTitle("");
+      setNewThought("");
+      setShowCreateForm(false);
+      setView("room");
+      toast({ title: "Thread created", description: `"${titleTrimmed}" is ready in the Mind Meld Room.` });
+    } else {
+      toast({ title: "Could not create thread", description: "Please try again.", variant: "destructive" });
+    }
+  };
 
   const filteredTimeline = useMemo(
     () =>
@@ -175,7 +209,21 @@ export default function MindMeldRoom() {
             </button>
           </div>
           {filteredTimeline.length === 0 ? (
-            <p className="mt-4 rounded-xl bg-slate-50 p-4 text-center text-xs text-slate-400">No timeline events match these filters.</p>
+            <div className="mt-4 rounded-xl bg-slate-50 p-6 text-center">
+              <p className="text-sm text-slate-500">
+                {meldTimeline.length === 0
+                  ? "No timeline events yet. Create a thread and add thoughts to start the alignment story."
+                  : "No timeline events match these filters."}
+              </p>
+              {meldTimeline.length === 0 && (
+                <button
+                  onClick={() => { setShowCreateForm(true); setView("room"); }}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700"
+                >
+                  <Plus className="h-4 w-4" /> Create thread
+                </button>
+              )}
+            </div>
           ) : (
             <ul className="mt-4 space-y-3 border-l-2 border-violet-100 pl-4">
               {filteredTimeline.map((e) => (
@@ -199,6 +247,17 @@ export default function MindMeldRoom() {
         </SectionCard>
       ) : view === "handoff" ? (
         <SectionCard title="Handoff History" icon={History} accent="violet">
+          {handoffs.length === 0 ? (
+            <div className="rounded-xl bg-slate-50 p-6 text-center">
+              <p className="text-sm text-slate-500">No handoffs yet. Start a thread, then Carmenfy or Rosify to route between founders.</p>
+              <button
+                onClick={() => { setShowCreateForm(true); setView("room"); }}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700"
+              >
+                <Plus className="h-4 w-4" /> Create thread
+              </button>
+            </div>
+          ) : (
           <ul className="space-y-3">
             {handoffs.map((h) => (
               <li key={h.id} className="flex items-start gap-3 rounded-xl border border-slate-100 p-3">
@@ -211,9 +270,21 @@ export default function MindMeldRoom() {
               </li>
             ))}
           </ul>
+          )}
         </SectionCard>
       ) : view === "notes" ? (
         <SectionCard title="Private Decision Notes" icon={Lock} accent="rose">
+          {mindMeldItems.length === 0 ? (
+            <div className="rounded-xl bg-slate-50 p-6 text-center">
+              <p className="text-sm text-slate-500">No private notes yet. Create a thread to capture founder alignment work.</p>
+              <button
+                onClick={() => { setShowCreateForm(true); setView("room"); }}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700"
+              >
+                <Plus className="h-4 w-4" /> Create thread
+              </button>
+            </div>
+          ) : (
           <div className="space-y-3">
             {mindMeldItems.map((m) => (
               <div key={m.id} className="rounded-xl border border-slate-100 p-4">
@@ -226,8 +297,22 @@ export default function MindMeldRoom() {
               </div>
             ))}
           </div>
+          )}
         </SectionCard>
       ) : view === "board" ? (
+        mindMeldItems.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-violet-200 bg-violet-50/30 p-10 text-center">
+            <Brain className="mx-auto h-10 w-10 text-violet-400" />
+            <p className="mt-3 text-sm font-medium text-slate-700">No threads on the Shared Mind Board yet</p>
+            <p className="mt-1 text-xs text-slate-500">Create your first alignment thread to see it here.</p>
+            <button
+              onClick={() => { setShowCreateForm(true); setView("room"); }}
+              className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700"
+            >
+              <Plus className="h-4 w-4" /> Create thread
+            </button>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {mindMeldItems.map((m) => (
             <button key={m.id} onClick={() => { setSelectedId(m.id); setView("room"); }} className="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-violet-200 hover:shadow-md">
@@ -245,6 +330,7 @@ export default function MindMeldRoom() {
             </button>
           ))}
         </div>
+        )
       ) : view === "room" ? (
         <div className="space-y-6">
           {/* Command stats */}
@@ -266,15 +352,34 @@ export default function MindMeldRoom() {
           </div>
 
           {/* Item selector */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {mindMeldItems.map((m) => (
               <button key={m.id} onClick={() => setSelectedId(m.id)} className={`rounded-xl px-3 py-1.5 text-xs font-medium transition ${selectedId === m.id ? "bg-violet-100 text-violet-700 ring-1 ring-violet-200" : "bg-white text-slate-500 ring-1 ring-slate-200 hover:bg-slate-50"}`}>
                 {m.title}
               </button>
             ))}
+            <button
+              onClick={() => setShowCreateForm((v) => !v)}
+              className="inline-flex items-center gap-1 rounded-xl bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-violet-700"
+            >
+              <Plus className="h-3.5 w-3.5" /> New thread
+            </button>
           </div>
 
-          {selected && (
+          {(showCreateForm || mindMeldItems.length === 0) && (
+            <CreateThreadPanel
+              title={newTitle}
+              thought={newThought}
+              owner={defaultOwner}
+              creating={creating}
+              onTitleChange={setNewTitle}
+              onThoughtChange={setNewThought}
+              onSubmit={() => void handleCreateThread()}
+              onCancel={mindMeldItems.length > 0 ? () => setShowCreateForm(false) : undefined}
+            />
+          )}
+
+          {selected ? (
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
               {/* Mind Meld Room panel */}
               <div className="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm xl:col-span-3">
@@ -490,7 +595,9 @@ export default function MindMeldRoom() {
                 </div>
               </div>
             </div>
-          )}
+          ) : !showCreateForm && mindMeldItems.length > 0 ? (
+            <p className="rounded-xl bg-slate-50 p-4 text-center text-sm text-slate-500">Select a thread above to open the Mind Meld Room.</p>
+          ) : null}
 
           {/* Module pulse strip */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -560,13 +667,38 @@ export default function MindMeldRoom() {
           {/* Left & center */}
           <div className="space-y-6 lg:col-span-2">
             {/* Item selector */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {mindMeldItems.map((m) => (
                 <button key={m.id} onClick={() => setSelectedId(m.id)} className={`rounded-xl px-3 py-1.5 text-xs font-medium transition ${selectedId === m.id ? "bg-violet-100 text-violet-700 ring-1 ring-violet-200" : "bg-white text-slate-500 ring-1 ring-slate-200 hover:bg-slate-50"}`}>
                   {m.title}
                 </button>
               ))}
+              <button
+                onClick={() => setShowCreateForm((v) => !v)}
+                className="inline-flex items-center gap-1 rounded-xl bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-violet-700"
+              >
+                <Plus className="h-3.5 w-3.5" /> New thread
+              </button>
             </div>
+
+            {(showCreateForm || mindMeldItems.length === 0) && (
+              <CreateThreadPanel
+                title={newTitle}
+                thought={newThought}
+                owner={defaultOwner}
+                creating={creating}
+                onTitleChange={setNewTitle}
+                onThoughtChange={setNewThought}
+                onSubmit={() => void handleCreateThread()}
+                onCancel={mindMeldItems.length > 0 ? () => setShowCreateForm(false) : undefined}
+              />
+            )}
+
+            {!selected && !showCreateForm && mindMeldItems.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-violet-200 bg-violet-50/30 p-8 text-center">
+                <p className="text-sm text-slate-600">Start your first alignment thread above.</p>
+              </div>
+            )}
 
             {selected && (
               <>
@@ -689,6 +821,66 @@ export default function MindMeldRoom() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function CreateThreadPanel({
+  title,
+  thought,
+  owner,
+  creating,
+  onTitleChange,
+  onThoughtChange,
+  onSubmit,
+  onCancel,
+}: {
+  title: string;
+  thought: string;
+  owner: "Rose" | "Carmen";
+  creating: boolean;
+  onTitleChange: (v: string) => void;
+  onThoughtChange: (v: string) => void;
+  onSubmit: () => void;
+  onCancel?: () => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-fuchsia-50 p-6 shadow-sm">
+      <div className="flex items-center gap-2">
+        <Plus className="h-5 w-5 text-violet-600" />
+        <h3 className="text-sm font-bold text-slate-800">Create alignment thread</h3>
+        <StatusChip label={owner} tone={owner === "Rose" ? "rose" : "sky"} />
+      </div>
+      <p className="mt-1 text-xs text-slate-500">Private thread for Rose &amp; Carmen — not an official company decision until routed through approval.</p>
+      <div className="mt-4 space-y-3">
+        <input
+          value={title}
+          onChange={(e) => onTitleChange(e.target.value)}
+          placeholder="Thread title (e.g. Q3 platform direction)"
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-200"
+          onKeyDown={(e) => e.key === "Enter" && onSubmit()}
+        />
+        <textarea
+          value={thought}
+          onChange={(e) => onThoughtChange(e.target.value)}
+          placeholder={`${owner}'s opening thought (optional)`}
+          className="h-20 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-200"
+        />
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={onSubmit}
+            disabled={!title.trim() || creating}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50"
+          >
+            <Plus className="h-4 w-4" /> {creating ? "Creating…" : "Create thread"}
+          </button>
+          {onCancel && (
+            <button onClick={onCancel} className="rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition hover:bg-white">
+              Cancel
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -208,6 +208,7 @@ interface AppState extends PersistedState {
   carmenfy: (itemId: string, note: string) => void;
   rosify: (itemId: string, note: string) => void;
   addMindMeldThought: (itemId: string, owner: "Rose" | "Carmen", text: string) => void;
+  createMindMeldThread: (input: { title: string; owner: "Rose" | "Carmen"; initialThought?: string }) => Promise<string | null>;
   addFeedback: (item: Omit<FeedbackItem, "id" | "count">) => void;
   createAgentWork: (input: {
     title: string;
@@ -930,6 +931,37 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     [invalidateMindMeld],
   );
 
+  const createMindMeldThread = useCallback(
+    async (input: { title: string; owner: "Rose" | "Carmen"; initialThought?: string }): Promise<string | null> => {
+      const thought = input.initialThought?.trim() ?? "";
+      try {
+        const created = await createMindMeldItem({
+          title: input.title.trim(),
+          source: "Mind Meld Room",
+          owner: input.owner,
+          status: input.owner === "Rose" ? "rose-thinking" : "carmen-thinking",
+          roseThoughts: input.owner === "Rose" ? thought : "",
+          carmenThoughts: input.owner === "Carmen" ? thought : "",
+          synthesis: "New thread — add thoughts from both sides to begin alignment.",
+          openQuestions: thought ? ["What does success look like?"] : [],
+          alignment: "needs-clarity",
+          alignmentScore: thought ? 15 : 10,
+          risk: "low",
+          privacy: "leadership-only",
+          layers: ["Vision"],
+          focusAreas: [],
+          sensitive: false,
+          history: [{ id: uid("h"), timestamp: now(), actor: input.owner, action: "Created thread" }],
+        });
+        await invalidateMindMeld();
+        return String(created.id);
+      } catch {
+        return null;
+      }
+    },
+    [invalidateMindMeld],
+  );
+
   const addFeedback = useCallback(
     (item: Omit<FeedbackItem, "id" | "count">) => {
       if (!canSubmit(state.currentRole)) return;
@@ -1437,6 +1469,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         carmenfy,
         rosify,
         addMindMeldThought,
+        createMindMeldThread,
         addFeedback,
         createAgentWork,
         updateAgentWork,
