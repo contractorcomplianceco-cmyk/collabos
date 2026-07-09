@@ -5,6 +5,7 @@ import { PageHeader, SectionCard, StatusChip, EmptyState } from "@/components/sh
 import { useAppState } from "@/hooks/use-app-state";
 import { canSubmit } from "@/lib/helpers";
 import { useToast } from "@/hooks/use-toast";
+import { humanLabel, HUMAN_TASK_STATUS } from "@/lib/ui-labels";
 import type { Task } from "@/types";
 
 const TASK_TONE: Record<Task["status"], "slate" | "sky" | "amber" | "emerald"> = {
@@ -51,7 +52,7 @@ export default function ProjectTasksPage() {
     setOwner("");
     setDue("");
     setShowForm(false);
-    toast({ title: "Task created", description: "Manual tasks are kept across nightly project sync." });
+    toast({ title: "Task created", description: "Your task is saved — overnight server updates won't remove it." });
   };
 
   const startEdit = (task: Task) => {
@@ -88,7 +89,7 @@ export default function ProjectTasksPage() {
             <input value={editOwner} onChange={(e) => setEditOwner(e.target.value)} placeholder="Owner" className="field-input text-sm" />
             <input value={editDue} onChange={(e) => setEditDue(e.target.value)} placeholder="Due date" className="field-input text-sm" />
             <select value={editStatus} onChange={(e) => setEditStatus(e.target.value as Task["status"])} className="field-input text-sm">
-              {STATUSES.map((s) => <option key={s} value={s}>{s.replace(/-/g, " ")}</option>)}
+              {STATUSES.map((s) => <option key={s} value={s}>{humanLabel(HUMAN_TASK_STATUS, s)}</option>)}
             </select>
           </div>
           <div className="flex gap-2">
@@ -109,7 +110,7 @@ export default function ProjectTasksPage() {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <StatusChip label={task.status.replace(/-/g, " ")} tone={TASK_TONE[task.status]} />
+          <StatusChip label={humanLabel(HUMAN_TASK_STATUS, task.status)} tone={TASK_TONE[task.status]} />
           {canEdit && task.status !== "done" ? (
             <>
               <button onClick={() => void markDone(task)} title="Mark complete" className="rounded-lg p-1.5 text-emerald-600 hover:bg-emerald-50"><Check className="h-4 w-4" /></button>
@@ -125,7 +126,7 @@ export default function ProjectTasksPage() {
     <div className="space-y-6 p-6">
       <PageHeader
         title="Project Tasks"
-        subtitle="Manual follow-up tasks tied to projects — nightly sync updates project status, not your tasks."
+        subtitle="Follow-up tasks tied to projects — your tasks stay here; project status updates overnight from the server."
         icon={ClipboardCheck}
         accent="sky"
         actions={
@@ -144,8 +145,8 @@ export default function ProjectTasksPage() {
 
       {projects.length === 0 && !projectsLoading ? (
         <EmptyState
-          message="No projects in the registry yet."
-          hint="Projects appear after the nightly sync discovers repos and services, or when you add them manually."
+          message="No projects yet."
+          hint="Projects appear after overnight server updates, or when you add them on the Projects page."
           action={<Link href="/projects" className="text-xs font-semibold text-sky-600 hover:underline">View Projects</Link>}
         />
       ) : null}
@@ -188,7 +189,7 @@ export default function ProjectTasksPage() {
               {doneTasks.map(renderTask)}
               {doneTasks.length === 0 ? (
                 <li>
-                  <EmptyState message="No completed tasks yet." hint="Completed tasks stay visible for audit context." />
+                  <EmptyState message="No completed tasks yet." hint="Finished tasks stay here so you can look back." />
                 </li>
               ) : null}
             </ul>

@@ -191,8 +191,8 @@ export default function MindMeldRoom() {
               Ready to
               <select value={tlReadyTo} onChange={(e) => setTlReadyTo(e.target.value)} className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700">
                 <option value="all">All</option>
-                <option value="carmenfy">Carmenfy</option>
-                <option value="rosify">Rosify</option>
+                <option value="carmenfy">Send to Carmen</option>
+                <option value="rosify">Send to Rose</option>
               </select>
             </label>
             <button
@@ -235,7 +235,7 @@ export default function MindMeldRoom() {
                     {e.sensitive && <StatusChip label="Sensitive" tone="rose" />}
                     {e.finalized && <StatusChip label="Finalized" tone="emerald" />}
                     {e.needs && <StatusChip label={`Needs ${e.needs === "both" ? "Rose + Carmen" : e.needs === "rose" ? "Rose" : "Carmen"}`} tone="amber" />}
-                    {e.readyTo && <StatusChip label={e.readyTo === "carmenfy" ? "Ready to Carmenfy" : "Ready to Rosify"} tone="sky" />}
+                    {e.readyTo && <StatusChip label={e.readyTo === "carmenfy" ? "Ready for Carmen" : "Ready for Rose"} tone="sky" />}
                     <span className="ml-auto text-[11px] text-slate-400">{e.timestamp}</span>
                   </div>
                   <p className="mt-1.5 text-xs text-slate-600">{e.text}</p>
@@ -249,7 +249,7 @@ export default function MindMeldRoom() {
         <SectionCard title="Handoff History" icon={History} accent="violet">
           {handoffs.length === 0 ? (
             <div className="rounded-xl bg-slate-50 p-6 text-center">
-              <p className="text-sm text-slate-500">No handoffs yet. Start a thread, then Carmenfy or Rosify to route between founders.</p>
+              <p className="text-sm text-slate-500">No handoffs yet. Start a thread, then send it to Carmen or Rose when you're ready.</p>
               <button
                 onClick={() => { setShowCreateForm(true); setView("room"); }}
                 className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700"
@@ -429,8 +429,8 @@ export default function MindMeldRoom() {
                         <button onClick={() => { if (!roseDraft.trim()) return; addMindMeldThought(selected.id, "Rose", roseDraft); setRoseDraft(""); toast({ title: "Thought added to Rose View" }); }} className="mt-2 rounded-lg bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-600">Save thought</button>
                       </div>
                     )}
-                    <button onClick={() => { carmenfy(selected.id, handoffNote); setHandoffNote(""); toast({ title: "Ready to Carmenfy", description: "Routed to Carmen for systems review. No official decision created." }); }} className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 mt-4">
-                      <Send className="h-4 w-4" /> Ready to Carmenfy
+                    <button onClick={() => { carmenfy(selected.id, handoffNote); setHandoffNote(""); toast({ title: "Sent to Carmen", description: "Routed for systems review. No official decision created." }); }} className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 mt-4">
+                      <Send className="h-4 w-4" /> Send to Carmen
                     </button>
                     <button onClick={() => { carmenfy(selected.id, handoffNote); setHandoffNote(""); toast({ title: "Handoff to Carmen", description: "Routed to Carmen for systems review. No official decision created." }); }} className="mt-2 inline-flex items-center justify-center gap-1 text-[11px] font-semibold text-rose-500 transition hover:text-rose-600">
                       Handoff to Carmen <ArrowRight className="h-3.5 w-3.5" />
@@ -521,8 +521,8 @@ export default function MindMeldRoom() {
                         <button onClick={() => { if (!carmenDraft.trim()) return; addMindMeldThought(selected.id, "Carmen", carmenDraft); setCarmenDraft(""); toast({ title: "Perspective added to Carmen View" }); }} className="mt-2 rounded-lg bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-600">Save perspective</button>
                       </div>
                     )}
-                    <button onClick={() => { rosify(selected.id, handoffNote); setHandoffNote(""); toast({ title: "Ready to Rosify", description: "Routed to Rose for direction review. No official decision created." }); }} className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 mt-4">
-                      <Send className="h-4 w-4" /> Ready to Rosify
+                    <button onClick={() => { rosify(selected.id, handoffNote); setHandoffNote(""); toast({ title: "Sent to Rose", description: "Routed for direction review. No official decision created." }); }} className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 mt-4">
+                      <Send className="h-4 w-4" /> Send to Rose
                     </button>
                     <button onClick={() => { rosify(selected.id, handoffNote); setHandoffNote(""); toast({ title: "Handoff to Rose", description: "Routed to Rose for direction review. No official decision created." }); }} className="mt-2 inline-flex items-center justify-center gap-1 text-[11px] font-semibold text-sky-500 transition hover:text-sky-600">
                       <ArrowLeft className="h-3.5 w-3.5" /> Handoff to Rose
@@ -541,7 +541,7 @@ export default function MindMeldRoom() {
                     </div>
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Optional handoff note</p>
-                      <input value={handoffNote} onChange={(e) => setHandoffNote(e.target.value)} placeholder="Add a note before Carmenfy / Rosify..." className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-200" />
+                      <input value={handoffNote} onChange={(e) => setHandoffNote(e.target.value)} placeholder="Add a note before sending to Carmen or Rose..." className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-200" />
                       <p className="mt-1.5 text-[11px] text-slate-400">Handoffs create a private item for the other person. They never auto-create official company decisions.</p>
                     </div>
                   </div>
@@ -743,8 +743,8 @@ export default function MindMeldRoom() {
                 <SectionCard title="Handoff" icon={ArrowRightLeft} accent="violet">
                   <input value={handoffNote} onChange={(e) => setHandoffNote(e.target.value)} placeholder="Optional handoff note..." className="mb-3 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-200" />
                   <div className="flex flex-wrap gap-2">
-                    <button onClick={() => { carmenfy(selected.id, handoffNote); setHandoffNote(""); toast({ title: "Ready to Carmenfy", description: "Routed to Carmen for systems review. No official decision created." }); }} className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"><Send className="h-4 w-4" /> Ready to Carmenfy</button>
-                    <button onClick={() => { rosify(selected.id, handoffNote); setHandoffNote(""); toast({ title: "Ready to Rosify", description: "Routed to Rose for direction review. No official decision created." }); }} className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-orange-400 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"><Send className="h-4 w-4" /> Ready to Rosify</button>
+                    <button onClick={() => { carmenfy(selected.id, handoffNote); setHandoffNote(""); toast({ title: "Sent to Carmen", description: "Routed for systems review. No official decision created." }); }} className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"><Send className="h-4 w-4" /> Send to Carmen</button>
+                    <button onClick={() => { rosify(selected.id, handoffNote); setHandoffNote(""); toast({ title: "Sent to Rose", description: "Routed for direction review. No official decision created." }); }} className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-orange-400 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"><Send className="h-4 w-4" /> Send to Rose</button>
                   </div>
                   <p className="mt-2 text-xs text-slate-400">Handoffs create a private item for the other person. They never auto-create official company decisions.</p>
                 </SectionCard>

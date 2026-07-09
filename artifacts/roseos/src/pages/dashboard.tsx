@@ -11,8 +11,9 @@ import { canApprove, canViewSensitive } from "@/lib/helpers";
 import {
   KpiWidget, SectionCard, StatusChip, ClassificationBadge, EmptyState,
 } from "@/components/shared";
+import { humanLabel, HUMAN_TASK_STATUS } from "@/lib/ui-labels";
 
-const POPULAR_SEARCHES = ["client onboarding", "qualifier scoring", "automation registry"];
+const POPULAR_SEARCHES = ["client onboarding", "qualifier scoring", "how we automate"];
 
 function ideaTag(momentum: number) {
   if (momentum >= 85) return { label: "Hot", tone: "rose" as const };
@@ -122,7 +123,7 @@ export default function Dashboard() {
     const intakeDetail = top.sensitivity !== "normal" && !canViewSensitive(currentRole)
       ? "Restricted — leadership review only"
       : top.cleanedSummary;
-    attentionItems.push({ id: "att-intake", label: `${newIntake.length} intake message${newIntake.length === 1 ? "" : "s"} to review`, detail: intakeDetail, href: "/external-intake", tone: "sky" });
+    attentionItems.push({ id: "att-intake", label: `${newIntake.length} incoming message${newIntake.length === 1 ? "" : "s"} to review`, detail: intakeDetail, href: "/external-intake", tone: "sky" });
   }
   const dupIntake = intakeItems.filter((it) => it.duplicateRisk !== "none" && it.status !== "archived" && it.status !== "routed");
   if (dupIntake.length > 0) {
@@ -135,7 +136,7 @@ export default function Dashboard() {
     }
     const proposedMemories = memoryCandidates.filter((m) => m.status === "proposed");
     if (proposedMemories.length > 0) {
-      attentionItems.push({ id: "att-mem", label: `${proposedMemories.length} memory candidate${proposedMemories.length === 1 ? "" : "s"} awaiting approval`, detail: proposedMemories[0].summary, href: "/external-intake", tone: "emerald" });
+      attentionItems.push({ id: "att-mem", label: `${proposedMemories.length} note${proposedMemories.length === 1 ? "" : "s"} waiting for sign-off`, detail: proposedMemories[0].summary, href: "/external-intake", tone: "emerald" });
     }
   }
 
@@ -152,26 +153,26 @@ export default function Dashboard() {
       {/* Welcome */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Welcome back, {greeting}</h1>
-        <p className="mt-1 text-sm text-slate-500">Your collaboration workspace — starts empty and grows with real team data.</p>
+        <p className="mt-1 text-sm text-slate-500">Your shared team workspace — starts empty and grows with real work.</p>
       </div>
 
       {workspaceEmpty ? (
         <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-violet-50 p-5">
           <p className="text-sm font-semibold text-slate-800">Getting started</p>
-          <p className="mt-1 text-sm text-slate-600">No demo data is loaded. Add your first records and tasks, or wait for nightly project sync.</p>
+          <p className="mt-1 text-sm text-slate-600">Nothing here yet. Add your first records and tasks, or check back after overnight updates from the server.</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Link href="/solution-finder" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-violet-600 ring-1 ring-violet-100 hover:bg-violet-50">Add Company Brain record</Link>
-            <Link href="/project-tasks" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-sky-600 ring-1 ring-sky-100 hover:bg-sky-50">Create a project task</Link>
-            <Link href="/innovation-lab" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-amber-600 ring-1 ring-amber-100 hover:bg-amber-50">Submit an idea</Link>
-            <Link href="/agent-queue" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 ring-1 ring-rose-100 hover:bg-rose-50">Cursor Direct Request</Link>
+            <Link href="/solution-finder" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-violet-600 ring-1 ring-violet-100 hover:bg-violet-50">Document how we work</Link>
+            <Link href="/project-tasks" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-sky-600 ring-1 ring-sky-100 hover:bg-sky-50">Add a task</Link>
+            <Link href="/innovation-lab" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-amber-600 ring-1 ring-amber-100 hover:bg-amber-50">Share an idea</Link>
+            <Link href="/agent-queue" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 ring-1 ring-rose-100 hover:bg-rose-50">Log a Cursor request</Link>
           </div>
         </div>
       ) : null}
 
       <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
-        <span className="font-semibold text-slate-700">Daily check:</span> When nothing is flagged below, manually review{" "}
+        <span className="font-semibold text-slate-700">Daily check:</span> When nothing is flagged below, skim{" "}
         <Link href="/review-queue" className="font-semibold text-rose-600 hover:underline">Review Queue</Link> and{" "}
-        <Link href="/agent-queue" className="font-semibold text-violet-600 hover:underline">Cursor Direct Requests</Link> once per day.
+        <Link href="/agent-queue" className="font-semibold text-violet-600 hover:underline">Cursor Direct Requests</Link> once a day.
       </div>
 
       {/* Since your last visit */}
@@ -199,7 +200,7 @@ export default function Dashboard() {
           </div>
         )}
         <p className="mt-2.5 text-[11px] text-slate-400">
-          In-app activity only — no push or email. Visiting each module marks it as seen for your account.
+          In-app activity only — no push or email. Opening a page marks it as seen for you.
         </p>
       </SectionCard>
 
@@ -232,9 +233,9 @@ export default function Dashboard() {
         <Link href="/projects" className="block transition hover:opacity-90">
           <KpiWidget label="Active Projects" value={projects.length} sub="across all departments" icon={FolderKanban} tone="blue" />
         </Link>
-        <KpiWidget label="Open Tasks" value={projectTasks.filter((t) => t.status !== "done").length} sub="tracked in shared registry" icon={ClipboardCheck} tone="sky" />
+        <KpiWidget label="Open Tasks" value={projectTasks.filter((t) => t.status !== "done").length} sub="follow-ups across projects" icon={ClipboardCheck} tone="sky" />
         <KpiWidget label="Solutions Found" value={companyRecords.length} sub="in Company Brain" icon={Search} tone="emerald" />
-        <KpiWidget label="Ideas Generated" value={ideas.length} sub="in the innovation pipeline" icon={Lightbulb} tone="violet" />
+        <KpiWidget label="Ideas Shared" value={ideas.length} sub="in Innovation Lab" icon={Lightbulb} tone="violet" />
         <KpiWidget label="Dupes Avoided" value={duplicateRisks.length} sub="overlaps flagged early" icon={Target} tone="rose" />
       </div>
 
@@ -247,7 +248,7 @@ export default function Dashboard() {
           accent="blue"
           action={<Link href="/project-tasks" className="text-xs font-semibold text-sky-500 hover:underline">View all</Link>}
         >
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Shared project follow-up from the registry</p>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Open follow-ups from your projects</p>
           <ul className="space-y-2">
             {openTasks.map((task) => (
               <li key={task.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-2.5">
@@ -255,12 +256,12 @@ export default function Dashboard() {
                   <p className="truncate text-sm font-medium text-slate-700">{task.title}</p>
                   <p className="truncate text-[11px] text-slate-400">{projectNameById[task.projectId] ?? "Project"} · {task.owner ?? "Unassigned"}</p>
                 </div>
-                <StatusChip label={task.status.replace(/-/g, " ")} tone={task.status === "review" ? "amber" : task.status === "in-progress" ? "sky" : "slate"} />
+                <StatusChip label={humanLabel(HUMAN_TASK_STATUS, task.status)} tone={task.status === "review" ? "amber" : task.status === "in-progress" ? "sky" : "slate"} />
               </li>
             ))}
             {openTasks.length === 0 ? (
               <li>
-                <EmptyState message="No open project tasks." hint="Create tasks on the Project Tasks page — they are kept across nightly sync." action={<Link href="/project-tasks" className="text-xs font-semibold text-sky-600 hover:underline">Go to Project Tasks</Link>} />
+                <EmptyState message="No open project tasks." hint="Add tasks on the Project Tasks page — they stay here even after overnight server updates." action={<Link href="/project-tasks" className="text-xs font-semibold text-sky-600 hover:underline">Go to Project Tasks</Link>} />
               </li>
             ) : null}
           </ul>
@@ -274,7 +275,7 @@ export default function Dashboard() {
           action={topDuplicates.length > 0 ? <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-600">Overlap detected</span> : null}
         >
           {topDuplicates.length === 0 ? (
-            <EmptyState message="No duplicate risks flagged yet." hint="Submit ideas and projects — overlaps surface as your registry grows." action={<Link href="/duplicate-radar" className="text-xs font-semibold text-rose-600 hover:underline">Open Duplicate Radar</Link>} />
+            <EmptyState message="No overlapping work flagged yet." hint="As you add ideas and projects, we'll surface possible duplicates here." action={<Link href="/duplicate-radar" className="text-xs font-semibold text-rose-600 hover:underline">Open Duplicate Radar</Link>} />
           ) : (
           <>
           <div className="flex items-center gap-4">
@@ -349,7 +350,7 @@ export default function Dashboard() {
         {/* Innovation Lab */}
         <SectionCard title="Innovation Lab" icon={Lightbulb} accent="amber" action={<Link href="/innovation-lab" className="text-xs font-semibold text-amber-500 hover:underline">View</Link>}>
           {topIdeas.length === 0 ? (
-            <EmptyState message="No ideas in the pipeline yet." hint="Submit your first idea in Innovation Lab to start clustering." action={<Link href="/innovation-lab" className="text-xs font-semibold text-amber-600 hover:underline">Submit an idea</Link>} />
+            <EmptyState message="No ideas yet." hint="Share your first idea in Innovation Lab to get started." action={<Link href="/innovation-lab" className="text-xs font-semibold text-amber-600 hover:underline">Share an idea</Link>} />
           ) : (
           <>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Top idea clusters gaining momentum</p>
@@ -476,7 +477,7 @@ export default function Dashboard() {
                 )}
               </li>
             ))}
-            {queuePreview.length === 0 && <li className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-400">Queue is clear — nothing awaiting review.</li>}
+            {queuePreview.length === 0 && <li className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-400">All clear — nothing waiting on you.</li>}
           </ul>
         </SectionCard>
 
@@ -503,10 +504,10 @@ export default function Dashboard() {
         {/* Workspace status */}
         <SectionCard title="Workspace Status" icon={Sparkles} accent="emerald">
           <ul className="space-y-2 text-sm text-slate-600">
-            <li>· Company Brain: {companyRecords.length} documented record{companyRecords.length === 1 ? "" : "s"}</li>
-            <li>· Projects: {projects.length} in registry{projects.some((p) => p.lastSyncedAt) ? " (nightly sync active)" : ""}</li>
-            <li>· Open tasks: {projectTasks.filter((t) => t.status !== "done").length} manual follow-ups</li>
-            <li>· Integrations: pending approval — no live Cliq/WhatsApp yet</li>
+            <li>· Company Brain: {companyRecords.length} how-we-work record{companyRecords.length === 1 ? "" : "s"}</li>
+            <li>· Projects: {projects.length} tracked{projects.some((p) => p.lastSyncedAt) ? " (overnight updates on)" : ""}</li>
+            <li>· Open tasks: {projectTasks.filter((t) => t.status !== "done").length} follow-ups</li>
+            <li>· Cliq & WhatsApp: not connected yet — needs your approval first</li>
           </ul>
           <div className="mt-3 flex flex-wrap gap-2">
             <Link href="/solution-finder" className="text-xs font-semibold text-violet-600 hover:underline">Company Brain</Link>

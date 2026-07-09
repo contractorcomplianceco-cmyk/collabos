@@ -13,6 +13,7 @@ import { ApprovalRouteBadge, EmptyState, PageHeader, RiskBadge, SectionCard, Sta
 import { useAppState } from "@/hooks/use-app-state";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { humanLabel, HUMAN_AGENT_STATUS } from "@/lib/ui-labels";
 import type { AgentWorkItem, AgentWorkPriority, AgentWorkStatus, AgentWorkType, ApprovalRoute, RiskLevel } from "@/types";
 
 const WORK_TYPES: AgentWorkType[] = ["bug", "fix", "improvement", "ops", "question", "integration-prep"];
@@ -47,19 +48,19 @@ function splitSteps(text: string): string[] {
 
 function AgentProtocol() {
   return (
-    <SectionCard title="Agent Execution Protocol" icon={ShieldCheck} accent="violet">
+    <SectionCard title="How this works" icon={ShieldCheck} accent="violet">
       <div className="grid gap-3 text-sm text-slate-600 md:grid-cols-3">
         <div className="rounded-xl bg-violet-50/60 p-3">
-          <p className="font-semibold text-violet-700">1. Human request</p>
-          <p className="mt-1 text-xs">Rose, Carmen, or an approved contributor creates a specific work item with a desired outcome.</p>
+          <p className="font-semibold text-violet-700">1. You ask</p>
+          <p className="mt-1 text-xs">Rose, Carmen, or an approved teammate logs a specific request with the outcome you want.</p>
         </div>
         <div className="rounded-xl bg-sky-50/60 p-3">
-          <p className="font-semibold text-sky-700">2. Approval gate</p>
-          <p className="mt-1 text-xs">The agent only works items marked approved for agent or explicitly approved in chat.</p>
+          <p className="font-semibold text-sky-700">2. You approve</p>
+          <p className="mt-1 text-xs">Cursor only picks up work you've signed off on.</p>
         </div>
         <div className="rounded-xl bg-emerald-50/60 p-3">
-          <p className="font-semibold text-emerald-700">3. Evidence loop</p>
-          <p className="mt-1 text-xs">Execution notes, checks, deployment status, branch, commit, or MR links are written back here.</p>
+          <p className="font-semibold text-emerald-700">3. You review</p>
+          <p className="mt-1 text-xs">Notes, checks, and what changed are written back here for you to review.</p>
         </div>
       </div>
     </SectionCard>
@@ -114,7 +115,7 @@ function WorkItemCard({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <StatusChip label={item.status} tone={STATUS_TONE[item.status]} />
+            <StatusChip label={humanLabel(HUMAN_AGENT_STATUS, item.status)} tone={STATUS_TONE[item.status]} />
             <StatusChip label={item.priority} tone={PRIORITY_TONE[item.priority]} />
             <StatusChip label={item.requestType} tone="sky" />
             <RiskBadge value={item.risk} />
@@ -139,13 +140,13 @@ function WorkItemCard({
 
       {open && (
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          <SectionCard title="Execution Fields" icon={GitBranch} accent="sky" className="shadow-none">
+          <SectionCard title="Update progress" icon={GitBranch} accent="sky" className="shadow-none">
             <div className="space-y-3">
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="text-xs text-slate-500">
                   Status
                   <select disabled={!canManage} value={status} onChange={(e) => setStatus(e.target.value as AgentWorkStatus)} className="field-input mt-1">
-                    {STATUSES.map((s) => <option key={s} value={s}>{s.replace(/-/g, " ")}</option>)}
+                    {STATUSES.map((s) => <option key={s} value={s}>{humanLabel(HUMAN_AGENT_STATUS, s)}</option>)}
                   </select>
                 </label>
                 <label className="text-xs text-slate-500">
@@ -157,7 +158,7 @@ function WorkItemCard({
               </div>
               <label className="block text-xs text-slate-500">
                 Agent notes
-                <textarea disabled={!canManage} value={agentNotes} onChange={(e) => setAgentNotes(e.target.value)} rows={3} className="field-input mt-1" placeholder="What the agent did, found, or needs." />
+                <textarea disabled={!canManage} value={agentNotes} onChange={(e) => setAgentNotes(e.target.value)} rows={3} className="field-input mt-1" placeholder="What happened, what was found, or what's still needed." />
               </label>
               <div className="grid gap-3 sm:grid-cols-3">
                 <input disabled={!canManage} value={branchName} onChange={(e) => setBranchName(e.target.value)} className="field-input" placeholder="Branch" />
@@ -170,11 +171,11 @@ function WorkItemCard({
               </label>
               <label className="block text-xs text-slate-500">
                 Final outcome
-                <textarea disabled={!canManage} value={finalOutcome} onChange={(e) => setFinalOutcome(e.target.value)} rows={2} className="field-input mt-1" placeholder="What Rose should review." />
+                <textarea disabled={!canManage} value={finalOutcome} onChange={(e) => setFinalOutcome(e.target.value)} rows={2} className="field-input mt-1" placeholder="What Rose or Carmen should review." />
               </label>
               {canManage && (
                 <button onClick={save} className="inline-flex items-center gap-1.5 rounded-xl bg-rose-500 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-rose-600">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Save execution update
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Save update
                 </button>
               )}
             </div>
@@ -255,18 +256,18 @@ export default function AgentQueue() {
     setOwner("");
     setVerificationSteps("");
     setShowForm(false);
-    toast({ title: "Cursor direct request created", description: "Saved to the shared queue. It still needs approval before Cursor execution." });
+    toast({ title: "Cursor request created", description: "Saved to the shared list. It still needs your approval before Cursor starts." });
   };
 
   const update = (id: string, patch: Parameters<typeof updateAgentWork>[1]) => {
     void updateAgentWork(id, patch).then(() => {
-      toast({ title: "Cursor request updated", description: "The shared queue has the latest execution state." });
+      toast({ title: "Request updated", description: "The list now has the latest progress." });
     });
   };
 
   const addEvent = (id: string, action: string, note?: string) => {
     void addAgentWorkItemEvent(id, action, note).then(() => {
-      toast({ title: "Event added", description: "Execution evidence was appended to the work item." });
+      toast({ title: "Note added", description: "Progress was saved to this request." });
     });
   };
 
@@ -274,7 +275,7 @@ export default function AgentQueue() {
     <div className="space-y-6 p-6">
       <PageHeader
         title="Cursor Direct Requests"
-        subtitle="Human-approved work requests for Cursor to pick up, execute, and report back."
+        subtitle="Work you've approved for Cursor to pick up, do, and report back on."
         icon={Bot}
         accent="violet"
         actions={
@@ -288,15 +289,15 @@ export default function AgentQueue() {
 
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-violet-100 bg-violet-50/70 p-4">
-          <p className="text-xs font-medium text-violet-600">Ready for agent</p>
+          <p className="text-xs font-medium text-violet-600">Ready for Cursor</p>
           <p className="mt-1 text-2xl font-bold text-slate-900">{approved}</p>
         </div>
         <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-4">
-          <p className="text-xs font-medium text-amber-600">Active / blocked</p>
+          <p className="text-xs font-medium text-amber-600">In progress or blocked</p>
           <p className="mt-1 text-2xl font-bold text-slate-900">{active}</p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="text-xs font-medium text-slate-500">Total work items</p>
+          <p className="text-xs font-medium text-slate-500">Total requests</p>
           <p className="mt-1 text-2xl font-bold text-slate-900">{agentWorkItems.length}</p>
         </div>
       </div>
@@ -341,14 +342,14 @@ export default function AgentQueue() {
       <div className="flex flex-wrap gap-2">
         {(["all", ...STATUSES] as const).map((status) => (
           <button key={status} onClick={() => setStatusFilter(status)} className={`rounded-full px-3 py-1 text-xs font-medium capitalize transition ${statusFilter === status ? "bg-violet-500 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"}`}>
-            {status.replace(/-/g, " ")}
+            {status === "all" ? "All" : humanLabel(HUMAN_AGENT_STATUS, status)}
           </button>
         ))}
       </div>
 
       <div className="space-y-3">
-        {agentWorkLoading && <p className="py-10 text-center text-sm text-slate-400">Loading shared Cursor request queue...</p>}
-        {!agentWorkLoading && filtered.length === 0 && <EmptyState message="No work items in this state." hint="Create a request or approve an existing item for agent execution." />}
+        {agentWorkLoading && <p className="py-10 text-center text-sm text-slate-400">Loading your Cursor request list…</p>}
+        {!agentWorkLoading && filtered.length === 0 && <EmptyState message="Nothing here in this view." hint="Log a new request or approve one that's waiting on you." />}
         {!agentWorkLoading && filtered.map((item) => (
           <WorkItemCard key={item.id} item={item} canManage={canManage} onUpdate={update} onEvent={addEvent} />
         ))}

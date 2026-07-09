@@ -132,19 +132,19 @@ export default function SolutionFinder() {
       requiredApprover: "carmen",
     });
     setGapFlagged(lastRunQuery);
-    toast({ title: "Knowledge gap flagged", description: "Sent to the Review Queue as a pending recommendation — nothing is auto-approved." });
+    toast({ title: "Gap flagged", description: "Sent to Review Queue for sign-off — nothing is approved automatically." });
   };
 
   return (
     <div className="space-y-6 p-6">
       <PageHeader
         title="Solution Finder"
-        subtitle="Ask a question — Rose OS searches Company Brain for documented answers."
+        subtitle="Ask a question — Rose searches Company Brain for answers your team has documented."
         icon={Search}
         accent="violet"
       />
 
-      <SectionCard title="Ask Rose OS" icon={Sparkles} accent="violet">
+      <SectionCard title="Ask Rose" icon={Sparkles} accent="violet">
         <div className="flex flex-col gap-3 sm:flex-row">
           <input
             value={query}
@@ -301,7 +301,7 @@ export default function SolutionFinder() {
       {!result && (
         <EmptyState
           message="Ask a question above to search the Company Brain."
-          hint="Answers come only from documented records — if nothing is documented, Rose OS says so instead of guessing."
+          hint="Answers come only from what your team has documented — if nothing is written down yet, Rose will say so instead of guessing."
         />
       )}
 
@@ -360,8 +360,8 @@ export default function SolutionFinder() {
         {browseResults.length === 0 ? (
           <div className="mt-3">
             <EmptyState
-              message={companyRecords.length === 0 ? "Company Brain is empty — add your first documented process." : "No records match this filter."}
-              hint={companyRecords.length === 0 ? "Records power Solution Finder answers. Start with one SOP or policy your team already uses." : "Try a broader keyword or switch the classification filter back to All."}
+              message={companyRecords.length === 0 ? "Company Brain is empty — add how your team does something." : "No records match this filter."}
+              hint={companyRecords.length === 0 ? "These records power Solution Finder. Start with one SOP or policy you already use." : "Try a broader keyword or switch the filter back to All."}
             />
           </div>
         ) : (

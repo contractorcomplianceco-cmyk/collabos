@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { FolderKanban, ArrowRight, ClipboardCheck } from "lucide-react";
 import { PageHeader, SectionCard, StatusChip, RiskBadge, EmptyState } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
+import { humanLabel, HUMAN_PROJECT_STATUS } from "@/lib/ui-labels";
 import type { ProjectStatus } from "@/types";
 
 const STATUS_TONE: Record<ProjectStatus, "sky" | "rose" | "amber" | "slate" | "emerald" | "violet"> = {
@@ -41,14 +42,14 @@ export default function ProjectsPage() {
     <div className="space-y-6 p-6">
       <PageHeader
         title="Projects"
-        subtitle="Shared project registry across departments — status, owners, and follow-up tasks."
+        subtitle="Projects your team is tracking — who's on them, how they're going, and what needs follow-up."
         icon={FolderKanban}
         accent="sky"
       />
       <p className="-mt-4 text-xs text-slate-400">
-        Project status syncs nightly from live server state.
+        Project details refresh overnight from the server.
         {projects.some((p) => p.lastSyncedAt)
-          ? ` Last auto-sync: ${new Date(
+          ? ` Last update: ${new Date(
               Math.max(...projects.map((p) => (p.lastSyncedAt ? Date.parse(p.lastSyncedAt) : 0))),
             ).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}.`
           : null}
@@ -83,7 +84,7 @@ export default function ProjectsPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="text-sm font-semibold text-slate-800">{p.name}</h3>
-                        <StatusChip label={p.status.replace(/-/g, " ")} tone={STATUS_TONE[p.status]} />
+                        <StatusChip label={humanLabel(HUMAN_PROJECT_STATUS, p.status)} tone={STATUS_TONE[p.status]} />
                         <RiskBadge value={p.risk} />
                       </div>
                       <p className="mt-1 text-sm text-slate-600">{p.description}</p>
@@ -133,8 +134,8 @@ export default function ProjectsPage() {
               {sorted.length === 0 ? (
                 <li>
                   <EmptyState
-                    message="No projects in the shared registry yet."
-                    hint="Projects sync nightly from live server state (repos, PM2, health checks). Run a manual sync or wait for the next cron cycle."
+                    message="No projects yet."
+                    hint="Projects show up after overnight updates from the server, or when you add them here."
                   />
                 </li>
               ) : null}

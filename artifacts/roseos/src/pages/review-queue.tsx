@@ -4,6 +4,7 @@ import { PageHeader, ClassificationBadge, RiskBadge, ApprovalRouteBadge, StatusC
 import { useAppState } from "@/hooks/use-app-state";
 import { canApprove } from "@/lib/helpers";
 import { useToast } from "@/hooks/use-toast";
+import { humanLabel, HUMAN_REVIEW_CATEGORY, HUMAN_REVIEW_STATUS } from "@/lib/ui-labels";
 
 const CATEGORIES = ["all", "duplicate", "team-pulse", "automation", "market", "mind-meld-handoff", "final-decision", "mockup-prompt", "external-intake"];
 const STATUS_TONE: Record<string, "amber" | "emerald" | "rose" | "sky"> = { pending: "amber", approved: "emerald", rejected: "rose", "needs-revision": "sky" };
@@ -23,25 +24,25 @@ export default function ReviewQueue() {
 
   return (
     <div className="space-y-6 p-6">
-      <PageHeader title="Review Queue" subtitle="Central approval queue. AI recommendations are never auto-approved." icon={ClipboardCheck} accent="rose" />
+      <PageHeader title="Review Queue" subtitle="Things that need your sign-off. Nothing here is approved automatically." icon={ClipboardCheck} accent="rose" />
 
       <div className="flex flex-wrap items-center gap-2">
         <Filter className="h-4 w-4 text-slate-400" />
         {CATEGORIES.map((c) => (
           <button key={c} onClick={() => setCategory(c)} className={`rounded-full px-3 py-1 text-xs font-medium capitalize transition ${category === c ? "bg-rose-500 text-white shadow-sm" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"}`}>
-            {c.replace(/-/g, " ")}
+            {humanLabel(HUMAN_REVIEW_CATEGORY, c)}
           </button>
         ))}
       </div>
 
       <div className="space-y-3">
         {recommendationsLoading && (
-          <p className="py-10 text-center text-sm text-slate-400">Loading shared review queue...</p>
+          <p className="py-10 text-center text-sm text-slate-400">Loading items waiting on you…</p>
         )}
         {!recommendationsLoading && filtered.length === 0 && (
           <EmptyState
             message="Nothing in this category."
-            hint="New recommendations arrive here from External Intake, Mockup Studio, Duplicate Radar, and the Mind Meld Room — and always wait for a human decision."
+            hint="New items land here from Incoming Messages, Mockup Studio, Duplicate Radar, and Mind Meld — and always wait for a person to decide."
           />
         )}
         {!recommendationsLoading && filtered.map((r) => {
@@ -58,7 +59,7 @@ export default function ReviewQueue() {
                   </div>
                   <p className="mt-3 text-sm font-medium text-slate-800">{r.recommendation}</p>
                   <button onClick={() => setExpanded(expanded === r.id ? null : r.id)} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-600">
-                    <History className="h-3.5 w-3.5" /> {expanded === r.id ? "Hide" : "Show"} audit history
+                    <History className="h-3.5 w-3.5" /> {expanded === r.id ? "Hide" : "Show"} history
                   </button>
                   {expanded === r.id && (
                     <ul className="mt-2 space-y-1 border-l-2 border-slate-100 pl-3">
@@ -88,7 +89,7 @@ export default function ReviewQueue() {
                       <span className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-500">Requires {r.requiredApprover === "both" ? "Rose + Carmen" : r.requiredApprover}</span>
                     )
                   ) : (
-                    <StatusChip label={r.status} tone={STATUS_TONE[r.status]} />
+                    <StatusChip label={humanLabel(HUMAN_REVIEW_STATUS, r.status)} tone={STATUS_TONE[r.status]} />
                   )}
                   </div>
                 </div>

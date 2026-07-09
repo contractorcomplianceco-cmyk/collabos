@@ -4,12 +4,12 @@ import type { Classification, RiskLevel, ApprovalRoute } from "@/types";
 import { ShieldCheck, FileText, Sparkles, PenLine, Clock, Lock, CheckCircle2, ArrowUpRight } from "lucide-react";
 
 const CLASS_META: Record<Classification, { label: string; cls: string; icon: React.ElementType }> = {
-  "documented-fact": { label: "Documented Fact", cls: "bg-slate-100 text-slate-700 border-slate-200", icon: FileText },
-  "user-update": { label: "User Update", cls: "bg-sky-50 text-sky-700 border-sky-200", icon: PenLine },
-  "ai-recommendation": { label: "AI Recommendation", cls: "bg-violet-50 text-violet-700 border-violet-200", icon: Sparkles },
-  "draft-idea": { label: "Draft Idea", cls: "bg-amber-50 text-amber-700 border-amber-200", icon: PenLine },
-  "pending-approval": { label: "Pending Approval", cls: "bg-orange-50 text-orange-700 border-orange-200", icon: Clock },
-  "approved-decision": { label: "Approved Decision", cls: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
+  "documented-fact": { label: "How we do it", cls: "bg-slate-100 text-slate-700 border-slate-200", icon: FileText },
+  "user-update": { label: "Team update", cls: "bg-sky-50 text-sky-700 border-sky-200", icon: PenLine },
+  "ai-recommendation": { label: "Suggested by Rose", cls: "bg-violet-50 text-violet-700 border-violet-200", icon: Sparkles },
+  "draft-idea": { label: "Draft idea", cls: "bg-amber-50 text-amber-700 border-amber-200", icon: PenLine },
+  "pending-approval": { label: "Needs your sign-off", cls: "bg-orange-50 text-orange-700 border-orange-200", icon: Clock },
+  "approved-decision": { label: "Signed off", cls: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
   sensitive: { label: "Sensitive", cls: "bg-rose-50 text-rose-700 border-rose-200", icon: Lock },
 };
 
@@ -263,11 +263,11 @@ export function ApprovalPassport({
   };
   return (
     <div className="inline-flex flex-wrap items-center gap-1.5 rounded-xl bg-slate-50 px-2 py-1.5 ring-1 ring-slate-100">
-      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Passport</span>
+      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Sign-off</span>
       {stamp("Rose", needsRose, Boolean(approvals?.rose))}
       {stamp("Carmen", needsCarmen, Boolean(approvals?.carmen))}
-      {status === "rejected" && <span className="rounded-lg bg-rose-50 px-2 py-1 text-[10px] font-bold uppercase text-rose-500">Rejected</span>}
-      {status === "needs-revision" && <span className="rounded-lg bg-sky-50 px-2 py-1 text-[10px] font-bold uppercase text-sky-500">Revision</span>}
+      {status === "rejected" && <span className="rounded-lg bg-rose-50 px-2 py-1 text-[10px] font-bold uppercase text-rose-500">Declined</span>}
+      {status === "needs-revision" && <span className="rounded-lg bg-sky-50 px-2 py-1 text-[10px] font-bold uppercase text-sky-500">Needs another look</span>}
     </div>
   );
 }

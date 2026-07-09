@@ -115,7 +115,7 @@ export function computeActivitySinceLastVisit(input: ActivityInput): ActivityIte
     items.push({
       id: "since-recs",
       module: "review-queue",
-      label: `${newRecs.length} review queue item${newRecs.length === 1 ? "" : "s"}`,
+      label: `${newRecs.length} item${newRecs.length === 1 ? "" : "s"} waiting on you`,
       detail: newRecs[0].recommendation,
       href: "/review-queue",
       count: newRecs.length,
@@ -131,7 +131,7 @@ export function computeActivitySinceLastVisit(input: ActivityInput): ActivityIte
     items.push({
       id: "since-intake",
       module: "external-intake",
-      label: `${newIntake.length} intake message${newIntake.length === 1 ? "" : "s"}`,
+      label: `${newIntake.length} incoming message${newIntake.length === 1 ? "" : "s"}`,
       detail: newIntake[0].cleanedSummary,
       href: "/external-intake",
       count: newIntake.length,

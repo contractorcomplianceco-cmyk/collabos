@@ -35,20 +35,19 @@ export default function LoginPage() {
             <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide">
               <ShieldCheck className="h-3.5 w-3.5" /> Secure workspace sign-in
             </div>
-            <h1 className="text-2xl font-bold leading-snug">CollabOS Command Center</h1>
+            <h1 className="text-2xl font-bold leading-snug">CollabOS</h1>
             <p className="mt-2 text-sm text-white/85">
-              Real accounts, real permissions. What you can see and do inside is decided by your
-              role — approvals, sensitive content, and admin tools are locked server-side.
+              Sign in with your team account. What you can see and approve depends on your role — sensitive areas stay locked to the right people.
             </p>
           </div>
           <div className="mt-8 space-y-2 text-xs text-white/80">
-            <p className="flex items-center gap-2"><Lock className="h-3.5 w-3.5" /> Sessions are verified on every request</p>
-            <p className="flex items-center gap-2"><Sparkles className="h-3.5 w-3.5" /> Every important action is written to the audit log</p>
+            <p className="flex items-center gap-2"><Lock className="h-3.5 w-3.5" /> Your session stays secure while you work</p>
+            <p className="flex items-center gap-2"><Sparkles className="h-3.5 w-3.5" /> Important actions are saved for reference</p>
           </div>
         </div>
         <div className="p-8">
           <div className="mb-6 flex justify-center">
-            <img src={collabosLogo} alt="CollabOS Command Center logo" className="w-40 object-contain" />
+            <img src={collabosLogo} alt="CollabOS logo" className="w-40 object-contain" />
           </div>
           <form onSubmit={submit} className="space-y-3">
             <div>
@@ -90,7 +89,7 @@ export default function LoginPage() {
             </p>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Sign in with your approved <span className="font-medium">@ccacontact.com</span> staff email.
-              Admin-created accounts may require a password change on first login; staff bootstrap accounts use your assigned password.
+              If an admin set you up, you may need to choose a new password on first login. Otherwise use the password Carmen gave you.
             </p>
             <p className="mt-2 text-xs text-slate-500">
               Need access or a password reset? Contact Carmen.

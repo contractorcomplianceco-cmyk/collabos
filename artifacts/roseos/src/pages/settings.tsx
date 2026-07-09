@@ -13,7 +13,7 @@ const STATE_TONE: Record<string, "emerald" | "amber" | "violet" | "slate" | "sky
 const ROLE_MATRIX = [
   { role: "Rose / Leadership", access: "Full access · approves direction, pricing, client-facing & final decisions · Mind Meld" },
   { role: "Carmen / Systems Review", access: "Full systems access · approves process, CRM, automation & build changes · Mind Meld" },
-  { role: "Admin", access: "Administrative access across modules · Mind Meld" },
+  { role: "Admin", access: "Administrative access across the workspace · Mind Meld" },
   { role: "Department Lead", access: "Department view · submit & manage team work · no leadership approvals" },
   { role: "Team Member", access: "Submit ideas, updates & support needs · read dashboards" },
   { role: "Viewer", access: "Read-only access · cannot submit or approve" },
@@ -57,7 +57,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <PageHeader title="Settings, Sources & Permissions" subtitle="Configure data sources, thresholds, permissions, and privacy." icon={SettingsIcon} accent="sky"
+      <PageHeader title="Settings" subtitle="Your account, alerts, connections, and who can do what." icon={SettingsIcon} accent="sky"
         actions={
           <button onClick={() => { resetData(); toast({ title: "Local preferences reset", description: "Your role preference was refreshed. Shared workspace data is unchanged." }); }} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
             <RotateCcw className="h-4 w-4" /> Reset local preferences
@@ -87,7 +87,7 @@ export default function SettingsPage() {
           >
             {changePassword.isPending ? "Updating…" : "Change password"}
           </button>
-          <p className="mt-2 text-xs text-slate-400">Optional for staff bootstrap accounts. Required when an admin issues a temporary password.</p>
+          <p className="mt-2 text-xs text-slate-400">Optional if Carmen gave you a permanent password. Required when an admin sends a temporary one.</p>
         </SectionCard>
 
         <SectionCard title="Detection & Alerts" icon={Bell} accent="rose">
@@ -131,7 +131,7 @@ export default function SettingsPage() {
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-xs text-slate-400">Integration status is stored in the shared database. Live external connections are not active yet — approvals are required before each integration goes live.</p>
+          <p className="mt-3 text-xs text-slate-400">Connections stay off until you approve them. Cliq and WhatsApp are not live yet.</p>
         </SectionCard>
 
         <SectionCard title="Roles & Permissions" icon={ShieldCheck} accent="rose" className="lg:col-span-2">

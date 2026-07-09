@@ -46,16 +46,16 @@ const TYPE_LABEL: Record<IntakeDetectedType, string> = {
 };
 
 const DEST_LABEL: Record<IntakeDestination, string> = {
-  "mind-meld": "Rose/Carmen Mind Meld",
-  "review-queue": "CollabOS Review Queue",
+  "mind-meld": "Rose & Carmen Mind Meld",
+  "review-queue": "Review Queue",
   "command-center-task": "Cursor Direct Request",
-  "idea-backlog": "Idea Backlog",
-  "build-registry": "Build Registry Suggestion",
-  "requirements-registry": "Requirements Registry Suggestion",
-  "automation-registry": "Automation Registry Suggestion",
-  "decision-log": "Decision Log Suggestion",
-  "company-brain-update": "Company Brain Update Suggestion",
-  "no-action": "No Action",
+  "idea-backlog": "Draft idea",
+  "build-registry": "Suggest a build request",
+  "requirements-registry": "Suggest requirements",
+  "automation-registry": "Suggest an automation",
+  "decision-log": "Suggest a decision",
+  "company-brain-update": "Suggest a Company Brain update",
+  "no-action": "No action",
 };
 
 const SENSITIVITY_LABEL: Record<IntakeSensitivity, string> = {
@@ -101,12 +101,12 @@ const DUP_TONE: Record<IntakeDuplicateRisk, "slate" | "amber" | "rose"> = {
 };
 
 const GUARDRAILS = [
-  "External messages are intake drafts until reviewed by a human.",
-  "Sensitive or private items must not be shared broadly.",
-  "Rule-based classifications are recommendations, not approved company decisions.",
-  "Rose approves company direction, client-facing content, pricing, launch decisions, and final decisions.",
-  "Carmen reviews systems, process, Zoho, AI, automation, and build architecture.",
-  "High-risk items may require both Rose and Carmen.",
+  "Incoming messages stay drafts until a person reviews them.",
+  "Sensitive or private items stay with leadership.",
+  "Automatic sorting is a suggestion — not an approved decision.",
+  "Rose signs off on company direction, client-facing content, pricing, launches, and final calls.",
+  "Carmen reviews systems, process, Zoho, AI, automations, and build plans.",
+  "High-risk items may need both Rose and Carmen.",
 ];
 
 const READINESS_LABEL: Record<ReadinessLevel, string> = {
@@ -138,12 +138,12 @@ const MEMORY_DEST_LABEL: Record<MemoryDestination, string> = {
 };
 
 const ROUTE_ACTIONS: { dest: IntakeDestination; label: string; icon: React.ElementType }[] = [
-  { dest: "mind-meld", label: "Send to Rose/Carmen Mind Meld", icon: Brain },
-  { dest: "review-queue", label: "Send to Review Queue", icon: ClipboardCheck },
-  { dest: "command-center-task", label: "Route to Cursor Direct Requests", icon: ListTodo },
-  { dest: "idea-backlog", label: "Create Draft Idea", icon: Lightbulb },
-  { dest: "build-registry", label: "Create Build Request Draft", icon: Hammer },
-  { dest: "company-brain-update", label: "Propose Company Brain Update", icon: BookOpen },
+  { dest: "mind-meld", label: "Send to Mind Meld", icon: Brain },
+  { dest: "review-queue", label: "Send for review", icon: ClipboardCheck },
+  { dest: "command-center-task", label: "Log a Cursor request", icon: ListTodo },
+  { dest: "idea-backlog", label: "Save as draft idea", icon: Lightbulb },
+  { dest: "build-registry", label: "Suggest a build request", icon: Hammer },
+  { dest: "company-brain-update", label: "Suggest a Company Brain update", icon: BookOpen },
 ];
 
 function FilterSelect({ label, value, onChange, options }: {
@@ -203,7 +203,7 @@ function IntegrationCard({ name, icon: Icon, mode, onModeChange, webhookPath, en
                 key={m}
                 onClick={() => onModeChange(m)}
                 disabled={m === "live" || !canMutate}
-                title={m === "live" ? "Live mode requires configured environment variables and server endpoints." : !canMutate ? "Your role has view-only access." : undefined}
+                title={m === "live" ? "Live mode needs setup on the server first." : !canMutate ? "Your role can view only." : undefined}
                 className={`rounded-lg px-2.5 py-1 font-medium capitalize transition ${
                   mode === m ? "bg-rose-500 text-white" : m === "live" || !canMutate ? "cursor-not-allowed bg-slate-50 text-slate-300" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
@@ -214,16 +214,16 @@ function IntegrationCard({ name, icon: Icon, mode, onModeChange, webhookPath, en
           </div>
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-slate-500">Webhook URL</span>
+          <span className="text-slate-500">Connection URL</span>
           <code className="rounded bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600">{webhookPath}</code>
         </div>
         <div className="flex items-start justify-between gap-2">
-          <span className="text-slate-500">Environment variables</span>
+          <span className="text-slate-500">Setup keys</span>
           <div className="flex flex-col items-end gap-1">
             {envVars.map((v) => (
               <span key={v} className="inline-flex items-center gap-1.5">
                 <code className="text-[11px] text-slate-600">{v}</code>
-                <StatusChip label="not set" tone="slate" />
+                <StatusChip label="not set up" tone="slate" />
               </span>
             ))}
           </div>
@@ -241,10 +241,10 @@ function IntegrationCard({ name, icon: Icon, mode, onModeChange, webhookPath, en
           mode === "off" || !canMutate ? "cursor-not-allowed bg-slate-50 text-slate-300" : "bg-sky-100 text-sky-700 hover:bg-sky-200"
         }`}
       >
-        <Send className="h-3.5 w-3.5" /> Send test webhook message
+        <Send className="h-3.5 w-3.5" /> Send a test message
       </button>
       <p className="mt-2 text-[11px] text-slate-400">
-        Test messages are simulated locally. No live {name} connection exists until environment variables and server endpoints are configured.
+        Test messages stay on this page for now. A live {name} connection needs setup before real messages arrive.
       </p>
     </div>
   );
@@ -335,7 +335,7 @@ export default function ExternalIntake() {
 
   const submitManual = () => {
     if (!canAct) {
-      toast({ title: "View-only access", description: "Your role cannot add intake messages." });
+      toast({ title: "View-only access", description: "Your role can't add messages here." });
       return;
     }
     if (!formMessage.trim() || !formSender.trim()) {
@@ -354,7 +354,7 @@ export default function ExternalIntake() {
     setFormHandle("");
     setFormChannel("");
     setShowForm(false);
-    toast({ title: "Sample message captured", description: "Classified and added to the intake queue (test mode)." });
+    toast({ title: "Sample message added", description: "Sorted and added to the message queue (test mode)." });
   };
 
   const route = (dest: IntakeDestination, ownerOverride?: IntakeReviewOwner) => {
@@ -366,13 +366,13 @@ export default function ExternalIntake() {
   const carmenfy = () => {
     if (!canAct || !selected) return;
     routeIntakeItem(selected.id, "review-queue", actor, "Carmen");
-    toast({ title: "Carmenfy", description: "Draft sent to the Review Queue with Carmen as reviewer — systems lens applied." });
+    toast({ title: "Sent to Carmen", description: "Draft sent to Review Queue for Carmen — systems perspective." });
   };
 
   const rosify = () => {
     if (!canAct || !selected) return;
     routeIntakeItem(selected.id, "review-queue", actor, "Rose");
-    toast({ title: "Rosify", description: "Draft sent to the Review Queue with Rose as reviewer — direction lens applied." });
+    toast({ title: "Sent to Rose", description: "Draft sent to Review Queue for Rose — direction perspective." });
   };
 
   const checkDuplicates = () => {
@@ -405,7 +405,7 @@ export default function ExternalIntake() {
       createdBy: actor,
     });
     setShowMemoryPicker(false);
-    toast({ title: "Memory candidate created", description: `Proposed for ${MEMORY_DEST_LABEL[dest]} — pending approval, nothing written yet.` });
+    toast({ title: "Note saved for review", description: `Suggested for ${MEMORY_DEST_LABEL[dest]} — waiting on sign-off, nothing saved yet.` });
   };
 
   const copyBuildPrompt = async () => {
@@ -427,20 +427,20 @@ export default function ExternalIntake() {
       senderHandle: source === "zoho_cliq" ? "@webhook-test" : "+1 (555) 000-0000",
       rawMessage: "Test webhook message: need to follow up on the QualifierConnect automation workflow in Zoho CRM.",
     });
-    toast({ title: "Test webhook simulated", description: "A sample message was added to the intake queue." });
+    toast({ title: "Test message added", description: "A sample message was added to the queue." });
   };
 
   return (
     <div className="space-y-6 p-6">
       <PageHeader
-        title="External Intake"
-        subtitle="Messages from Zoho Cliq, WhatsApp, and manual test entry — classified and routed for human review."
+        title="Incoming Messages"
+        subtitle="Messages from Zoho Cliq, WhatsApp, and manual entry — sorted for you, then waiting on a person to decide."
         icon={Inbox}
         accent="sky"
       />
 
       {intakeLoading ? (
-        <p className="text-sm text-slate-500">Loading shared intake queue…</p>
+        <p className="text-sm text-slate-500">Loading incoming messages…</p>
       ) : (
       <>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -451,12 +451,12 @@ export default function ExternalIntake() {
               onClick={() => setTab(t)}
               className={`rounded-full px-4 py-1.5 text-xs font-semibold capitalize transition ${tab === t ? "bg-rose-500 text-white shadow-sm" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"}`}
             >
-              {t === "queue" ? "Intake Queue" : t === "constellation" ? "Collab Constellation" : "Integration Settings"}
+              {t === "queue" ? "Message queue" : t === "constellation" ? "How things connect" : "Connections"}
             </button>
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <StatusChip label="Demo / test mode — no live integrations" tone="amber" />
+          <StatusChip label="Test mode — no live connections yet" tone="amber" />
           {canAct && (
             <button
               onClick={() => setShowForm((v) => !v)}
@@ -479,7 +479,7 @@ export default function ExternalIntake() {
       </SectionCard>
 
       {showForm && canAct && (
-        <SectionCard title="Manual sample intake (test mode)" icon={Plus} accent="sky">
+        <SectionCard title="Add a test message" icon={Plus} accent="sky">
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs text-slate-500">
               Source
@@ -540,7 +540,7 @@ export default function ExternalIntake() {
             canMutate={canAct}
           />
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800 lg:col-span-2">
-            Zoho Cliq and WhatsApp webhooks are configured here but not live yet. Use manual test intake below until integrations are approved and connected.
+            Zoho Cliq and WhatsApp aren't live yet. Add a test message below until you approve turning them on.
           </div>
         </div>
       ) : tab === "constellation" ? (
@@ -609,7 +609,7 @@ export default function ExternalIntake() {
 
           <div className="grid gap-4 xl:grid-cols-[1fr_420px]">
             <div className="space-y-3">
-              {filtered.length === 0 && <EmptyState message="No intake items match these filters." />}
+              {filtered.length === 0 && <EmptyState message="No messages match these filters." />}
               {filtered.map((it) => {
                 const isSensitive = it.sensitivity !== "normal";
                 const itemReadiness = readinessById.get(it.id);
@@ -652,7 +652,7 @@ export default function ExternalIntake() {
             <div>
               {!selected ? (
                 <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center text-sm text-slate-400">
-                  Select an intake item to review its details, classification, and routing actions.
+                  Select a message to review details, sorting, and where to send it next.
                 </div>
               ) : (
                 <div className="sticky top-4 space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -809,13 +809,13 @@ export default function ExternalIntake() {
                           onClick={carmenfy}
                           className="inline-flex items-center gap-1.5 rounded-lg bg-sky-50 px-2.5 py-2 text-left text-[11px] font-medium text-sky-700 transition hover:bg-sky-100"
                         >
-                          <Sparkles className="h-3.5 w-3.5 shrink-0" /> Carmenfy — systems lens
+                          <Sparkles className="h-3.5 w-3.5 shrink-0" /> Send to Carmen — systems view
                         </button>
                         <button
                           onClick={rosify}
                           className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 px-2.5 py-2 text-left text-[11px] font-medium text-rose-700 transition hover:bg-rose-100"
                         >
-                          <Sparkles className="h-3.5 w-3.5 shrink-0" /> Rosify — direction lens
+                          <Sparkles className="h-3.5 w-3.5 shrink-0" /> Send to Rose — direction view
                         </button>
                         <button
                           onClick={checkDuplicates}

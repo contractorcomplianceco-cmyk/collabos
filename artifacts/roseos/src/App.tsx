@@ -60,25 +60,26 @@ const NAV: NavItem[] = [
   { href: "/mind-meld", label: "Mind Meld Room", icon: Brain, ctx: "Mind Meld Room", gated: true },
   { href: "/review-queue", label: "Review Queue", icon: ClipboardCheck, ctx: "Review Queue" },
   { href: "/agent-queue", label: "Cursor Direct Requests", icon: Bot, ctx: "Cursor Direct Requests" },
-  { href: "/external-intake", label: "External Intake", icon: Inbox, ctx: "External Intake" },
+  { href: "/external-intake", label: "Incoming Messages", icon: Inbox, ctx: "Incoming Messages" },
   { href: "/settings", label: "Settings", icon: SettingsIcon, ctx: "Settings" },
 ];
 
 const ROSE_BRAIN_TIPS: Record<string, string[]> = {
-  "Collab Dashboard": ["Your workspace starts empty — add projects and ideas as you go.", "I can summarize what's in the registry when data appears.", "Want a one-paragraph executive brief?"],
+  "Collab Dashboard": ["Your workspace starts empty — add projects and ideas as you go.", "I can summarize what's happening when your team adds data.", "Want a one-paragraph executive brief?"],
   "Projects": ["Create projects to track work across departments.", "Open the task list to see follow-ups by project.", "Unowned work can be flagged for leadership review."],
-  "Project Tasks": ["Open tasks are grouped from the shared registry.", "Filter by project from the Projects page.", "Completed tasks stay visible for audit context."],
-  "Duplicate Radar": ["I can flag overlaps as your registry grows.", "I can draft a merge recommendation for review.", "Add company records to improve duplicate detection."],
-  "Team Pulse": ["Submit feedback to surface where teams need support.", "I can suggest a supportive follow-up plan.", "Sentiment signals appear as feedback is collected."],
-  "Solution Finder": ["Ask me how documented processes work.", "I only answer from Company Brain records you add.", "If undocumented, I'll route you to the right owner."],
-  "Innovation Lab": ["Submit ideas to start your innovation pipeline.", "I can check a new idea for overlap before you submit.", "Ideas cluster automatically as the pipeline grows."],
+  "Project Tasks": ["Open tasks are grouped from your shared project list.", "Filter by project from the Projects page.", "Completed tasks stay visible for reference."],
+  "Duplicate Radar": ["I can flag overlaps as your project list grows.", "I can draft a merge recommendation for review.", "Add how-we-work records to improve duplicate detection."],
+  "Team Pulse": ["Submit feedback to surface where teams need support.", "I can suggest a supportive follow-up plan.", "Team mood signals appear as feedback is collected."],
+  "Solution Finder": ["Ask me how documented processes work.", "I only answer from Company Brain records you add.", "If nothing is documented yet, I'll point you to the right owner."],
+  "Innovation Lab": ["Submit ideas to get your innovation list started.", "I can check a new idea for overlap before you submit.", "Similar ideas group together as the list grows."],
   "Mockup Studio": ["Describe an idea and I'll structure a build brief.", "I can generate a ready-to-use build prompt.", "Send any concept to the Review Queue."],
-  "Executive Reports": ["I can generate report types from live workspace data.", "Reports populate as projects and registry data grow.", "Export creates a leadership-ready summary."],
+  "Executive Reports": ["I can generate report types from live workspace data.", "Reports fill in as projects and team data grow.", "Export creates a leadership-ready summary."],
   "Market Pulse": ["Add competitors and keywords in Settings to start monitoring.", "Signals appear as market data is captured.", "I can suggest a recommended response per signal."],
-  "Mind Meld Room": ["This space is private to Rose and Carmen.", "Carmenfy routes to systems; Rosify routes to direction.", "Handoffs never auto-create official decisions."],
-  "Review Queue": ["AI recommendations are never auto-approved.", "Items appear here when routed for leadership review.", "Each action is logged to audit history."],
-  "Cursor Direct Requests": ["Only approved items are ready for Cursor execution.", "Use this lane for fixes, bugs, ops, and integration prep.", "Every Cursor update needs evidence."],
-  "Settings": ["Adjust duplicate sensitivity and alert thresholds.", "All integrations are recommend-only until connected.", "Shared workspace data stays server-backed."],
+  "Mind Meld Room": ["This space is private to Rose and Carmen.", "Send to Carmen for systems; send to Rose for direction.", "Handoffs never auto-create official decisions."],
+  "Review Queue": ["Suggestions are never auto-approved.", "Items appear here when something needs your sign-off.", "Every decision is saved for reference."],
+  "Cursor Direct Requests": ["Only approved requests are ready for Cursor.", "Use this for fixes, bugs, day-to-day ops, and setup work.", "Every Cursor update should include what changed."],
+  "Incoming Messages": ["Messages stay drafts until a person reviews them.", "Sensitive items stay with leadership.", "Routing suggestions still need your approval."],
+  "Settings": ["Adjust duplicate sensitivity and alert thresholds.", "Connections stay off until you approve them.", "Your shared workspace is saved on the server."],
 };
 
 const ROLE_IDENTITY: Record<string, { name: string; title: string; initials: string }> = {
@@ -117,7 +118,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       <div className="flex items-center justify-center px-6 py-5">
-        <img src={collabosLogo} alt="CollabOS Command Center logo" className="w-36 shrink-0 object-contain" />
+        <img src={collabosLogo} alt="CollabOS logo" className="w-36 shrink-0 object-contain" />
       </div>
       <nav className="flex-1 space-y-0.5 px-3 pb-4">
         {visibleNav.map((l) => {
@@ -165,7 +166,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 backdrop-blur"><Brain className="h-4 w-4" /></div>
             <p className="text-sm font-bold">Need help?</p>
           </div>
-          <p className="mt-1.5 text-xs leading-relaxed text-white/85">Ask Rose Brain anything about your collaboration intelligence.</p>
+          <p className="mt-1.5 text-xs leading-relaxed text-white/85">Ask Rose Brain anything about your team workspace.</p>
           <button
             onClick={() => { setRoseBrainOpen(true); onNavigate?.(); }}
             className="mt-3 w-full rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50"
@@ -175,7 +176,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </div>
       <div className="border-t border-slate-100 px-4 py-3 text-[11px] text-slate-400">
-        Shared workspace data · integrations pending
+        Shared workspace · connections not live yet
       </div>
     </>
   );
@@ -218,7 +219,7 @@ function AlertsBell() {
             )}
             {alerts.length > 0 ? (
               <>
-                <p className="mb-2 mt-3 px-1 text-xs font-semibold uppercase tracking-wide text-slate-400">System alerts</p>
+                <p className="mb-2 mt-3 px-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Heads-up alerts</p>
                 <ul className="max-h-48 space-y-1.5 overflow-y-auto">
                   {alerts.map((a) => (
                     <li key={a.id} className="flex items-start gap-2 rounded-xl p-2 hover:bg-slate-50">
@@ -355,7 +356,7 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
             ref={inputRef}
             value={query}
             onChange={(e) => { setQuery(e.target.value); setSmartResult(null); }}
-            placeholder="Jump to a module, or type an idea / message to act on it..."
+            placeholder="Go somewhere, or describe an idea or message..."
             className="w-full border-none bg-transparent py-3.5 text-sm focus:outline-none"
           />
           <kbd className="shrink-0 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">Esc</kbd>
@@ -380,7 +381,7 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
             </div>
           )}
           <p className="px-2 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Go to</p>
-          {navMatches.length === 0 && <p className="px-2.5 py-2 text-xs text-slate-400">No modules match.</p>}
+          {navMatches.length === 0 && <p className="px-2.5 py-2 text-xs text-slate-400">Nothing matches that search.</p>}
           {navMatches.map((n) => (
             <button key={n.href} onClick={() => go(n.href)} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
               <n.icon className="h-4 w-4 text-slate-400" /> {n.label}
@@ -388,7 +389,7 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
           ))}
         </div>
         <p className="border-t border-slate-100 bg-slate-50 px-4 py-2 text-[10px] text-slate-400">
-          Smart actions are rule-based drafts — everything still goes through the Review Queue.
+          Smart actions are quick drafts — everything still goes through the Review Queue for your sign-off.
         </p>
       </div>
     </div>
@@ -406,7 +407,7 @@ function TopBar({ onMenu, onOpenPalette }: { onMenu: () => void; onOpenPalette: 
         <button type="button" onClick={onOpenPalette} className="relative hidden min-w-0 max-w-md flex-1 sm:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <span className="block w-full truncate whitespace-nowrap rounded-full bg-slate-100 py-2 pl-9 pr-12 text-left text-sm text-slate-400 transition hover:bg-slate-200/70">
-            Search modules, or type an idea to act on...
+            Search pages, or type an idea to act on...
           </span>
           <kbd className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400 lg:block">⌘K</kbd>
         </button>
@@ -550,7 +551,7 @@ function Guarded({ href, children }: { href: string; children: React.ReactNode }
         <div className="max-w-sm rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100"><Lock className="h-6 w-6 text-slate-400" /></div>
           <h2 className="text-sm font-bold text-slate-800">Access restricted</h2>
-          <p className="mt-1 text-xs text-slate-500">Your current role ({currentRole}) doesn't have access to this module. Ask an admin if you need more access.</p>
+          <p className="mt-1 text-xs text-slate-500">Your current role ({currentRole}) can't open this page. Ask Carmen if you need access.</p>
         </div>
       </div>
     );
@@ -566,7 +567,7 @@ function AdminGuarded({ permission, children }: { permission: string; children: 
         <div className="max-w-sm rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100"><Lock className="h-6 w-6 text-slate-400" /></div>
           <h2 className="text-sm font-bold text-slate-800">Admin area</h2>
-          <p className="mt-1 text-xs text-slate-500">This area is limited to administrators. The server enforces this permission too.</p>
+          <p className="mt-1 text-xs text-slate-500">This area is for administrators only.</p>
         </div>
       </div>
     );
