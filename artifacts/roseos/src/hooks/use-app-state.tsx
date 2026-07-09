@@ -62,6 +62,12 @@ import {
   updateAgentWorkItem,
   addAgentWorkEvent,
   getListAgentWorkItemsQueryKey,
+  createCompanyRecord,
+  updateCompanyRecord,
+  createProjectTask,
+  updateProjectTask,
+  getListCompanyRecordsQueryKey,
+  getListProjectTasksQueryKey,
   type RecommendationRecord,
   type IdeaRecord,
   type MindMeldItemRecord,
@@ -128,6 +134,7 @@ import type {
   MemoryCandidate,
   MemoryDestination,
   MindMeldTimelineEvent,
+  Classification,
 } from "@/types";
 import {
   defaultSettings,
@@ -241,6 +248,34 @@ interface AppState extends PersistedState {
     createdBy: string;
   }) => void;
   setMemoryCandidateStatus: (id: string, status: MemoryCandidate["status"], actor: string) => void;
+  createCompanyRecordEntry: (input: {
+    title: string;
+    type: string;
+    summary: string;
+    classification: Classification;
+    keywords: string[];
+  }) => Promise<void>;
+  updateCompanyRecordEntry: (id: string, patch: {
+    title?: string;
+    type?: string;
+    summary?: string;
+    classification?: Classification;
+    keywords?: string[];
+  }) => Promise<void>;
+  createProjectTaskEntry: (input: {
+    title: string;
+    projectId: string;
+    owner?: string | null;
+    status?: Task["status"];
+    due?: string | null;
+  }) => Promise<void>;
+  updateProjectTaskEntry: (id: string, patch: Partial<{
+    title: string;
+    projectId: string;
+    owner: string | null;
+    status: Task["status"];
+    due: string | null;
+  }>) => Promise<void>;
   resetData: () => void;
 }
 
@@ -480,6 +515,7 @@ function toProject(row: ProjectRecord): Project {
     lastActivity: row.lastActivity,
     deadline: row.deadline,
     tags: row.tags,
+    lastSyncedAt: row.lastSyncedAt ?? null,
   };
 }
 
@@ -770,6 +806,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
   const invalidateAgentWork = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: getListAgentWorkItemsQueryKey() });
+  }, [queryClient]);
+  const invalidateCompanyRecords = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: getListCompanyRecordsQueryKey() });
+  }, [queryClient]);
+  const invalidateProjectTasks = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: getListProjectTasksQueryKey() });
   }, [queryClient]);
 
   const [state, setState] = useState<PersistedState>(() => freshState());
@@ -1073,6 +1115,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
       let meld: Parameters<typeof createMindMeldItem>[0] | null = null;
       let idea: Parameters<typeof createIdea>[0] | null = null;
+      let agentWork: Parameters<typeof createAgentWorkItem>[0] | null = null;
       let pending: Omit<Recommendation, "id" | "history" | "status"> | null = null;
       let actionLabel = "";
 
@@ -1119,12 +1162,26 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           createdAt: now().slice(0, 10),
         };
         actionLabel = "Draft idea created in the Idea Backlog (pending review).";
+      } else if (destination === "command-center-task") {
+        agentWork = {
+          title: item.cleanedSummary.slice(0, 80),
+          description: item.rawMessage,
+          requestType: "fix",
+          priority: "medium",
+          affectedModule: "Cursor Direct Requests",
+          desiredOutcome: item.nextStep || "Resolve the follow-up described in intake.",
+          owner: effectiveOwner === "Rose" ? "Rose" : effectiveOwner === "Carmen" ? "Carmen" : null,
+          approvalRoute: approver,
+          risk: sensitive ? "high" : "medium",
+          source: "External Intake",
+          relatedIntakeId: Number(id),
+        };
+        actionLabel = "Routed to Cursor Direct Requests (awaiting approval before agent execution).";
       } else if (destination === "no-action") {
         actionLabel = "Archived — no action taken.";
       } else {
         const destLabel: Record<string, string> = {
           "review-queue": "CollabOS Review Queue draft",
-          "command-center-task": "Draft Command Center task",
           "build-registry": "Build Registry suggestion",
           "requirements-registry": "Requirements Registry suggestion",
           "automation-registry": "Automation Registry suggestion",
@@ -1165,6 +1222,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           .then(() => invalidateIdeas())
           .catch(() => undefined);
       }
+      if (agentWork) {
+        void createAgentWorkItem(agentWork)
+          .then(() => invalidateAgentWork())
+          .catch(() => undefined);
+      }
       if (pending) {
         void createRecommendation({
           source: pending.source,
@@ -1178,7 +1240,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           .catch(() => undefined);
       }
     },
-    [intakeItems, invalidateRecommendations, invalidateIdeas, invalidateMindMeld, invalidateIntake],
+    [intakeItems, invalidateRecommendations, invalidateIdeas, invalidateMindMeld, invalidateIntake, invalidateAgentWork],
   );
 
   const addMemoryCandidate = useCallback(
@@ -1235,6 +1297,86 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     fresh.currentRole = state.currentRole;
     setState(fresh);
   }, [state.currentRole]);
+
+  const createCompanyRecordEntry = useCallback(
+    async (input: {
+      title: string;
+      type: string;
+      summary: string;
+      classification: Classification;
+      keywords: string[];
+    }) => {
+      if (!canSubmit(state.currentRole)) return;
+      await createCompanyRecord({
+        title: input.title,
+        type: input.type,
+        summary: input.summary,
+        classification: input.classification,
+        keywords: input.keywords,
+        source: "User entry",
+      });
+      await invalidateCompanyRecords();
+    },
+    [state.currentRole, invalidateCompanyRecords],
+  );
+
+  const updateCompanyRecordEntry = useCallback(
+    async (id: string, patch: {
+      title?: string;
+      type?: string;
+      summary?: string;
+      classification?: Classification;
+      keywords?: string[];
+    }) => {
+      if (!canSubmit(state.currentRole)) return;
+      await updateCompanyRecord(Number(id), patch);
+      await invalidateCompanyRecords();
+    },
+    [state.currentRole, invalidateCompanyRecords],
+  );
+
+  const createProjectTaskEntry = useCallback(
+    async (input: {
+      title: string;
+      projectId: string;
+      owner?: string | null;
+      status?: Task["status"];
+      due?: string | null;
+    }) => {
+      if (!canSubmit(state.currentRole)) return;
+      await createProjectTask({
+        title: input.title,
+        projectId: Number(input.projectId),
+        owner: input.owner ?? null,
+        status: input.status ?? "todo",
+        due: input.due ?? null,
+        source: "manual",
+      });
+      await invalidateProjectTasks();
+    },
+    [state.currentRole, invalidateProjectTasks],
+  );
+
+  const updateProjectTaskEntry = useCallback(
+    async (id: string, patch: Partial<{
+      title: string;
+      projectId: string;
+      owner: string | null;
+      status: Task["status"];
+      due: string | null;
+    }>) => {
+      if (!canSubmit(state.currentRole)) return;
+      await updateProjectTask(Number(id), {
+        title: patch.title,
+        projectId: patch.projectId !== undefined ? Number(patch.projectId) : undefined,
+        owner: patch.owner,
+        status: patch.status,
+        due: patch.due,
+      });
+      await invalidateProjectTasks();
+    },
+    [state.currentRole, invalidateProjectTasks],
+  );
 
   return (
     <AppStateContext.Provider
@@ -1302,6 +1444,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         routeIntakeItem,
         addMemoryCandidate,
         setMemoryCandidateStatus,
+        createCompanyRecordEntry,
+        updateCompanyRecordEntry,
+        createProjectTaskEntry,
+        updateProjectTaskEntry,
         resetData,
       }}
     >

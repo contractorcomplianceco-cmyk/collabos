@@ -8,16 +8,10 @@ import {
 import { useAppState } from "@/hooks/use-app-state";
 import { canApprove, canViewSensitive } from "@/lib/helpers";
 import {
-  KpiWidget, SectionCard, StatusChip, ClassificationBadge,
+  KpiWidget, SectionCard, StatusChip, ClassificationBadge, EmptyState,
 } from "@/components/shared";
 
-const POPULAR_SEARCHES = ["user onboarding", "qualifier scoring", "automation registry"];
-
-const WHATS_NEW = [
-  { id: "wn-1", title: "Duplicate Radar engine", note: "Smarter overlap detection across ideas & builds.", date: "Jun 13" },
-  { id: "wn-2", title: "Team Pulse 2.0", note: "Sentiment trends by department.", date: "Jun 10" },
-  { id: "wn-3", title: "Solution Finder upgrades", note: "Answers grounded in Company Brain records.", date: "Jun 8" },
-];
+const POPULAR_SEARCHES = ["client onboarding", "qualifier scoring", "automation registry"];
 
 function ideaTag(momentum: number) {
   if (momentum >= 85) return { label: "Hot", tone: "rose" as const };
@@ -105,6 +99,7 @@ export default function Dashboard() {
   const isRose = currentRole === "Rose" || currentRole === "Admin";
   const isCarmen = currentRole === "Carmen" || currentRole === "Admin";
   const isLeadership = isRose || isCarmen;
+  const workspaceEmpty = projects.length === 0 && companyRecords.length === 0 && ideas.length === 0;
 
   const attentionItems: { id: string; label: string; detail: string; href: string; tone: "rose" | "amber" | "sky" | "violet" | "emerald" }[] = [];
   const awaitingMe = pendingRecs.filter((r) => {
@@ -155,7 +150,26 @@ export default function Dashboard() {
       {/* Welcome */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Welcome back, {greeting}</h1>
-        <p className="mt-1 text-sm text-slate-500">Your collaboration intelligence at a glance.</p>
+        <p className="mt-1 text-sm text-slate-500">Your collaboration workspace — starts empty and grows with real team data.</p>
+      </div>
+
+      {workspaceEmpty ? (
+        <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-violet-50 p-5">
+          <p className="text-sm font-semibold text-slate-800">Getting started</p>
+          <p className="mt-1 text-sm text-slate-600">No demo data is loaded. Add your first records and tasks, or wait for nightly project sync.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link href="/solution-finder" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-violet-600 ring-1 ring-violet-100 hover:bg-violet-50">Add Company Brain record</Link>
+            <Link href="/project-tasks" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-sky-600 ring-1 ring-sky-100 hover:bg-sky-50">Create a project task</Link>
+            <Link href="/innovation-lab" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-amber-600 ring-1 ring-amber-100 hover:bg-amber-50">Submit an idea</Link>
+            <Link href="/agent-queue" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 ring-1 ring-rose-100 hover:bg-rose-50">Cursor Direct Request</Link>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+        <span className="font-semibold text-slate-700">Daily check:</span> When nothing is flagged below, manually review{" "}
+        <Link href="/review-queue" className="font-semibold text-rose-600 hover:underline">Review Queue</Link> and{" "}
+        <Link href="/agent-queue" className="font-semibold text-violet-600 hover:underline">Cursor Direct Requests</Link> once per day.
       </div>
 
       {/* What Needs My Attention */}
@@ -177,22 +191,31 @@ export default function Dashboard() {
             ))}
           </div>
         )}
-        <p className="mt-2.5 text-[11px] text-slate-400">Personalized for your role — approvals, intake reviews, and Mind Meld threads waiting on you.</p>
+        <p className="mt-2.5 text-[11px] text-slate-400">
+          Personalized for your role. No push notifications yet — check Review Queue, Mind Meld, and Cursor Direct Requests when your teammate acts.
+        </p>
       </SectionCard>
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiWidget label="Active Projects" value={projects.length} sub="across all departments" icon={FolderKanban} tone="blue" delta="+12%" />
+        <Link href="/projects" className="block transition hover:opacity-90">
+          <KpiWidget label="Active Projects" value={projects.length} sub="across all departments" icon={FolderKanban} tone="blue" />
+        </Link>
         <KpiWidget label="Open Tasks" value={projectTasks.filter((t) => t.status !== "done").length} sub="tracked in shared registry" icon={ClipboardCheck} tone="sky" />
-        <KpiWidget label="Solutions Found" value={companyRecords.length} sub="in Company Brain" icon={Search} tone="emerald" delta="+18%" />
-        <KpiWidget label="Ideas Generated" value={ideas.length} sub="in the innovation pipeline" icon={Lightbulb} tone="violet" delta="+24%" />
-        <KpiWidget label="Dupes Avoided" value={duplicateRisks.length} sub="overlaps flagged early" icon={Target} tone="rose" delta="+15%" />
+        <KpiWidget label="Solutions Found" value={companyRecords.length} sub="in Company Brain" icon={Search} tone="emerald" />
+        <KpiWidget label="Ideas Generated" value={ideas.length} sub="in the innovation pipeline" icon={Lightbulb} tone="violet" />
+        <KpiWidget label="Dupes Avoided" value={duplicateRisks.length} sub="overlaps flagged early" icon={Target} tone="rose" />
       </div>
 
       {/* Module grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
         {/* Project tasks */}
-        <SectionCard title="Project Tasks" icon={FolderKanban} accent="blue">
+        <SectionCard
+          title="Project Tasks"
+          icon={FolderKanban}
+          accent="blue"
+          action={<Link href="/project-tasks" className="text-xs font-semibold text-sky-500 hover:underline">View all</Link>}
+        >
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Shared project follow-up from the registry</p>
           <ul className="space-y-2">
             {openTasks.map((task) => (
@@ -205,7 +228,9 @@ export default function Dashboard() {
               </li>
             ))}
             {openTasks.length === 0 ? (
-              <li className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-400">No open project tasks in the shared registry.</li>
+              <li>
+                <EmptyState message="No open project tasks." hint="Create tasks on the Project Tasks page — they are kept across nightly sync." action={<Link href="/project-tasks" className="text-xs font-semibold text-sky-600 hover:underline">Go to Project Tasks</Link>} />
+              </li>
             ) : null}
           </ul>
         </SectionCard>
@@ -215,8 +240,12 @@ export default function Dashboard() {
           title="Duplicate Effort Radar"
           icon={Target}
           accent="rose"
-          action={<span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-600">High overlap</span>}
+          action={topDuplicates.length > 0 ? <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-600">Overlap detected</span> : null}
         >
+          {topDuplicates.length === 0 ? (
+            <EmptyState message="No duplicate risks flagged yet." hint="Submit ideas and projects — overlaps surface as your registry grows." action={<Link href="/duplicate-radar" className="text-xs font-semibold text-rose-600 hover:underline">Open Duplicate Radar</Link>} />
+          ) : (
+          <>
           <div className="flex items-center gap-4">
             <MiniRadar points={topDuplicates.map((d) => d.similarity)} />
             <div className="flex-1 space-y-2">
@@ -231,10 +260,16 @@ export default function Dashboard() {
           <Link href="/duplicate-radar" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-rose-500 hover:underline">
             View all duplicates <ArrowRight className="h-3.5 w-3.5" />
           </Link>
+          </>
+          )}
         </SectionCard>
 
         {/* Team Pulse */}
         <SectionCard title="Team Pulse" icon={Users} accent="sky" action={<Link href="/team-pulse" className="text-xs font-semibold text-sky-500 hover:underline">View</Link>}>
+          {sentimentSignals.length === 0 ? (
+            <EmptyState message="No team sentiment signals yet." hint="Submit feedback on Team Pulse — supportive signals appear as they're collected." />
+          ) : (
+          <>
           <div className="relative h-44">
             {sentimentSignals.map((s, i) => {
               const pos = BUBBLE_POS[i] ?? BUBBLE_POS[0];
@@ -258,6 +293,8 @@ export default function Dashboard() {
             <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400" />Neutral</span>
             <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-rose-400" />Negative</span>
           </div>
+          </>
+          )}
         </SectionCard>
 
         {/* Solution Finder */}
@@ -280,6 +317,10 @@ export default function Dashboard() {
 
         {/* Innovation Lab */}
         <SectionCard title="Innovation Lab" icon={Lightbulb} accent="amber" action={<Link href="/innovation-lab" className="text-xs font-semibold text-amber-500 hover:underline">View</Link>}>
+          {topIdeas.length === 0 ? (
+            <EmptyState message="No ideas in the pipeline yet." hint="Submit your first idea in Innovation Lab to start clustering." action={<Link href="/innovation-lab" className="text-xs font-semibold text-amber-600 hover:underline">Submit an idea</Link>} />
+          ) : (
+          <>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Top idea clusters gaining momentum</p>
           <div className="mt-2 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
             {topIdeas.map((i) => {
@@ -302,6 +343,8 @@ export default function Dashboard() {
           <Link href="/innovation-lab" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-amber-500 hover:underline">
             View all ideas <ArrowRight className="h-3.5 w-3.5" />
           </Link>
+          </>
+          )}
         </SectionCard>
 
         {/* Executive Reports */}
@@ -418,28 +461,24 @@ export default function Dashboard() {
           </Link>
         </div>
 
-        {/* What's New */}
-        <SectionCard title="What's New" icon={Sparkles} accent="emerald">
-          <ul className="space-y-3">
-            {WHATS_NEW.map((w) => (
-              <li key={w.id} className="flex items-start gap-2.5">
-                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-slate-700">{w.title}</span>
-                    <span className="text-[10px] text-slate-400">{w.date}</span>
-                  </div>
-                  <p className="text-xs text-slate-500">{w.note}</p>
-                </div>
-              </li>
-            ))}
+        {/* Workspace status */}
+        <SectionCard title="Workspace Status" icon={Sparkles} accent="emerald">
+          <ul className="space-y-2 text-sm text-slate-600">
+            <li>· Company Brain: {companyRecords.length} documented record{companyRecords.length === 1 ? "" : "s"}</li>
+            <li>· Projects: {projects.length} in registry{projects.some((p) => p.lastSyncedAt) ? " (nightly sync active)" : ""}</li>
+            <li>· Open tasks: {projectTasks.filter((t) => t.status !== "done").length} manual follow-ups</li>
+            <li>· Integrations: pending approval — no live Cliq/WhatsApp yet</li>
           </ul>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link href="/solution-finder" className="text-xs font-semibold text-violet-600 hover:underline">Company Brain</Link>
+            <Link href="/agent-queue" className="text-xs font-semibold text-rose-600 hover:underline">Cursor Direct Requests</Link>
+          </div>
         </SectionCard>
       </div>
 
       {/* Footer */}
       <div className="flex items-center justify-center gap-1.5 border-t border-slate-100 pt-5 text-xs text-slate-400">
-        CollabOS Command Center · Built with <Heart className="h-3.5 w-3.5 text-rose-400" /> for collaboration
+        CollabOS · Built with <Heart className="h-3.5 w-3.5 text-rose-400" /> for collaboration
       </div>
     </div>
   );

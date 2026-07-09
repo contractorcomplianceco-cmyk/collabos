@@ -567,8 +567,8 @@ export function classifyIntakeMessage(rawMessage: string): IntakeClassification 
       suggestedDestination: "command-center-task",
       sensitivity,
       reviewOwner: "Assigned team member",
-      nextStep: "Create a draft task to unblock, then assign an owner.",
-      reason: "Uses blocked / stuck / waiting-on language, which signals a blocker that needs an owner fast.",
+      nextStep: "Create a Cursor Direct Request with an owner and desired outcome.",
+      reason: "Uses blocked / stuck / waiting-on language — route as a follow-up request for Cursor Direct Requests.",
     };
   }
 
@@ -589,8 +589,8 @@ export function classifyIntakeMessage(rawMessage: string): IntakeClassification 
       suggestedDestination: "command-center-task",
       sensitivity,
       reviewOwner: "Assigned team member",
-      nextStep: "Create a draft Command Center task for review.",
-      reason: "Uses to-do / follow-up / reminder language, which maps to a draft Command Center task.",
+      nextStep: "Create a Cursor Direct Request for review before agent execution.",
+      reason: "Uses to-do / follow-up / reminder language — route to Cursor Direct Requests, not Command Center.",
     };
   }
 
@@ -947,7 +947,7 @@ export function generateBuildPrompt(item: IntakeItem): string {
     item.relatedProjectNames.length > 0
       ? `- Related existing work: ${item.relatedProjectNames.join(", ")} - link, do not duplicate.`
       : "- No related work detected; run Duplicate Radar before building.",
-    "- Frontend-only prototype today: no live Zoho Cliq or WhatsApp integration exists.",
+    "- Live external integrations (Zoho Cliq, WhatsApp) are not connected yet — use manual intake until approved.",
     "",
     "## Acceptance criteria",
     "- The feature works end to end in test mode with seeded data.",

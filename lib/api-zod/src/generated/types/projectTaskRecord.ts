@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { ProjectTaskRecordSource } from './projectTaskRecordSource';
 import type { ProjectTaskRecordStatus } from './projectTaskRecordStatus';
 
 export interface ProjectTaskRecord {
@@ -16,4 +17,5 @@ export interface ProjectTaskRecord {
   status: ProjectTaskRecordStatus;
   /** @nullable */
   due: string | null;
+  source: ProjectTaskRecordSource;
 }

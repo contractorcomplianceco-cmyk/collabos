@@ -107,7 +107,7 @@ export default function UserManagement() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-xl font-bold text-slate-800"><UserCog className="h-5 w-5 text-rose-500" /> User Management</h1>
-          <p className="text-sm text-slate-500">Real accounts with server-enforced roles. Every change here is written to the audit log.</p>
+          <p className="text-sm text-slate-500">Admin-only — create accounts, assign roles, and reset passwords. Every change is written to the audit log.</p>
         </div>
         <button onClick={() => { setShowCreate((v) => !v); setProblem(null); }} className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-blue-500 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-95">
           {showCreate ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />} {showCreate ? "Cancel" : "Add user"}

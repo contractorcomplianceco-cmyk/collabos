@@ -112,7 +112,7 @@ export function serializeBuildItem(row: BuildItemRow) {
 }
 
 export function serializeProjectTask(row: ProjectTaskRow) {
-  return { id: row.id, title: row.title, projectId: row.projectId, owner: row.owner, status: row.status, due: row.dueDate };
+  return { id: row.id, title: row.title, projectId: row.projectId, owner: row.owner, status: row.status, due: row.dueDate, source: row.source };
 }
 
 export async function seedRegistryIfEmpty(): Promise<void> {
@@ -140,7 +140,7 @@ export async function seedRegistryIfEmpty(): Promise<void> {
   const taskRows = Object.entries(SEED_TASKS_BY_PROJECT).flatMap(([name, items]) => {
     const pid = byName.get(name);
     if (!pid) return [];
-    return items.map((item) => ({ title: item.title, projectId: pid, owner: item.owner, status: item.status, dueDate: item.dueDate }));
+    return items.map((item) => ({ title: item.title, projectId: pid, owner: item.owner, status: item.status, dueDate: item.dueDate, source: "sync" as const }));
   });
   if (taskRows.length > 0) await db.insert(projectTasksTable).values(taskRows);
 

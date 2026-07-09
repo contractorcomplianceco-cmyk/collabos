@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Switch, Route, Router as WouterRouter, Link, useLocation } from "wouter";
+import { Switch, Route, Router as WouterRouter, Link, useLocation, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +10,7 @@ import {
   LayoutDashboard, Target, Users, Search, Lightbulb, PenTool, FileBarChart,
   Activity, Brain, ClipboardCheck, Settings as SettingsIcon, Bell, Lock, Menu, X,
   Sparkles, Send, AlertTriangle, Inbox, LogOut, UserCog, ScrollText, Wand2, Bot,
+  FolderKanban, ListChecks,
 } from "lucide-react";
 import { canAccessMindMeld, canViewModule, mapServerRole, canSubmit, classifyIntakeMessage, detectDuplicates } from "@/lib/helpers";
 import collabosLogo from "@/assets/collabos-logo.png";
@@ -30,6 +31,8 @@ import ExternalIntake from "@/pages/external-intake";
 import SettingsPage from "@/pages/settings";
 import UserManagement from "@/pages/user-management";
 import AuditLogs from "@/pages/audit-logs";
+import ProjectsPage from "@/pages/projects";
+import ProjectTasksPage from "@/pages/project-tasks";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +46,8 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { href: "/", label: "Collab Dashboard", icon: LayoutDashboard, ctx: "Collab Dashboard" },
+  { href: "/projects", label: "Projects", icon: FolderKanban, ctx: "Projects" },
+  { href: "/project-tasks", label: "Project Tasks", icon: ListChecks, ctx: "Project Tasks" },
   { href: "/duplicate-radar", label: "Duplicate Radar", icon: Target, ctx: "Duplicate Radar" },
   { href: "/team-pulse", label: "Team Pulse", icon: Users, ctx: "Team Pulse" },
   { href: "/solution-finder", label: "Solution Finder", icon: Search, ctx: "Solution Finder" },
@@ -58,16 +63,18 @@ const NAV: NavItem[] = [
 ];
 
 const ROSE_BRAIN_TIPS: Record<string, string[]> = {
-  "Collab Dashboard": ["3 high-risk items need leadership attention.", "Document Collection has been unowned for 7 days.", "Want a one-paragraph executive brief?"],
-  "Duplicate Radar": ["Content Magic and AI Content Generator overlap 95%.", "I can draft a merge recommendation for review.", "Two analytics surfaces share the same CRM data."],
-  "Team Pulse": ["Ops needs documentation support most.", "Sales reports Zoho tool friction.", "I can suggest a supportive follow-up plan."],
-  "Solution Finder": ["Ask me how onboarding or qualifier scoring works.", "I only answer from documented Company Brain records.", "If undocumented, I'll route you to the right owner."],
-  "Innovation Lab": ["Three platform ideas cluster into Collab OS vNext.", "I can check a new idea for overlap before you submit.", "Momentum is highest on Collab OS vNext."],
+  "Collab Dashboard": ["Your workspace starts empty — add projects and ideas as you go.", "I can summarize what's in the registry when data appears.", "Want a one-paragraph executive brief?"],
+  "Projects": ["Create projects to track work across departments.", "Open the task list to see follow-ups by project.", "Unowned work can be flagged for leadership review."],
+  "Project Tasks": ["Open tasks are grouped from the shared registry.", "Filter by project from the Projects page.", "Completed tasks stay visible for audit context."],
+  "Duplicate Radar": ["I can flag overlaps as your registry grows.", "I can draft a merge recommendation for review.", "Add company records to improve duplicate detection."],
+  "Team Pulse": ["Submit feedback to surface where teams need support.", "I can suggest a supportive follow-up plan.", "Sentiment signals appear as feedback is collected."],
+  "Solution Finder": ["Ask me how documented processes work.", "I only answer from Company Brain records you add.", "If undocumented, I'll route you to the right owner."],
+  "Innovation Lab": ["Submit ideas to start your innovation pipeline.", "I can check a new idea for overlap before you submit.", "Ideas cluster automatically as the pipeline grows."],
   "Mockup Studio": ["Describe an idea and I'll structure a build brief.", "I can generate a ready-to-use build prompt.", "Send any concept to the Review Queue."],
-  "Executive Reports": ["I can generate 10 report types from live data.", "Project Health flags 2 at-risk projects.", "Export creates a leadership-ready summary."],
-  "Market Pulse": ["All signals are public-source sample data.", "Acme Corp launched an AI intake assistant.", "I can suggest a recommended response per signal."],
+  "Executive Reports": ["I can generate report types from live workspace data.", "Reports populate as projects and registry data grow.", "Export creates a leadership-ready summary."],
+  "Market Pulse": ["Add competitors and keywords in Settings to start monitoring.", "Signals appear as market data is captured.", "I can suggest a recommended response per signal."],
   "Mind Meld Room": ["This space is private to Rose and Carmen.", "Carmenfy routes to systems; Rosify routes to direction.", "Handoffs never auto-create official decisions."],
-  "Review Queue": ["AI recommendations are never auto-approved.", "Pricing decision needs both Rose and Carmen.", "Each action is logged to audit history."],
+  "Review Queue": ["AI recommendations are never auto-approved.", "Items appear here when routed for leadership review.", "Each action is logged to audit history."],
   "Cursor Direct Requests": ["Only approved items are ready for Cursor execution.", "Use this lane for fixes, bugs, ops, and integration prep.", "Every Cursor update needs evidence."],
   "Settings": ["Adjust duplicate sensitivity and alert thresholds.", "All integrations are recommend-only until connected.", "Shared workspace data stays server-backed."],
 };
@@ -519,6 +526,8 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={Dashboard} />
+        <Route path="/projects">{() => <Guarded href="/projects"><ProjectsPage /></Guarded>}</Route>
+        <Route path="/project-tasks">{() => <Guarded href="/project-tasks"><ProjectTasksPage /></Guarded>}</Route>
         <Route path="/duplicate-radar">{() => <Guarded href="/duplicate-radar"><DuplicateRadar /></Guarded>}</Route>
         <Route path="/team-pulse">{() => <Guarded href="/team-pulse"><TeamPulse /></Guarded>}</Route>
         <Route path="/solution-finder">{() => <Guarded href="/solution-finder"><SolutionFinder /></Guarded>}</Route>
@@ -551,28 +560,46 @@ function RoleSync() {
   return null;
 }
 
-function AuthGate() {
-  const { status } = useAuth();
-  if (status === "loading") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-rose-50 via-white to-blue-50">
-        <div className="flex items-center gap-3 text-sm font-medium text-slate-500">
-          <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-rose-400" /> Checking your session...
-        </div>
+function SessionLoading() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-rose-50 via-white to-blue-50">
+      <div className="flex items-center gap-3 text-sm font-medium text-slate-500">
+        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-rose-400" /> Checking your session...
       </div>
-    );
-  }
-  if (status === "anon") return <LoginPage />;
+    </div>
+  );
+}
+
+function LoginRoute() {
+  const { status } = useAuth();
+  if (status === "loading") return <SessionLoading />;
+  if (status === "authed") return <Redirect to="/" />;
+  return <LoginPage />;
+}
+
+function AuthenticatedApp() {
+  const { status } = useAuth();
+  const [location] = useLocation();
+  if (status === "loading") return <SessionLoading />;
+  if (status === "anon") return <Redirect to="/login" />;
+  if (location === "/login") return <Redirect to="/" />;
   return (
     <AppStateProvider>
       <RoleSync />
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
+        <Router />
         <Toaster />
       </TooltipProvider>
     </AppStateProvider>
+  );
+}
+
+function AppRoutes() {
+  return (
+    <Switch>
+      <Route path="/login" component={LoginRoute} />
+      <Route component={AuthenticatedApp} />
+    </Switch>
   );
 }
 
@@ -580,7 +607,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AuthGate />
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <AppRoutes />
+        </WouterRouter>
       </AuthProvider>
     </QueryClientProvider>
   );

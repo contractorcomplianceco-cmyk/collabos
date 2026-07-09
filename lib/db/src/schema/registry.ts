@@ -18,6 +18,7 @@ export const DECISION_STATUSES = ["open", "decided", "deferred"] as const;
 export const AUTOMATION_STATUSES = ["live", "draft", "proposed", "paused"] as const;
 export const BUILD_ITEM_STATUSES = ["scoping", "ready", "in-build", "blocked", "shipped"] as const;
 export const TASK_STATUSES = ["todo", "in-progress", "review", "done"] as const;
+export const TASK_SOURCES = ["manual", "sync"] as const;
 export const ALERT_TYPES = ["overlap", "risk", "blocker", "missing-owner", "duplicate", "stale"] as const;
 export const DUPLICATE_CATEGORIES = ["projects", "ideas", "build-items", "automations"] as const;
 
@@ -99,6 +100,7 @@ export const projectTasksTable = pgTable("project_tasks", {
   owner: text("owner"),
   status: text("status", { enum: TASK_STATUSES }).notNull().default("todo"),
   dueDate: text("due_date"),
+  source: text("source", { enum: TASK_SOURCES }).notNull().default("manual"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

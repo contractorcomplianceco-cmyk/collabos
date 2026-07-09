@@ -973,6 +973,49 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CompanyRecord"
+    post:
+      operationId: createCompanyRecord
+      tags: [registry]
+      summary: Create a Company Brain record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyRecordInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyRecord"
+  /company-records/{id}:
+    patch:
+      operationId: updateCompanyRecord
+      tags: [registry]
+      summary: Update a Company Brain record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyRecordUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyRecord"
+        "404":
+          description: Not found
   /decisions:
     get:
       operationId: listDecisions
@@ -1057,6 +1100,49 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ProjectTaskRecord"
+    post:
+      operationId: createProjectTask
+      tags: [registry]
+      summary: Create a project task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectTaskInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectTaskRecord"
+  /project-tasks/{id}:
+    patch:
+      operationId: updateProjectTask
+      tags: [registry]
+      summary: Update a project task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectTaskUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectTaskRecord"
+        "404":
+          description: Not found
   /market/signals:
     get:
       operationId: listMarketSignals
@@ -2021,6 +2107,7 @@ components:
         lastActivity: { type: string }
         deadline: { type: ["string", "null"] }
         tags: { type: array, items: { type: string } }
+        lastSyncedAt: { type: ["string", "null"], format: date-time }
     BlockerRecord:
       type: object
       required: [id, projectId, title, owner, risk, age]
@@ -2040,6 +2127,24 @@ components:
         type: { type: string }
         summary: { type: string }
         source: { type: string }
+        classification: { type: string }
+        keywords: { type: array, items: { type: string } }
+    CompanyRecordInput:
+      type: object
+      required: [title, type, summary, classification, keywords]
+      properties:
+        title: { type: string, minLength: 1 }
+        type: { type: string, minLength: 1 }
+        summary: { type: string, minLength: 1 }
+        source: { type: string }
+        classification: { type: string }
+        keywords: { type: array, items: { type: string } }
+    CompanyRecordUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        type: { type: string, minLength: 1 }
+        summary: { type: string, minLength: 1 }
         classification: { type: string }
         keywords: { type: array, items: { type: string } }
     DecisionRecord:
@@ -2101,10 +2206,29 @@ components:
         source: { type: string }
     ProjectTaskRecord:
       type: object
-      required: [id, title, projectId, owner, status, due]
+      required: [id, title, projectId, owner, status, due, source]
       properties:
         id: { type: integer }
         title: { type: string }
+        projectId: { type: integer }
+        owner: { type: ["string", "null"] }
+        status: { type: string, enum: [todo, in-progress, review, done] }
+        due: { type: ["string", "null"] }
+        source: { type: string, enum: [manual, sync] }
+    ProjectTaskInput:
+      type: object
+      required: [title, projectId]
+      properties:
+        title: { type: string, minLength: 1 }
+        projectId: { type: integer }
+        owner: { type: ["string", "null"] }
+        status: { type: string, enum: [todo, in-progress, review, done] }
+        due: { type: ["string", "null"] }
+        source: { type: string, enum: [manual, sync] }
+    ProjectTaskUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
         projectId: { type: integer }
         owner: { type: ["string", "null"] }
         status: { type: string, enum: [todo, in-progress, review, done] }

@@ -24,4 +24,6 @@ export interface ProjectRecord {
   /** @nullable */
   deadline: string | null;
   tags: string[];
+  /** @nullable */
+  lastSyncedAt?: Date | null;
 }

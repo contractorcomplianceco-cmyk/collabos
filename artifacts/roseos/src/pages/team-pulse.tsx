@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Users, HeartHandshake, BookOpen, GraduationCap, Wrench, Lock, Plus } from "lucide-react";
-import { PageHeader, SectionCard, StatusChip, ApprovalRouteBadge, Donut } from "@/components/shared";
+import { PageHeader, SectionCard, StatusChip, ApprovalRouteBadge } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
 import { canViewSensitive, canSubmit } from "@/lib/helpers";
 import { useToast } from "@/hooks/use-toast";
@@ -22,8 +22,8 @@ export default function TeamPulse() {
   const visible = feedbackItems.filter((f) =>
     f.privacy === "leadership-only" ? canViewSensitive(currentRole) : true,
   );
-  const pulseScore = 74;
   const topNeeds = [...visible].sort((a, b) => b.count - a.count).slice(0, 4);
+  const hasSignals = sentimentSignals.length > 0 || visible.length > 0;
 
   return (
     <div className="space-y-6 p-6">
@@ -45,26 +45,34 @@ export default function TeamPulse() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <SectionCard title="Pulse Summary" icon={HeartHandshake} accent="sky" className="lg:col-span-1">
-          <div className="flex flex-col items-center">
-            <Donut value={pulseScore} label="supportive" accent="#0ea5e9" />
-            <p className="mt-3 text-center text-xs text-slate-500">Healthy momentum with a few support needs in Ops and Sales.</p>
-          </div>
-          <div className="mt-4 space-y-2">
-            {sentimentSignals.map((s) => (
-              <div key={s.team}>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-slate-700">{s.team}</span>
-                  <span className="text-slate-400">{s.theme}</span>
-                </div>
-                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className={`h-full rounded-full ${s.score > 0.6 ? "bg-emerald-500" : s.score > 0.35 ? "bg-amber-400" : "bg-rose-400"}`}
-                    style={{ width: `${Math.round(s.score * 100)}%` }}
-                  />
-                </div>
+          {hasSignals ? (
+            <>
+              <p className="text-center text-sm text-slate-600">
+                {visible.length} support need{visible.length === 1 ? "" : "s"} recorded
+                {sentimentSignals.length > 0 ? ` across ${sentimentSignals.length} team signal${sentimentSignals.length === 1 ? "" : "s"}` : ""}.
+              </p>
+              <div className="mt-4 space-y-2">
+                {sentimentSignals.map((s) => (
+                  <div key={s.team}>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-slate-700">{s.team}</span>
+                      <span className="text-slate-400">{s.theme}</span>
+                    </div>
+                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className={`h-full rounded-full ${s.score > 0.6 ? "bg-emerald-500" : s.score > 0.35 ? "bg-amber-400" : "bg-rose-400"}`}
+                        style={{ width: `${Math.round(s.score * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          ) : (
+            <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-500">
+              No team feedback yet. Submit a support need below — scores appear as feedback is collected, not from demo data.
+            </p>
+          )}
         </SectionCard>
 
         <div className="space-y-6 lg:col-span-2">

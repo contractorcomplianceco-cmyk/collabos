@@ -1102,6 +1102,8 @@ export interface ProjectRecord {
   /** @nullable */
   deadline: string | null;
   tags: string[];
+  /** @nullable */
+  lastSyncedAt?: string | null;
 }
 
 export type BlockerRecordRisk = typeof BlockerRecordRisk[keyof typeof BlockerRecordRisk];
@@ -1132,6 +1134,29 @@ export interface CompanyRecord {
   source: string;
   classification: string;
   keywords: string[];
+}
+
+export interface CompanyRecordInput {
+  /** @minLength 1 */
+  title: string;
+  /** @minLength 1 */
+  type: string;
+  /** @minLength 1 */
+  summary: string;
+  source?: string;
+  classification: string;
+  keywords: string[];
+}
+
+export interface CompanyRecordUpdate {
+  /** @minLength 1 */
+  title?: string;
+  /** @minLength 1 */
+  type?: string;
+  /** @minLength 1 */
+  summary?: string;
+  classification?: string;
+  keywords?: string[];
 }
 
 export type DecisionRecordStatus = typeof DecisionRecordStatus[keyof typeof DecisionRecordStatus];
@@ -1291,6 +1316,14 @@ export const ProjectTaskRecordStatus = {
   done: 'done',
 } as const;
 
+export type ProjectTaskRecordSource = typeof ProjectTaskRecordSource[keyof typeof ProjectTaskRecordSource];
+
+
+export const ProjectTaskRecordSource = {
+  manual: 'manual',
+  sync: 'sync',
+} as const;
+
 export interface ProjectTaskRecord {
   id: number;
   title: string;
@@ -1300,6 +1333,58 @@ export interface ProjectTaskRecord {
   status: ProjectTaskRecordStatus;
   /** @nullable */
   due: string | null;
+  source: ProjectTaskRecordSource;
+}
+
+export type ProjectTaskInputStatus = typeof ProjectTaskInputStatus[keyof typeof ProjectTaskInputStatus];
+
+
+export const ProjectTaskInputStatus = {
+  todo: 'todo',
+  'in-progress': 'in-progress',
+  review: 'review',
+  done: 'done',
+} as const;
+
+export type ProjectTaskInputSource = typeof ProjectTaskInputSource[keyof typeof ProjectTaskInputSource];
+
+
+export const ProjectTaskInputSource = {
+  manual: 'manual',
+  sync: 'sync',
+} as const;
+
+export interface ProjectTaskInput {
+  /** @minLength 1 */
+  title: string;
+  projectId: number;
+  /** @nullable */
+  owner?: string | null;
+  status?: ProjectTaskInputStatus;
+  /** @nullable */
+  due?: string | null;
+  source?: ProjectTaskInputSource;
+}
+
+export type ProjectTaskUpdateStatus = typeof ProjectTaskUpdateStatus[keyof typeof ProjectTaskUpdateStatus];
+
+
+export const ProjectTaskUpdateStatus = {
+  todo: 'todo',
+  'in-progress': 'in-progress',
+  review: 'review',
+  done: 'done',
+} as const;
+
+export interface ProjectTaskUpdate {
+  /** @minLength 1 */
+  title?: string;
+  projectId?: number;
+  /** @nullable */
+  owner?: string | null;
+  status?: ProjectTaskUpdateStatus;
+  /** @nullable */
+  due?: string | null;
 }
 
 export type MarketSignalRecordRisk = typeof MarketSignalRecordRisk[keyof typeof MarketSignalRecordRisk];

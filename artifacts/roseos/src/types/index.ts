@@ -64,6 +64,7 @@ export interface Project {
   lastActivity: string;
   deadline: string | null;
   tags: string[];
+  lastSyncedAt?: string | null;
 }
 
 export interface Task {

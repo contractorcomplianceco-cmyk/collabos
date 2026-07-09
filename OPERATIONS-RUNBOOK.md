@@ -198,14 +198,68 @@ Do not represent test-mode integrations as live. Do not wire live external servi
 
 ## Backups
 
-Before real use, add a database backup job for `collabos_staging` and confirm restore steps.
+CollabOS PostgreSQL is backed up daily via cron.
 
-Minimum backup expectation:
+| Item | Value |
+|------|-------|
+| Schedule | Daily at **03:15 UTC** (`15 3 * * *`) |
+| Script | `/home/ubuntu/projects/scripts/backup-collabos-db.sh` |
+| Output directory | `/var/backups/collabos/db/` |
+| Filename pattern | `collabos_staging-<UTC timestamp>.sql.gz` |
+| Retention | 7 days |
+| Cron log | `/home/ubuntu/logs/collabos-backup-cron.log` |
+| Backup log | `/home/ubuntu/logs/collabos-backup.log` |
+| Credentials | Loaded from `/home/ubuntu/projects/scripts/collabos.env` (`DATABASE_URL`) — never commit |
 
-- Daily `pg_dump` to `/var/backups/collabos/db/`
-- Keep at least 7 days
-- Store secrets outside git
-- Test restore before relying on the app for live operations
+### Manual backup
+
+```bash
+/home/ubuntu/projects/scripts/backup-collabos-db.sh
+```
+
+### Restore (staging / disaster recovery)
+
+Replace `<backup-file>` with the desired `.sql.gz` from `/var/backups/collabos/db/`:
+
+```bash
+set -a && source /home/ubuntu/projects/scripts/collabos.env && set +a
+gunzip -c /var/backups/collabos/db/<backup-file> | psql "$DATABASE_URL"
+```
+
+Test restore on a non-production database before relying on backups for live operations.
+
+## Project Registry Sync
+
+CollabOS project registry is refreshed nightly from live server state (git repos, PM2, HTTP health, Command Center cockpits).
+
+| Item | Value |
+|------|-------|
+| Schedule | Daily at **03:30 UTC** (`30 3 * * *`) — after DB backup at 03:15 |
+| Script | `/home/ubuntu/projects/scripts/sync-collabos-projects.sh` |
+| Engine | `/home/ubuntu/projects/scripts/sync-collabos-projects.mjs` |
+| Sync log | `/home/ubuntu/logs/collabos-project-sync.log` |
+| Cron log | `/home/ubuntu/logs/collabos-project-sync-cron.log` |
+| Credentials | Loaded from `/home/ubuntu/projects/scripts/collabos.env` (`DATABASE_URL`) |
+
+The sync updates matched projects (status, progress, blockers, `last_synced_at`), inserts newly discovered repos, and never deletes manual entries.
+
+### Manual sync
+
+```bash
+/home/ubuntu/projects/scripts/sync-collabos-projects.sh
+```
+
+## Demo Data Removal (2026-07-08)
+
+Automatic workspace seeding on API startup is **disabled**. Only `ensureStaffAccountsFromEnv` runs on boot (staff promotion + demo login deactivation).
+
+**Tables cleared** (workspace content only; Command Center tables untouched):
+
+`recommendations`, `ideas`, `mind_meld_items`, `mind_meld_handoffs`, `mind_meld_timeline`, `mind_feed`, `intake_items`, `memory_candidates`, `feedback_items`, `sentiment_signals`, `sops`, `projects`, `project_blockers`, `project_tasks`, `build_items`, `company_records`, `decisions`, `automations`, `duplicate_risks`, `alerts`, `market_signals`, `market_competitors`, `report_templates`, `agent_work_items`, `integration_status`, `mockups`, `mockup_versions`, `audit_logs`
+
+`app_settings` competitors/keywords reset to empty arrays. Staff users (`rose@ccacontact.com`, `carmen@ccacontact.com`, `admin@ccacontact.com`) preserved.
+
+Seed modules remain in `artifacts/api-server/src/lib/seed-*.ts` for reference but are not invoked from `index.ts`.
 
 ## Known Caveats
 

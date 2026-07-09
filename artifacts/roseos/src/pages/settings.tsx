@@ -25,8 +25,8 @@ export default function SettingsPage() {
     <div className="space-y-6 p-6">
       <PageHeader title="Settings, Sources & Permissions" subtitle="Configure data sources, thresholds, permissions, and privacy." icon={SettingsIcon} accent="sky"
         actions={
-          <button onClick={() => { resetData(); toast({ title: "Local demo state reset", description: "Your local role preference was refreshed. Shared workspace data is unchanged." }); }} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
-            <RotateCcw className="h-4 w-4" /> Reset local demo state
+          <button onClick={() => { resetData(); toast({ title: "Local preferences reset", description: "Your role preference was refreshed. Shared workspace data is unchanged." }); }} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50">
+            <RotateCcw className="h-4 w-4" /> Reset local preferences
           </button>
         }
       />

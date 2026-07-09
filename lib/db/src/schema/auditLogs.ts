@@ -44,6 +44,10 @@ export const AUDIT_ACTIONS = [
   "agent_work_item_updated",
   "agent_work_status_changed",
   "agent_work_event_added",
+  "company_record_created",
+  "company_record_updated",
+  "project_task_created",
+  "project_task_updated",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

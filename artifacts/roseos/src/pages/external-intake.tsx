@@ -48,7 +48,7 @@ const TYPE_LABEL: Record<IntakeDetectedType, string> = {
 const DEST_LABEL: Record<IntakeDestination, string> = {
   "mind-meld": "Rose/Carmen Mind Meld",
   "review-queue": "CollabOS Review Queue",
-  "command-center-task": "Command Center Task",
+  "command-center-task": "Cursor Direct Request",
   "idea-backlog": "Idea Backlog",
   "build-registry": "Build Registry Suggestion",
   "requirements-registry": "Requirements Registry Suggestion",
@@ -140,7 +140,7 @@ const MEMORY_DEST_LABEL: Record<MemoryDestination, string> = {
 const ROUTE_ACTIONS: { dest: IntakeDestination; label: string; icon: React.ElementType }[] = [
   { dest: "mind-meld", label: "Send to Rose/Carmen Mind Meld", icon: Brain },
   { dest: "review-queue", label: "Send to Review Queue", icon: ClipboardCheck },
-  { dest: "command-center-task", label: "Create Draft Task", icon: ListTodo },
+  { dest: "command-center-task", label: "Route to Cursor Direct Requests", icon: ListTodo },
   { dest: "idea-backlog", label: "Create Draft Idea", icon: Lightbulb },
   { dest: "build-registry", label: "Create Build Request Draft", icon: Hammer },
   { dest: "company-brain-update", label: "Propose Company Brain Update", icon: BookOpen },
@@ -540,8 +540,7 @@ export default function ExternalIntake() {
             canMutate={canAct}
           />
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800 lg:col-span-2">
-            This app currently runs frontend-only. Webhook URLs above are placeholders for a future backend — no live Zoho Cliq or WhatsApp
-            integration exists. All intake here is simulated test data.
+            Zoho Cliq and WhatsApp webhooks are configured here but not live yet. Use manual test intake below until integrations are approved and connected.
           </div>
         </div>
       ) : tab === "constellation" ? (

@@ -35,6 +35,8 @@ import type {
   BlockerRecord,
   BuildItemRecord,
   CompanyRecord,
+  CompanyRecordInput,
+  CompanyRecordUpdate,
   DecisionRecord,
   DuplicateRiskRecord,
   FeedbackItemInput,
@@ -67,7 +69,9 @@ import type {
   MockupVersionInput,
   MockupVersionRecord,
   ProjectRecord,
+  ProjectTaskInput,
   ProjectTaskRecord,
+  ProjectTaskUpdate,
   RecommendationInput,
   RecommendationRecord,
   RecommendationStatusChange,
@@ -3647,6 +3651,149 @@ export function useListCompanyRecords<TData = Awaited<ReturnType<typeof listComp
 
 
 
+export const getCreateCompanyRecordUrl = () => {
+
+
+
+
+  return `/api/company-records`
+}
+
+/**
+ * @summary Create a Company Brain record
+ */
+export const createCompanyRecord = async (companyRecordInput: CompanyRecordInput, options?: RequestInit): Promise<CompanyRecord> => {
+
+  return customFetch<CompanyRecord>(getCreateCompanyRecordUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      companyRecordInput,)
+  }
+);}
+
+
+
+
+export const getCreateCompanyRecordMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCompanyRecord>>, TError,{data: BodyType<CompanyRecordInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCompanyRecord>>, TError,{data: BodyType<CompanyRecordInput>}, TContext> => {
+
+const mutationKey = ['createCompanyRecord'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCompanyRecord>>, {data: BodyType<CompanyRecordInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createCompanyRecord(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateCompanyRecordMutationResult = NonNullable<Awaited<ReturnType<typeof createCompanyRecord>>>
+    export type CreateCompanyRecordMutationBody = BodyType<CompanyRecordInput>
+    export type CreateCompanyRecordMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a Company Brain record
+ */
+export const useCreateCompanyRecord = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCompanyRecord>>, TError,{data: BodyType<CompanyRecordInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createCompanyRecord>>,
+        TError,
+        {data: BodyType<CompanyRecordInput>},
+        TContext
+      > => {
+      return useMutation(getCreateCompanyRecordMutationOptions(options));
+    }
+
+export const getUpdateCompanyRecordUrl = (id: number,) => {
+
+
+
+
+  return `/api/company-records/${id}`
+}
+
+/**
+ * @summary Update a Company Brain record
+ */
+export const updateCompanyRecord = async (id: number,
+    companyRecordUpdate: CompanyRecordUpdate, options?: RequestInit): Promise<CompanyRecord> => {
+
+  return customFetch<CompanyRecord>(getUpdateCompanyRecordUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      companyRecordUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdateCompanyRecordMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCompanyRecord>>, TError,{id: number;data: BodyType<CompanyRecordUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCompanyRecord>>, TError,{id: number;data: BodyType<CompanyRecordUpdate>}, TContext> => {
+
+const mutationKey = ['updateCompanyRecord'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCompanyRecord>>, {id: number;data: BodyType<CompanyRecordUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateCompanyRecord(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCompanyRecordMutationResult = NonNullable<Awaited<ReturnType<typeof updateCompanyRecord>>>
+    export type UpdateCompanyRecordMutationBody = BodyType<CompanyRecordUpdate>
+    export type UpdateCompanyRecordMutationError = ErrorType<void>
+
+    /**
+ * @summary Update a Company Brain record
+ */
+export const useUpdateCompanyRecord = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCompanyRecord>>, TError,{id: number;data: BodyType<CompanyRecordUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCompanyRecord>>,
+        TError,
+        {id: number;data: BodyType<CompanyRecordUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateCompanyRecordMutationOptions(options));
+    }
+
 export const getListDecisionsUrl = () => {
 
 
@@ -4108,6 +4255,149 @@ export function useListProjectTasks<TData = Awaited<ReturnType<typeof listProjec
 
 
 
+
+export const getCreateProjectTaskUrl = () => {
+
+
+
+
+  return `/api/project-tasks`
+}
+
+/**
+ * @summary Create a project task
+ */
+export const createProjectTask = async (projectTaskInput: ProjectTaskInput, options?: RequestInit): Promise<ProjectTaskRecord> => {
+
+  return customFetch<ProjectTaskRecord>(getCreateProjectTaskUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      projectTaskInput,)
+  }
+);}
+
+
+
+
+export const getCreateProjectTaskMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProjectTask>>, TError,{data: BodyType<ProjectTaskInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createProjectTask>>, TError,{data: BodyType<ProjectTaskInput>}, TContext> => {
+
+const mutationKey = ['createProjectTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createProjectTask>>, {data: BodyType<ProjectTaskInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createProjectTask(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateProjectTaskMutationResult = NonNullable<Awaited<ReturnType<typeof createProjectTask>>>
+    export type CreateProjectTaskMutationBody = BodyType<ProjectTaskInput>
+    export type CreateProjectTaskMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a project task
+ */
+export const useCreateProjectTask = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProjectTask>>, TError,{data: BodyType<ProjectTaskInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createProjectTask>>,
+        TError,
+        {data: BodyType<ProjectTaskInput>},
+        TContext
+      > => {
+      return useMutation(getCreateProjectTaskMutationOptions(options));
+    }
+
+export const getUpdateProjectTaskUrl = (id: number,) => {
+
+
+
+
+  return `/api/project-tasks/${id}`
+}
+
+/**
+ * @summary Update a project task
+ */
+export const updateProjectTask = async (id: number,
+    projectTaskUpdate: ProjectTaskUpdate, options?: RequestInit): Promise<ProjectTaskRecord> => {
+
+  return customFetch<ProjectTaskRecord>(getUpdateProjectTaskUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      projectTaskUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdateProjectTaskMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProjectTask>>, TError,{id: number;data: BodyType<ProjectTaskUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateProjectTask>>, TError,{id: number;data: BodyType<ProjectTaskUpdate>}, TContext> => {
+
+const mutationKey = ['updateProjectTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProjectTask>>, {id: number;data: BodyType<ProjectTaskUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateProjectTask(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateProjectTaskMutationResult = NonNullable<Awaited<ReturnType<typeof updateProjectTask>>>
+    export type UpdateProjectTaskMutationBody = BodyType<ProjectTaskUpdate>
+    export type UpdateProjectTaskMutationError = ErrorType<void>
+
+    /**
+ * @summary Update a project task
+ */
+export const useUpdateProjectTask = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProjectTask>>, TError,{id: number;data: BodyType<ProjectTaskUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateProjectTask>>,
+        TError,
+        {id: number;data: BodyType<ProjectTaskUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateProjectTaskMutationOptions(options));
+    }
 
 export const getListMarketSignalsUrl = () => {
 

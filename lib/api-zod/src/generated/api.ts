@@ -1285,7 +1285,8 @@ export const ListProjectsResponseItem = zod.object({
   "classification": zod.string(),
   "lastActivity": zod.string(),
   "deadline": zod.string().nullable(),
-  "tags": zod.array(zod.string())
+  "tags": zod.array(zod.string()),
+  "lastSyncedAt": zod.coerce.date().nullish()
 })
 export const ListProjectsResponse = zod.array(ListProjectsResponseItem)
 
@@ -1317,6 +1318,55 @@ export const ListCompanyRecordsResponseItem = zod.object({
   "keywords": zod.array(zod.string())
 })
 export const ListCompanyRecordsResponse = zod.array(ListCompanyRecordsResponseItem)
+
+
+/**
+ * @summary Create a Company Brain record
+ */
+
+
+
+
+
+export const CreateCompanyRecordBody = zod.object({
+  "title": zod.string().min(1),
+  "type": zod.string().min(1),
+  "summary": zod.string().min(1),
+  "source": zod.string().optional(),
+  "classification": zod.string(),
+  "keywords": zod.array(zod.string())
+})
+
+
+/**
+ * @summary Update a Company Brain record
+ */
+export const UpdateCompanyRecordParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+
+
+export const UpdateCompanyRecordBody = zod.object({
+  "title": zod.string().min(1).optional(),
+  "type": zod.string().min(1).optional(),
+  "summary": zod.string().min(1).optional(),
+  "classification": zod.string().optional(),
+  "keywords": zod.array(zod.string()).optional()
+})
+
+export const UpdateCompanyRecordResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "type": zod.string(),
+  "summary": zod.string(),
+  "source": zod.string(),
+  "classification": zod.string(),
+  "keywords": zod.array(zod.string())
+})
 
 
 /**
@@ -1405,9 +1455,55 @@ export const ListProjectTasksResponseItem = zod.object({
   "projectId": zod.number(),
   "owner": zod.string().nullable(),
   "status": zod.enum(['todo', 'in-progress', 'review', 'done']),
-  "due": zod.string().nullable()
+  "due": zod.string().nullable(),
+  "source": zod.enum(['manual', 'sync'])
 })
 export const ListProjectTasksResponse = zod.array(ListProjectTasksResponseItem)
+
+
+/**
+ * @summary Create a project task
+ */
+
+
+
+export const CreateProjectTaskBody = zod.object({
+  "title": zod.string().min(1),
+  "projectId": zod.number(),
+  "owner": zod.string().nullish(),
+  "status": zod.enum(['todo', 'in-progress', 'review', 'done']).optional(),
+  "due": zod.string().nullish(),
+  "source": zod.enum(['manual', 'sync']).optional()
+})
+
+
+/**
+ * @summary Update a project task
+ */
+export const UpdateProjectTaskParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const UpdateProjectTaskBody = zod.object({
+  "title": zod.string().min(1).optional(),
+  "projectId": zod.number().optional(),
+  "owner": zod.string().nullish(),
+  "status": zod.enum(['todo', 'in-progress', 'review', 'done']).optional(),
+  "due": zod.string().nullish()
+})
+
+export const UpdateProjectTaskResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "projectId": zod.number(),
+  "owner": zod.string().nullable(),
+  "status": zod.enum(['todo', 'in-progress', 'review', 'done']),
+  "due": zod.string().nullable(),
+  "source": zod.enum(['manual', 'sync'])
+})
 
 
 /**

@@ -33,6 +33,7 @@ export function serializeProject(row: ProjectRow) {
     lastActivity: row.lastActivity,
     deadline: row.deadline,
     tags: row.tags,
+    lastSyncedAt: row.lastSyncedAt?.toISOString() ?? null,
   };
 }
 

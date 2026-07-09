@@ -8,7 +8,7 @@ const SEED_INTEGRATIONS = [
   { name: "WorkDrive", status: "Not connected / future", state: "future" as const },
   { name: "Supabase", status: "Planned", state: "planned" as const },
   { name: "Email alerts", status: "Disabled", state: "disabled" as const },
-  { name: "Market monitoring", status: "Sample data only", state: "sample" as const },
+  { name: "Market monitoring", status: "Not connected", state: "disabled" as const },
 ];
 
 export function serializeIntegrationStatus(row: IntegrationStatusRow) {

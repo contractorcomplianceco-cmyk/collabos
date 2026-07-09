@@ -90,7 +90,7 @@ export default function LoginPage() {
             </p>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Sign in with your approved <span className="font-medium">@ccacontact.com</span> staff email.
-              First-time passwords require a change after login.
+              Admin-created accounts may require a password change on first login; staff bootstrap accounts use your assigned password.
             </p>
             <p className="mt-2 text-xs text-slate-500">
               Need access or a password reset? Contact Carmen.

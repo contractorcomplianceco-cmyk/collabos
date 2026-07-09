@@ -8,6 +8,7 @@ import { findSolution, canSubmit, type SolutionResult } from "@/lib/helpers";
 import { useAppState } from "@/hooks/use-app-state";
 import { useToast } from "@/hooks/use-toast";
 import type { Classification } from "@/types";
+import { Plus, Pencil } from "lucide-react";
 
 const EXAMPLES = [
   "How do we handle client onboarding?",
@@ -24,7 +25,7 @@ const CLASS_FILTERS: { value: Classification | "all"; label: string }[] = [
 ];
 
 export default function SolutionFinder() {
-  const { currentRole, addRecommendation, projects, companyRecords } = useAppState();
+  const { currentRole, addRecommendation, projects, companyRecords, createCompanyRecordEntry, updateCompanyRecordEntry } = useAppState();
   const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<SolutionResult | null>(null);
@@ -34,6 +35,14 @@ export default function SolutionFinder() {
 
   const [browseQuery, setBrowseQuery] = useState("");
   const [browseClass, setBrowseClass] = useState<Classification | "all">("all");
+  const [showRecordForm, setShowRecordForm] = useState(false);
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
+  const [recordTitle, setRecordTitle] = useState("");
+  const [recordType, setRecordType] = useState("SOP");
+  const [recordSummary, setRecordSummary] = useState("");
+  const [recordKeywords, setRecordKeywords] = useState("");
+  const [recordClass, setRecordClass] = useState<Classification>("documented-fact");
+  const canEdit = canSubmit(currentRole);
 
   const run = (q: string) => {
     const trimmed = q.trim();
@@ -60,7 +69,57 @@ export default function SolutionFinder() {
       if (!q) return true;
       return `${r.title} ${r.summary} ${r.type} ${r.keywords.join(" ")}`.toLowerCase().includes(q);
     });
-  }, [browseQuery, browseClass]);
+  }, [browseQuery, browseClass, companyRecords]);
+
+  const resetRecordForm = () => {
+    setRecordTitle("");
+    setRecordType("SOP");
+    setRecordSummary("");
+    setRecordKeywords("");
+    setRecordClass("documented-fact");
+    setEditingRecordId(null);
+    setShowRecordForm(false);
+  };
+
+  const startEditRecord = (id: string) => {
+    const rec = companyRecords.find((r) => r.id === id);
+    if (!rec) return;
+    setEditingRecordId(id);
+    setRecordTitle(rec.title);
+    setRecordType(rec.type);
+    setRecordSummary(rec.summary);
+    setRecordKeywords(rec.keywords.join(", "));
+    setRecordClass(rec.classification);
+    setShowRecordForm(true);
+  };
+
+  const saveRecord = async () => {
+    if (!recordTitle.trim() || !recordSummary.trim()) {
+      toast({ title: "Missing fields", description: "Title and summary are required." });
+      return;
+    }
+    const keywords = recordKeywords.split(/[,;]+/).map((k) => k.trim()).filter(Boolean);
+    if (editingRecordId) {
+      await updateCompanyRecordEntry(editingRecordId, {
+        title: recordTitle.trim(),
+        type: recordType.trim(),
+        summary: recordSummary.trim(),
+        classification: recordClass,
+        keywords,
+      });
+      toast({ title: "Record updated" });
+    } else {
+      await createCompanyRecordEntry({
+        title: recordTitle.trim(),
+        type: recordType.trim(),
+        summary: recordSummary.trim(),
+        classification: recordClass,
+        keywords,
+      });
+      toast({ title: "Record added to Company Brain" });
+    }
+    resetRecordForm();
+  };
 
   const flagKnowledgeGap = () => {
     if (!canSubmit(currentRole) || !lastRunQuery) return;
@@ -250,8 +309,32 @@ export default function SolutionFinder() {
         title="Browse Company Brain"
         icon={Library}
         accent="slate"
-        action={<span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-500">{browseResults.length} of {companyRecords.length} records</span>}
+        action={
+          <div className="flex items-center gap-2">
+            {canEdit ? (
+              <button onClick={() => { resetRecordForm(); setShowRecordForm((v) => !v); }} className="inline-flex items-center gap-1 rounded-full bg-violet-500 px-2.5 py-0.5 text-[11px] font-semibold text-white hover:bg-violet-600">
+                <Plus className="h-3 w-3" /> {showRecordForm ? "Cancel" : "Add record"}
+              </button>
+            ) : null}
+            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-500">{browseResults.length} of {companyRecords.length} records</span>
+          </div>
+        }
       >
+        {showRecordForm && canEdit ? (
+          <div className="mb-4 space-y-3 rounded-xl border border-violet-100 bg-violet-50/40 p-4">
+            <p className="text-xs font-semibold text-violet-700">{editingRecordId ? "Edit record" : "New Company Brain record"}</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <input value={recordTitle} onChange={(e) => setRecordTitle(e.target.value)} placeholder="Title" className="field-input sm:col-span-2" />
+              <input value={recordType} onChange={(e) => setRecordType(e.target.value)} placeholder="Type (SOP, Policy, Guide…)" className="field-input" />
+              <select value={recordClass} onChange={(e) => setRecordClass(e.target.value as Classification)} className="field-input">
+                {CLASS_FILTERS.filter((f) => f.value !== "all").map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+              </select>
+              <textarea value={recordSummary} onChange={(e) => setRecordSummary(e.target.value)} placeholder="Summary — what does this document?" rows={3} className="field-input sm:col-span-2 resize-y" />
+              <input value={recordKeywords} onChange={(e) => setRecordKeywords(e.target.value)} placeholder="Keywords (comma-separated)" className="field-input sm:col-span-2" />
+            </div>
+            <button onClick={() => void saveRecord()} className="rounded-xl bg-violet-500 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-600">Save record</button>
+          </div>
+        ) : null}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <BookOpen className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -276,7 +359,10 @@ export default function SolutionFinder() {
         </div>
         {browseResults.length === 0 ? (
           <div className="mt-3">
-            <EmptyState message="No records match this filter." hint="Try a broader keyword or switch the classification filter back to All." />
+            <EmptyState
+              message={companyRecords.length === 0 ? "Company Brain is empty — add your first documented process." : "No records match this filter."}
+              hint={companyRecords.length === 0 ? "Records power Solution Finder answers. Start with one SOP or policy your team already uses." : "Try a broader keyword or switch the classification filter back to All."}
+            />
           </div>
         ) : (
           <div className="mt-3 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
@@ -284,7 +370,12 @@ export default function SolutionFinder() {
               <div key={r.id} className="rounded-xl border border-slate-100 bg-white p-3 shadow-sm">
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-semibold text-slate-800">{r.title}</p>
-                  <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">{r.type}</span>
+                  <div className="flex items-center gap-1">
+                    {canEdit ? (
+                      <button onClick={() => startEditRecord(r.id)} title="Edit record" className="rounded-lg p-1 text-slate-400 hover:bg-slate-50 hover:text-violet-600"><Pencil className="h-3.5 w-3.5" /></button>
+                    ) : null}
+                    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">{r.type}</span>
+                  </div>
                 </div>
                 <p className="mt-1 line-clamp-2 text-xs text-slate-500">{r.summary}</p>
                 <div className="mt-2 flex flex-wrap gap-1">

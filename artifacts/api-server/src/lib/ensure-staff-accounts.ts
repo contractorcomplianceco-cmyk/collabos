@@ -35,7 +35,8 @@ export async function ensureStaffAccountsFromEnv(): Promise<void> {
           role: account.role,
           status: "active",
           isDemo: false,
-          mustChangePassword: true,
+          passwordHash,
+          mustChangePassword: false,
         })
         .where(eq(usersTable.id, existing.id));
       continue;
