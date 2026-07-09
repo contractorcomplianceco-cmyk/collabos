@@ -292,3 +292,29 @@ COLLABOS_STAFF_BOOTSTRAP_PASSWORD=<secure-initial-password>
 ```
 
 Then restart `collabos-api`. Rose, Carmen, and super-admin staff accounts are created or refreshed with `mustChangePassword=true`, and demo logins are deactivated.
+
+## Standalone staff cockpit decommission (2026-07-09)
+
+Staff cockpits are served only via Command Center at `https://command.cagteam.net/{slug}` (e.g. `tony`, `jestina`, `landon`, `chloe`, `tara`, `rose`, `carmen`).
+
+**Nginx:** removed symlinks from `/etc/nginx/sites-enabled/` (configs kept in `sites-available`):
+
+- `tony.cagteam.net`
+- `jestina.cagteam.net`
+- `landon.cagteam.net`
+- `chloe.cagteam.net`
+- `tara.cagteam.net`
+
+Reload: `sudo nginx -t && sudo systemctl reload nginx`.
+
+**PM2:** removed `jestina-api` (port 8081; only backed standalone `tony.cagteam.net` `/api/`). `pm2 save` updated.
+
+**Left running intentionally:**
+
+- `cca-command-center-api`, `cca-command-center-cloud`, and related CC PM2 processes
+- `executive-command-api` (5026) and `lindaos-api` (5027) — proxied under `command.cagteam.net`
+- `salesintelligence-api` (8082) — still used by `salestraining.cagteam.net` (not decommissioned)
+- Zoho-related domains — cleanup deferred
+- TLS certs under `/etc/letsencrypt/live/` not deleted
+
+**Post-change checks:** all listed Command Center slugs and `https://ccacollab.com/` returned HTTP 200 after reload.
