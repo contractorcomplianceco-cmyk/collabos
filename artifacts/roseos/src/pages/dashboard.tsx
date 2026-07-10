@@ -193,71 +193,157 @@ export default function Dashboard() {
     }
   }
 
-  const decisionCards: { id: string; title: string; detail: string; status: string; href: string; external?: boolean }[] = [
+  type DecisionCard = { id: string; title: string; detail: string; status: string; href: string; external?: boolean };
+  const decisionGroups: { id: string; title: string; cards: DecisionCard[] }[] = [
     {
-      id: "dec-core",
-      title: "ComplianceCore (Core)",
-      detail: "Whole Core foundation — migration and leadership approval are not done. Discovery prefill stays on Supabase until you approve Core as source of truth; no Supabase→intake wiring yet.",
-      status: "Needs your decision",
-      href: "/projects",
+      id: "grp-core",
+      title: "Core & audit",
+      cards: [
+        {
+          id: "dec-core",
+          title: "ComplianceCore (Core)",
+          detail: "Whole Core foundation — migration and leadership approval are not done. Discovery prefill stays on Supabase until you approve Core as source of truth; no Supabase→intake wiring yet.",
+          status: "Needs your decision",
+          href: "/projects",
+        },
+        {
+          id: "dec-audit-engine",
+          title: "Audit Engine",
+          detail: "Protected scoring/intelligence layer exists, but approved outputs are not connected to Command Center entitlements yet. Needs your call before that wiring.",
+          status: "Needs your decision",
+          href: "/projects",
+        },
+        {
+          id: "dec-risk-audit",
+          title: "Risk Audit",
+          detail: "Audit Risk Model / risk audit still needs leadership sign-off before it is treated as an approved product path.",
+          status: "Needs your decision",
+          href: "https://audit.cagteam.net/",
+          external: true,
+        },
+        {
+          id: "dec-docs",
+          title: "Docs Collect — next steps",
+          detail: "App is live at docs.cagteam.net for internal use. Still needs your call on live client email, client-facing launch (remove Basic Auth), and how far to wire Zoho CRM / WorkDrive.",
+          status: "Needs your decision",
+          href: "https://docs.cagteam.net/",
+          external: true,
+        },
+      ],
     },
     {
-      id: "dec-audit-engine",
-      title: "Audit Engine",
-      detail: "Protected scoring/intelligence layer exists, but approved outputs are not connected to Command Center entitlements yet. Needs your call before that wiring.",
-      status: "Needs your decision",
-      href: "/projects",
+      id: "grp-apps",
+      title: "Apps waiting on Rose",
+      cards: [
+        {
+          id: "dec-biz-hub",
+          title: "Business Services Hub — redesign",
+          detail: "Live at business-services.cagteam.net, but work is paused for your redesign. Do not treat the current UI as final until you reshape it.",
+          status: "Awaiting redesign",
+          href: "https://business-services.cagteam.net/",
+          external: true,
+        },
+        {
+          id: "dec-demos",
+          title: "Demo apps → real?",
+          detail: "GovConnect, ProfitPulse, Voice Connect, Facility Intelligence, and Compliance Connect are demo/staging only. Confirm which should become real production apps (and which stay demos).",
+          status: "Needs your confirmation",
+          href: "/projects",
+        },
+        {
+          id: "dec-websites",
+          title: "Public websites / landing",
+          detail: "CAG parent site, CCA corporate site, and contractor landing still show Pending URL / planning in the registry. Confirm production URLs and launch readiness.",
+          status: "Needs your confirmation",
+          href: "/projects",
+        },
+        {
+          id: "dec-investor",
+          title: "Investor Boardroom",
+          detail: "Live at investor.ccacontact.com (~75%). Needs Rose confirmation that the experience is ready vs still in progress.",
+          status: "Needs your confirmation",
+          href: "https://investor.ccacontact.com/",
+          external: true,
+        },
+        {
+          id: "dec-discovery",
+          title: "CCA Discovery Form",
+          detail: "Source repo exists; not treated as a finished live product yet. Confirm whether Discovery stays on Supabase until Core is approved, and what goes live next.",
+          status: "Needs your confirmation",
+          href: "/projects",
+        },
+      ],
     },
     {
-      id: "dec-risk-audit",
-      title: "Risk Audit",
-      detail: "Audit Risk Model / risk audit still needs leadership sign-off before it is treated as an approved product path.",
-      status: "Needs your decision",
-      href: "https://audit.cagteam.net/",
-      external: true,
+      id: "grp-cockpits",
+      title: "Cockpits / redesigns",
+      cards: [
+        {
+          id: "dec-soraya",
+          title: "Soraya cockpit",
+          detail: "Route is up at command.cagteam.net/soraya, but this cockpit is still waiting on you — live data wiring and final Rose handoff were deferred. Bloom Soraya source also exists separately.",
+          status: "Awaiting Rose",
+          href: "https://command.cagteam.net/soraya",
+          external: true,
+        },
+        {
+          id: "dec-staff-cockpits",
+          title: "Other staff cockpits",
+          detail: "Opie, Skylar, Staff QA, Fulfillment Compliance, Alyssa (and peers) are hosted in Command Center, but several still use read-only / seed panels. Confirm which are finished vs still need your design pass.",
+          status: "Needs your confirmation",
+          href: "https://command.cagteam.net/",
+          external: true,
+        },
+        {
+          id: "dec-linda-sales",
+          title: "Linda + Sales Intelligence review",
+          detail: "Command Center registry still marks Linda OS and Sales Intelligence as Needs review. Confirm if those reviews are done or still open.",
+          status: "Needs your confirmation",
+          href: "https://command.cagteam.net/linda",
+          external: true,
+        },
+      ],
     },
     {
-      id: "dec-docs",
-      title: "Docs Collect — next steps",
-      detail: "App is live at docs.cagteam.net for internal use. Still needs your call on live client email, client-facing launch (remove Basic Auth), and how far to wire Zoho CRM / WorkDrive.",
-      status: "Needs your decision",
-      href: "https://docs.cagteam.net/",
-      external: true,
-    },
-    {
-      id: "dec-whatsapp",
-      title: "WhatsApp integration",
-      detail: "Not connected. Approve before any live WhatsApp intake is turned on.",
-      status: "Awaiting approval",
-      href: "/external-intake",
-    },
-    {
-      id: "dec-cliq",
-      title: "Zoho Cliq",
-      detail: "Test mode only in CollabOS. Approve before live Cliq messages flow in.",
-      status: "Awaiting approval",
-      href: "/external-intake",
-    },
-    {
-      id: "dec-email",
-      title: "Email alerts",
-      detail: "You can save the preference in Settings, but live email delivery stays off until you approve.",
-      status: "Awaiting approval",
-      href: "/settings",
-    },
-    {
-      id: "dec-gemini",
-      title: "Gemini AI",
-      detail: "Planned for CollabOS. Not connected here yet.",
-      status: "Planned",
-      href: "/settings",
-    },
-    {
-      id: "dec-zoho",
-      title: "Zoho CRM / WorkDrive",
-      detail: "Planned for CollabOS. Docs Collect has its own Zoho path that still needs leadership sign-off for live use.",
-      status: "Planned",
-      href: "/settings",
+      id: "grp-integrations",
+      title: "Integrations",
+      cards: [
+        {
+          id: "dec-whatsapp",
+          title: "WhatsApp integration",
+          detail: "Not connected. Approve before any live WhatsApp intake is turned on.",
+          status: "Awaiting approval",
+          href: "/external-intake",
+        },
+        {
+          id: "dec-cliq",
+          title: "Zoho Cliq",
+          detail: "Test mode only in CollabOS. Approve before live Cliq messages flow in.",
+          status: "Awaiting approval",
+          href: "/external-intake",
+        },
+        {
+          id: "dec-email",
+          title: "Email alerts",
+          detail: "You can save the preference in Settings, but live email delivery stays off until you approve.",
+          status: "Awaiting approval",
+          href: "/settings",
+        },
+        {
+          id: "dec-gemini",
+          title: "Gemini AI",
+          detail: "Planned for CollabOS. Not connected here yet.",
+          status: "Planned",
+          href: "/settings",
+        },
+        {
+          id: "dec-zoho",
+          title: "Zoho CRM / WorkDrive",
+          detail: "Planned for CollabOS. Docs Collect has its own Zoho path that still needs leadership sign-off for live use.",
+          status: "Planned",
+          href: "/settings",
+        },
+      ],
     },
   ];
 
@@ -360,38 +446,48 @@ export default function Dashboard() {
           action={<Link href="/settings" className="text-xs font-semibold text-amber-600 hover:underline">Settings</Link>}
         >
           <p className="mb-3 text-xs text-slate-500">
-            Main items still waiting on Rose or Carmen before we wire them live.
+            Everything still waiting on Rose (or Rose + Carmen) — grouped so paused apps and redesigns are not buried.
           </p>
-          <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-            {decisionCards.map((card) =>
-              card.external ? (
-                <a
-                  key={card.id}
-                  href={card.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-xl border border-amber-100 bg-amber-50/50 p-3 transition hover:shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-xs font-semibold text-slate-800">{card.title}</p>
-                    <StatusChip label={card.status} tone="amber" />
-                  </div>
-                  <p className="mt-1.5 text-[11px] leading-relaxed text-slate-600">{card.detail}</p>
-                </a>
-              ) : (
-                <Link
-                  key={card.id}
-                  href={card.href}
-                  className="rounded-xl border border-amber-100 bg-amber-50/50 p-3 transition hover:shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-xs font-semibold text-slate-800">{card.title}</p>
-                    <StatusChip label={card.status} tone={card.status === "Planned" ? "sky" : "amber"} />
-                  </div>
-                  <p className="mt-1.5 text-[11px] leading-relaxed text-slate-600">{card.detail}</p>
-                </Link>
-              ),
-            )}
+          <div className="space-y-4">
+            {decisionGroups.map((group) => (
+              <div key={group.id}>
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-amber-600/80">{group.title}</p>
+                <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                  {group.cards.map((card) =>
+                    card.external ? (
+                      <a
+                        key={card.id}
+                        href={card.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-xl border border-amber-100 bg-amber-50/50 p-3 transition hover:shadow-sm"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-xs font-semibold text-slate-800">{card.title}</p>
+                          <StatusChip label={card.status} tone="amber" />
+                        </div>
+                        <p className="mt-1.5 text-[11px] leading-relaxed text-slate-600">{card.detail}</p>
+                      </a>
+                    ) : (
+                      <Link
+                        key={card.id}
+                        href={card.href}
+                        className="rounded-xl border border-amber-100 bg-amber-50/50 p-3 transition hover:shadow-sm"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-xs font-semibold text-slate-800">{card.title}</p>
+                          <StatusChip
+                            label={card.status}
+                            tone={card.status === "Planned" ? "sky" : "amber"}
+                          />
+                        </div>
+                        <p className="mt-1.5 text-[11px] leading-relaxed text-slate-600">{card.detail}</p>
+                      </Link>
+                    ),
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
           {openDecisionsForMe.length > 0 ? (
             <div className="mt-3 rounded-xl border border-rose-100 bg-rose-50/40 p-3">

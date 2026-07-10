@@ -353,7 +353,7 @@ Registry and build plans updated to match live reality:
 - Command Center: integration + domain cleanup done; monitor PM2 restart count on `cca-command-center-cloud`.
 - CollabOS: build plans, handoffs, human copy, cookie auth, notifications, Mind Meld create, cache-bust.
 - **EC Electric PartnerConnect** added (`ec.ccacompliancepartner.com`, PM2 `ec-partnerconnect-api`).
-- Rose dashboard: **Waiting on you** + **Decisions & integrations** (ComplianceCore / Core, Audit Engine, Risk Audit, Docs Collect, WhatsApp, Cliq, email alerts, Gemini, Zoho CRM/WorkDrive).
+- Rose dashboard: **Waiting on you** + **Decisions & integrations** grouped as Core & audit, Apps waiting on Rose, Cockpits / redesigns, Integrations (ComplianceCore, Audit Engine, Risk Audit, Docs Collect, Business Hub redesign, Soraya cockpit, demo→real apps, websites, Investor Boardroom, staff cockpits, WhatsApp/Cliq/email/Gemini/Zoho).
 
 Manual build plans use `source = 'manual'` so nightly sync does not overwrite them. Re-run sync after registry edits:
 

@@ -89,11 +89,65 @@ const EXTRA_ENTITIES = [
   {
     slug: "investor-boardroom",
     name: "Investor Boardroom",
-    description: "Investor-facing boardroom surface at investor.ccacontact.com.",
+    description:
+      "Investor-facing boardroom at investor.ccacontact.com — live but needs Rose confirmation that the experience is ready vs still in progress.",
     department: "Leadership",
     source: "Nginx Config",
     healthUrl: "https://investor.ccacontact.com",
-    tags: ["investor.ccacontact.com", "live"],
+    tags: ["investor.ccacontact.com", "live", "awaiting-rose"],
+    presetProgress: 75,
+  },
+  {
+    slug: "ec-partnerconnect",
+    name: "EC Electric PartnerConnect",
+    description:
+      "EC Company / EC Electric PartnerConnect Room — private password-gated partner workspace at ec.ccacompliancepartner.com (same PartnerConnect family as FRR). Live on AWS; Zoho Cliq support wiring pending operational approval.",
+    department: "Partner Rooms",
+    source: "PM2 + Health Check",
+    pm2Process: "ec-partnerconnect-api",
+    healthUrl: "https://ec.ccacompliancepartner.com/api/healthz",
+    repoPath: join(PROJECTS_ROOT, "EC-Company"),
+    tags: ["ec.ccacompliancepartner.com", "ec-company", "partnerconnect", "live"],
+    presetProgress: 85,
+  },
+  {
+    slug: "compliance-core",
+    name: "ComplianceCore",
+    description:
+      "CCA ComplianceCore™ — core foundation / single source of truth (cca_client_* in Command Center). Migration and Rose leadership approval not done. Discovery stays on Supabase until Core is approved; do not wire Supabase→intake prefill or treat Core as live master yet.",
+    department: "Compliance",
+    source: "Architecture",
+    healthUrl: "https://command.cagteam.net/os/clients",
+    repoPath: join(PROJECTS_ROOT, "cca-command-center-cloud"),
+    tags: ["compliancecore", "core", "awaiting-rose", "planning"],
+    presetStatus: "planning",
+    presetProgress: 35,
+  },
+  {
+    slug: "audit-engine",
+    name: "Audit Engine",
+    description:
+      "CCA Audit Engine™ — protected scoring/intelligence layer. Approved outputs (TrustScore / risk) are not connected to Command Center entitlements yet. Awaiting Rose decision before entitlement wiring.",
+    department: "Compliance",
+    source: "Architecture",
+    healthUrl: "https://command.cagteam.net",
+    repoPath: join(PROJECTS_ROOT, "cca-command-center-cloud"),
+    tags: ["audit-engine", "awaiting-rose", "planning"],
+    presetStatus: "planning",
+    presetProgress: 30,
+  },
+  {
+    slug: "audit-risk-model",
+    name: "Audit Risk Model",
+    description:
+      "Risk Audit / Audit Risk Model at audit.cagteam.net. Source at Audit-Risk-Model. Leadership sign-off still needed before treating as an approved product path.",
+    department: "Compliance",
+    source: "Architecture",
+    healthUrl: "https://audit.cagteam.net",
+    repoPath: join(PROJECTS_ROOT, "Audit-Risk-Model"),
+    tags: ["compliance", "source-only", "risk-audit", "awaiting-rose", "audit.cagteam.net"],
+    presetStatus: "planning",
+    presetProgress: 40,
   },
   {
     slug: "exammanageros",
@@ -140,13 +194,14 @@ const EXTRA_ENTITIES = [
   {
     slug: "govconnect-demo",
     name: "GovConnect Demo",
-    description: "GovConnect demo at demo.ccagovconnect.com.",
+    description:
+      "GovConnect demo at demo.ccagovconnect.com — demo only until Rose confirms whether it becomes a real production app.",
     department: "Sales",
     source: "PM2 + Health Check",
     pm2Process: "govconnect-api",
     healthUrl: "https://demo.ccagovconnect.com",
     repoPath: join(PROJECTS_ROOT, "govconect-full-stack"),
-    tags: ["demo.ccagovconnect.com", "demo"],
+    tags: ["demo.ccagovconnect.com", "demo", "awaiting-rose"],
   },
   {
     slug: "bid-intelligence-os",
@@ -162,23 +217,27 @@ const EXTRA_ENTITIES = [
   {
     slug: "voice-connect",
     name: "Voice Connect",
-    description: "VoiceConnect demo at demo.ccavoiceconnect.com.",
+    description:
+      "VoiceConnect demo at demo.ccavoiceconnect.com — demo only until Rose confirms production path.",
     department: "Sales",
     source: "PM2 + Health Check",
     pm2Process: "ccavoiceconnect",
     healthUrl: "https://demo.ccavoiceconnect.com",
     repoPath: join(PROJECTS_ROOT, "ccavoiceconnect"),
-    tags: ["demo.ccavoiceconnect.com", "demo"],
+    tags: ["demo.ccavoiceconnect.com", "demo", "awaiting-rose"],
   },
   {
     slug: "facility-intelligence-demo",
     name: "Facility Intelligence Demo",
-    description: "Facility intelligence walkthrough demo.",
+    description:
+      "Facility intelligence walkthrough demo — Needs Review / Pending URL in registry until Rose confirms.",
     department: "Sales",
     source: "Health Check",
     healthUrl: "https://demo.ccafacilityintelligence.com",
     repoPath: join(PROJECTS_ROOT, "facility-demo"),
-    tags: ["demo.ccafacilityintelligence.com", "demo"],
+    tags: ["demo.ccafacilityintelligence.com", "demo", "awaiting-rose"],
+    presetStatus: "planning",
+    presetProgress: 40,
   },
 ];
 
@@ -271,15 +330,48 @@ function loadRegistryEntities() {
       entities.push({
         slug,
         name: mapRegistryName(app),
-        description: (app.description || app.appName || slug).slice(0, 500),
+        description:
+          slug === "biz-services-hub"
+            ? "Business Services Hub at business-services.cagteam.net — live but paused for Rose redesign. Do not treat current UI as final."
+            : slug === "profitpulse"
+              ? "ProfitPulse demo at demo.ccaprofitpulse.com — demo host only until Rose confirms it becomes a real app."
+              : slug === "compliance-connect"
+                ? "Compliance Connect demo at demo.ccacomplianceconnect.com — Needs review; confirm demo vs production path with Rose."
+                : slug === "voiceconnect-demo"
+                  ? "VoiceConnect demo at demo.ccavoiceconnect.com — demo only until Rose confirms production path."
+                  : slug === "facility-intelligence-demo"
+                    ? "Facility Intelligence demo — registry still Pending URL / Needs Review; confirm with Rose before treating as production."
+                    : slug === "main-website" || slug === "cag-website" || slug === "landing-page"
+                      ? `${mapRegistryName(app)} — public site still Pending URL / planning in registry. Needs Rose confirmation on production URL and launch.`
+                      : (app.description || app.appName || slug).slice(0, 500),
         department: (app.department || "Systems").split("/")[0].trim(),
         source,
         pm2Process: app.pm2ProcessName || undefined,
         healthUrl: healthUrl || undefined,
         repoPath: app.cloudFolderPath || undefined,
-        tags: buildRegistryTags(app),
-        presetStatus: app.systemState === "DEPRECATED" ? "complete" : undefined,
+        tags: [
+          ...buildRegistryTags(app),
+          ...(slug === "biz-services-hub" ||
+          ["profitpulse", "compliance-connect", "voiceconnect-demo", "facility-intelligence-demo", "main-website", "cag-website", "landing-page"].includes(slug)
+            ? ["awaiting-rose"]
+            : []),
+        ],
+        presetStatus:
+          app.systemState === "DEPRECATED"
+            ? "complete"
+            : slug === "biz-services-hub"
+              ? "at-risk"
+              : slug === "main-website" || slug === "cag-website" || slug === "landing-page" || slug === "facility-intelligence-demo"
+                ? "planning"
+                : // Stale Pending URL registry rows must not downgrade live apps
+                  slug === "bid-intelligence" || slug === "voiceconnect-demo" || slug === "audit-os"
+                    ? undefined
+                    : undefined,
+        // Skip syncing stale Pending-URL registry shells when a stronger live entity exists
+        skipSync: slug === "bid-intelligence" || slug === "voiceconnect-demo" || slug === "audit-os",
+        presetProgress: slug === "biz-services-hub" ? 60 : undefined,
       });
+      if (entities[entities.length - 1].skipSync) entities.pop();
     }
   } catch (err) {
     log(`WARN registry load failed: ${err.message}`);
@@ -327,15 +419,39 @@ function buildRegistryTags(app) {
 }
 
 function loadCockpitEntities() {
+  const awaitingRoseNotes = {
+    soraya:
+      "Hosted at https://command.cagteam.net/soraya. Still awaiting Rose — live data wiring and final handoff deferred; Bloom Soraya source exists separately. Do not treat as finished.",
+    opie:
+      "Hosted at https://command.cagteam.net/opie. CC route is live; needs Rose confirmation that the cockpit is finished vs still read-only/seed panels.",
+    skylar:
+      "Hosted at https://command.cagteam.net/skylar. CC route is live; needs Rose confirmation that the cockpit is finished vs still read-only/seed panels.",
+    "staff-qa":
+      "Hosted at https://command.cagteam.net/staff-qa. CC route is live; needs Rose confirmation that QA coverage and cockpit finish criteria are met.",
+    "fulfillment-compliance":
+      "Hosted at https://command.cagteam.net/fulfillment-compliance. CC route is live; needs Rose confirmation that fulfillment compliance cockpit is finished.",
+    alyssa:
+      "Hosted at https://command.cagteam.net/alyssa. CC route is live; needs Rose confirmation that AlyssaOS cockpit is finished vs still needs a design pass.",
+  };
   return COCKPIT_SLUGS.map((slug) => ({
     slug: `cockpit-${slug}`,
     name: COCKPIT_NAMES[slug] || `${slug} Cockpit`,
-    description: `Hosted in Command Center at ${CC_BASE}/${slug}. Standalone domain retired; module runs inside Command Center.`,
+    description:
+      awaitingRoseNotes[slug] ||
+      `Hosted in Command Center at ${CC_BASE}/${slug}. Standalone domain retired; module runs inside Command Center.`,
     department: "Staff OS",
     source: "Command Center",
     healthUrl: `${CC_BASE}/${slug}`,
     repoPath: join(PROJECTS_ROOT, "cca-command-center-cloud"),
-    tags: ["staff-os", "command-center-hosted", "command.cagteam.net", slug],
+    tags: [
+      "staff-os",
+      "command-center-hosted",
+      "command.cagteam.net",
+      slug,
+      ...(slug === "soraya" || awaitingRoseNotes[slug] ? ["awaiting-rose"] : []),
+    ],
+    presetStatus: slug === "soraya" ? "at-risk" : undefined,
+    presetProgress: slug === "soraya" ? 55 : undefined,
   }));
 }
 
@@ -353,6 +469,18 @@ function assessEntity(entity, pm2Map) {
   }
 
   if (entity.source === "Command Center") {
+    if (entity.presetStatus) {
+      return {
+        status: entity.presetStatus,
+        progress: entity.presetProgress ?? (httpOk === false ? 60 : 90),
+        risk: entity.presetStatus === "at-risk" || entity.presetStatus === "blocked" ? "high" : httpOk === false ? "medium" : "low",
+        blockers,
+        httpStatus,
+        pm2Restarts: 0,
+        pm2Online: null,
+        httpOk,
+      };
+    }
     const status = httpOk === false ? "at-risk" : "active";
     const risk = httpOk === false ? "medium" : "low";
     const progress = httpOk === false ? 60 : 90;
@@ -398,6 +526,9 @@ function assessEntity(entity, pm2Map) {
 
     if (entity.presetStatus === "complete") {
       status = "complete";
+    } else if (entity.presetStatus === "planning" || entity.presetStatus === "at-risk" || entity.presetStatus === "blocked") {
+      status = entity.presetStatus;
+      if (entity.presetProgress != null) progress = entity.presetProgress;
     } else if (pm2Online === false || (entity.healthUrl && httpOk === false)) {
       status = blockers.some((b) => b.risk === "critical") ? "blocked" : "at-risk";
     } else if (
@@ -411,7 +542,7 @@ function assessEntity(entity, pm2Map) {
   }
 
   if (blockers.some((b) => b.risk === "critical")) risk = "critical";
-  else if (blockers.some((b) => b.risk === "high")) risk = "high";
+  else if (blockers.some((b) => b.risk === "high") || status === "at-risk" || status === "blocked") risk = "high";
   else if (status === "planning") risk = "low";
   else if (status === "active" && httpOk === true) risk = "low";
 
