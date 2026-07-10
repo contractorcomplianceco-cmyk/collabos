@@ -1341,6 +1341,7 @@ export const ListProjectsResponseItem = zod.object({
   "lastActivity": zod.string(),
   "deadline": zod.string().nullable(),
   "tags": zod.array(zod.string()),
+  "projectType": zod.union([zod.literal('demo'),zod.literal('live'),zod.literal('planning'),zod.literal('merged-cc-host'),zod.literal(null)]).nullish(),
   "lastSyncedAt": zod.coerce.date().nullish()
 })
 export const ListProjectsResponse = zod.array(ListProjectsResponseItem)
@@ -1358,6 +1359,359 @@ export const ListProjectBlockersResponseItem = zod.object({
   "age": zod.number()
 })
 export const ListProjectBlockersResponse = zod.array(ListProjectBlockersResponseItem)
+
+
+/**
+ * @summary Create a manual project blocker
+ */
+
+
+
+export const CreateProjectBlockerBody = zod.object({
+  "title": zod.string().min(1),
+  "projectId": zod.number(),
+  "owner": zod.string().nullish(),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']).optional()
+})
+
+
+/**
+ * @summary Update a manual project blocker
+ */
+export const UpdateProjectBlockerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const UpdateProjectBlockerBody = zod.object({
+  "title": zod.string().min(1).optional(),
+  "owner": zod.string().nullish(),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']).optional()
+})
+
+export const UpdateProjectBlockerResponse = zod.object({
+  "id": zod.number(),
+  "projectId": zod.number(),
+  "title": zod.string(),
+  "owner": zod.string().nullable(),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "age": zod.number()
+})
+
+
+/**
+ * @summary Remove a manual project blocker
+ */
+export const DeleteProjectBlockerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary List build plans for all projects
+ */
+export const listProjectBuildPlansResponseProgressMin = 0;
+export const listProjectBuildPlansResponseProgressMax = 100;
+
+export const listProjectBuildPlansResponseVisibleProgressMin = 0;
+export const listProjectBuildPlansResponseVisibleProgressMax = 100;
+
+export const listProjectBuildPlansResponsePhasesItemVisibleProgressMin = 0;
+export const listProjectBuildPlansResponsePhasesItemVisibleProgressMax = 100;
+
+
+
+export const ListProjectBuildPlansResponseItem = zod.object({
+  "id": zod.number(),
+  "projectId": zod.number(),
+  "summary": zod.string(),
+  "currentPhaseId": zod.string(),
+  "currentPhaseTitle": zod.string(),
+  "progress": zod.number().min(listProjectBuildPlansResponseProgressMin).max(listProjectBuildPlansResponseProgressMax),
+  "visibleProgress": zod.number().min(listProjectBuildPlansResponseVisibleProgressMin).max(listProjectBuildPlansResponseVisibleProgressMax),
+  "phases": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "status": zod.enum(['locked', 'active', 'complete']),
+  "visibleProgress": zod.number().min(listProjectBuildPlansResponsePhasesItemVisibleProgressMin).max(listProjectBuildPlansResponsePhasesItemVisibleProgressMax).optional(),
+  "internalNotes": zod.string().optional()
+})),
+  "roseInstructions": zod.string(),
+  "carmenPlanNotes": zod.string(),
+  "source": zod.enum(['manual', 'sync']),
+  "updatedBy": zod.string().nullable(),
+  "canUnblock": zod.boolean(),
+  "updatedAt": zod.coerce.date()
+})
+export const ListProjectBuildPlansResponse = zod.array(ListProjectBuildPlansResponseItem)
+
+
+/**
+ * @summary Get build plan for a project
+ */
+export const GetProjectBuildPlanParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const getProjectBuildPlanResponseProgressMin = 0;
+export const getProjectBuildPlanResponseProgressMax = 100;
+
+export const getProjectBuildPlanResponseVisibleProgressMin = 0;
+export const getProjectBuildPlanResponseVisibleProgressMax = 100;
+
+export const getProjectBuildPlanResponsePhasesItemVisibleProgressMin = 0;
+export const getProjectBuildPlanResponsePhasesItemVisibleProgressMax = 100;
+
+
+
+export const GetProjectBuildPlanResponse = zod.object({
+  "id": zod.number(),
+  "projectId": zod.number(),
+  "summary": zod.string(),
+  "currentPhaseId": zod.string(),
+  "currentPhaseTitle": zod.string(),
+  "progress": zod.number().min(getProjectBuildPlanResponseProgressMin).max(getProjectBuildPlanResponseProgressMax),
+  "visibleProgress": zod.number().min(getProjectBuildPlanResponseVisibleProgressMin).max(getProjectBuildPlanResponseVisibleProgressMax),
+  "phases": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "status": zod.enum(['locked', 'active', 'complete']),
+  "visibleProgress": zod.number().min(getProjectBuildPlanResponsePhasesItemVisibleProgressMin).max(getProjectBuildPlanResponsePhasesItemVisibleProgressMax).optional(),
+  "internalNotes": zod.string().optional()
+})),
+  "roseInstructions": zod.string(),
+  "carmenPlanNotes": zod.string(),
+  "source": zod.enum(['manual', 'sync']),
+  "updatedBy": zod.string().nullable(),
+  "canUnblock": zod.boolean(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update a project build plan (Rose/Carmen)
+ */
+export const UpdateProjectBuildPlanParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const updateProjectBuildPlanBodyProgressMin = 0;
+export const updateProjectBuildPlanBodyProgressMax = 100;
+
+export const updateProjectBuildPlanBodyPhasesItemVisibleProgressMin = 0;
+export const updateProjectBuildPlanBodyPhasesItemVisibleProgressMax = 100;
+
+
+
+export const UpdateProjectBuildPlanBody = zod.object({
+  "summary": zod.string().optional(),
+  "currentPhaseId": zod.string().optional(),
+  "progress": zod.number().min(updateProjectBuildPlanBodyProgressMin).max(updateProjectBuildPlanBodyProgressMax).optional(),
+  "phases": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "status": zod.enum(['locked', 'active', 'complete']),
+  "visibleProgress": zod.number().min(updateProjectBuildPlanBodyPhasesItemVisibleProgressMin).max(updateProjectBuildPlanBodyPhasesItemVisibleProgressMax).optional(),
+  "internalNotes": zod.string().optional()
+})).optional(),
+  "carmenPlanNotes": zod.string().optional()
+})
+
+export const updateProjectBuildPlanResponseProgressMin = 0;
+export const updateProjectBuildPlanResponseProgressMax = 100;
+
+export const updateProjectBuildPlanResponseVisibleProgressMin = 0;
+export const updateProjectBuildPlanResponseVisibleProgressMax = 100;
+
+export const updateProjectBuildPlanResponsePhasesItemVisibleProgressMin = 0;
+export const updateProjectBuildPlanResponsePhasesItemVisibleProgressMax = 100;
+
+
+
+export const UpdateProjectBuildPlanResponse = zod.object({
+  "id": zod.number(),
+  "projectId": zod.number(),
+  "summary": zod.string(),
+  "currentPhaseId": zod.string(),
+  "currentPhaseTitle": zod.string(),
+  "progress": zod.number().min(updateProjectBuildPlanResponseProgressMin).max(updateProjectBuildPlanResponseProgressMax),
+  "visibleProgress": zod.number().min(updateProjectBuildPlanResponseVisibleProgressMin).max(updateProjectBuildPlanResponseVisibleProgressMax),
+  "phases": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "status": zod.enum(['locked', 'active', 'complete']),
+  "visibleProgress": zod.number().min(updateProjectBuildPlanResponsePhasesItemVisibleProgressMin).max(updateProjectBuildPlanResponsePhasesItemVisibleProgressMax).optional(),
+  "internalNotes": zod.string().optional()
+})),
+  "roseInstructions": zod.string(),
+  "carmenPlanNotes": zod.string(),
+  "source": zod.enum(['manual', 'sync']),
+  "updatedBy": zod.string().nullable(),
+  "canUnblock": zod.boolean(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update Rose handoff instructions for a project
+ */
+export const UpdateRoseInstructionsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateRoseInstructionsBody = zod.object({
+  "roseInstructions": zod.string()
+})
+
+export const updateRoseInstructionsResponseProgressMin = 0;
+export const updateRoseInstructionsResponseProgressMax = 100;
+
+export const updateRoseInstructionsResponseVisibleProgressMin = 0;
+export const updateRoseInstructionsResponseVisibleProgressMax = 100;
+
+export const updateRoseInstructionsResponsePhasesItemVisibleProgressMin = 0;
+export const updateRoseInstructionsResponsePhasesItemVisibleProgressMax = 100;
+
+
+
+export const UpdateRoseInstructionsResponse = zod.object({
+  "id": zod.number(),
+  "projectId": zod.number(),
+  "summary": zod.string(),
+  "currentPhaseId": zod.string(),
+  "currentPhaseTitle": zod.string(),
+  "progress": zod.number().min(updateRoseInstructionsResponseProgressMin).max(updateRoseInstructionsResponseProgressMax),
+  "visibleProgress": zod.number().min(updateRoseInstructionsResponseVisibleProgressMin).max(updateRoseInstructionsResponseVisibleProgressMax),
+  "phases": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "status": zod.enum(['locked', 'active', 'complete']),
+  "visibleProgress": zod.number().min(updateRoseInstructionsResponsePhasesItemVisibleProgressMin).max(updateRoseInstructionsResponsePhasesItemVisibleProgressMax).optional(),
+  "internalNotes": zod.string().optional()
+})),
+  "roseInstructions": zod.string(),
+  "carmenPlanNotes": zod.string(),
+  "source": zod.enum(['manual', 'sync']),
+  "updatedBy": zod.string().nullable(),
+  "canUnblock": zod.boolean(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Rose unlocks the next visible phase without changing internal progress
+ */
+export const UnblockProjectPhaseParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const unblockProjectPhaseResponseProgressMin = 0;
+export const unblockProjectPhaseResponseProgressMax = 100;
+
+export const unblockProjectPhaseResponseVisibleProgressMin = 0;
+export const unblockProjectPhaseResponseVisibleProgressMax = 100;
+
+export const unblockProjectPhaseResponsePhasesItemVisibleProgressMin = 0;
+export const unblockProjectPhaseResponsePhasesItemVisibleProgressMax = 100;
+
+
+
+export const UnblockProjectPhaseResponse = zod.object({
+  "id": zod.number(),
+  "projectId": zod.number(),
+  "summary": zod.string(),
+  "currentPhaseId": zod.string(),
+  "currentPhaseTitle": zod.string(),
+  "progress": zod.number().min(unblockProjectPhaseResponseProgressMin).max(unblockProjectPhaseResponseProgressMax),
+  "visibleProgress": zod.number().min(unblockProjectPhaseResponseVisibleProgressMin).max(unblockProjectPhaseResponseVisibleProgressMax),
+  "phases": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "status": zod.enum(['locked', 'active', 'complete']),
+  "visibleProgress": zod.number().min(unblockProjectPhaseResponsePhasesItemVisibleProgressMin).max(unblockProjectPhaseResponsePhasesItemVisibleProgressMax).optional(),
+  "internalNotes": zod.string().optional()
+})),
+  "roseInstructions": zod.string(),
+  "carmenPlanNotes": zod.string(),
+  "source": zod.enum(['manual', 'sync']),
+  "updatedBy": zod.string().nullable(),
+  "canUnblock": zod.boolean(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary List file handoffs for all projects
+ */
+export const ListProjectHandoffsResponseItem = zod.object({
+  "id": zod.number(),
+  "projectId": zod.number(),
+  "filename": zod.string(),
+  "mimeType": zod.string().nullable(),
+  "sizeBytes": zod.number(),
+  "uploadedBy": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})
+export const ListProjectHandoffsResponse = zod.array(ListProjectHandoffsResponseItem)
+
+
+/**
+ * @summary Upload a file handoff for a project
+ */
+export const UploadProjectHandoffParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+
+export const UploadProjectHandoffBody = zod.object({
+  "filename": zod.string().min(1),
+  "contentBase64": zod.string().min(1),
+  "mimeType": zod.string().optional()
+})
+
+
+/**
+ * @summary Download a project handoff file
+ */
+export const DownloadProjectHandoffParams = zod.object({
+  "id": zod.coerce.number(),
+  "handoffId": zod.coerce.number()
+})
+
+
+/**
+ * @summary Update project metadata (Rose/Carmen)
+ */
+export const UpdateProjectParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateProjectBody = zod.object({
+  "projectType": zod.enum(['demo', 'live', 'planning', 'merged-cc-host']).optional()
+})
+
+export const UpdateProjectResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "department": zod.string(),
+  "owner": zod.string().nullable(),
+  "status": zod.enum(['active', 'at-risk', 'blocked', 'stale', 'complete', 'planning']),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "progress": zod.number(),
+  "source": zod.string(),
+  "classification": zod.string(),
+  "lastActivity": zod.string(),
+  "deadline": zod.string().nullable(),
+  "tags": zod.array(zod.string()),
+  "projectType": zod.union([zod.literal('demo'),zod.literal('live'),zod.literal('planning'),zod.literal('merged-cc-host'),zod.literal(null)]).nullish(),
+  "lastSyncedAt": zod.coerce.date().nullish()
+})
 
 
 /**

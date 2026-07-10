@@ -1112,6 +1112,19 @@ export const ProjectRecordRisk = {
   critical: 'critical',
 } as const;
 
+/**
+ * @nullable
+ */
+export type ProjectRecordProjectType = typeof ProjectRecordProjectType[keyof typeof ProjectRecordProjectType] | null;
+
+
+export const ProjectRecordProjectType = {
+  demo: 'demo',
+  live: 'live',
+  planning: 'planning',
+  'merged-cc-host': 'merged-cc-host',
+} as const;
+
 export interface ProjectRecord {
   id: number;
   name: string;
@@ -1128,6 +1141,8 @@ export interface ProjectRecord {
   /** @nullable */
   deadline: string | null;
   tags: string[];
+  /** @nullable */
+  projectType?: ProjectRecordProjectType;
   /** @nullable */
   lastSyncedAt?: string | null;
 }
@@ -1150,6 +1165,147 @@ export interface BlockerRecord {
   owner: string | null;
   risk: BlockerRecordRisk;
   age: number;
+}
+
+export type BlockerInputRisk = typeof BlockerInputRisk[keyof typeof BlockerInputRisk];
+
+
+export const BlockerInputRisk = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export interface BlockerInput {
+  /** @minLength 1 */
+  title: string;
+  projectId: number;
+  /** @nullable */
+  owner?: string | null;
+  risk?: BlockerInputRisk;
+}
+
+export type BlockerUpdateRisk = typeof BlockerUpdateRisk[keyof typeof BlockerUpdateRisk];
+
+
+export const BlockerUpdateRisk = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export interface BlockerUpdate {
+  /** @minLength 1 */
+  title?: string;
+  /** @nullable */
+  owner?: string | null;
+  risk?: BlockerUpdateRisk;
+}
+
+export type BuildPlanPhaseStatus = typeof BuildPlanPhaseStatus[keyof typeof BuildPlanPhaseStatus];
+
+
+export const BuildPlanPhaseStatus = {
+  locked: 'locked',
+  active: 'active',
+  complete: 'complete',
+} as const;
+
+export interface BuildPlanPhase {
+  id: string;
+  title: string;
+  status: BuildPlanPhaseStatus;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  visibleProgress?: number;
+  internalNotes?: string;
+}
+
+export type ProjectType = typeof ProjectType[keyof typeof ProjectType];
+
+
+export const ProjectType = {
+  demo: 'demo',
+  live: 'live',
+  planning: 'planning',
+  'merged-cc-host': 'merged-cc-host',
+} as const;
+
+export interface ProjectUpdate {
+  projectType?: ProjectType;
+}
+
+export type ProjectBuildPlanRecordSource = typeof ProjectBuildPlanRecordSource[keyof typeof ProjectBuildPlanRecordSource];
+
+
+export const ProjectBuildPlanRecordSource = {
+  manual: 'manual',
+  sync: 'sync',
+} as const;
+
+export interface ProjectBuildPlanRecord {
+  id: number;
+  projectId: number;
+  summary: string;
+  currentPhaseId: string;
+  currentPhaseTitle: string;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  progress: number;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  visibleProgress: number;
+  phases: BuildPlanPhase[];
+  roseInstructions: string;
+  carmenPlanNotes: string;
+  source: ProjectBuildPlanRecordSource;
+  /** @nullable */
+  updatedBy: string | null;
+  canUnblock: boolean;
+  updatedAt: string;
+}
+
+export interface ProjectBuildPlanUpdate {
+  summary?: string;
+  currentPhaseId?: string;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  progress?: number;
+  phases?: BuildPlanPhase[];
+  carmenPlanNotes?: string;
+}
+
+export interface RoseInstructionsUpdate {
+  roseInstructions: string;
+}
+
+export interface ProjectHandoffRecord {
+  id: number;
+  projectId: number;
+  filename: string;
+  /** @nullable */
+  mimeType: string | null;
+  sizeBytes: number;
+  uploadedBy: string;
+  uploadedAt: string;
+}
+
+export interface ProjectHandoffUpload {
+  /** @minLength 1 */
+  filename: string;
+  /** @minLength 1 */
+  contentBase64: string;
+  mimeType?: string;
 }
 
 export interface CompanyRecord {

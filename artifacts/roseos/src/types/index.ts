@@ -187,6 +187,29 @@ export interface Blocker {
   age: number;
 }
 
+export interface ProjectBuildPlan {
+  id: string;
+  projectId: string;
+  summary: string;
+  currentPhaseId: string;
+  currentPhaseTitle: string;
+  progress: number;
+  visibleProgress: number;
+  phases: Array<{
+    id: string;
+    title: string;
+    status: "locked" | "active" | "complete";
+    visibleProgress?: number;
+    internalNotes?: string;
+  }>;
+  roseInstructions: string;
+  carmenPlanNotes: string;
+  source: "manual" | "sync";
+  updatedBy: string | null;
+  canUnblock: boolean;
+  updatedAt: string;
+}
+
 export interface SentimentSignal {
   team: string;
   score: number;

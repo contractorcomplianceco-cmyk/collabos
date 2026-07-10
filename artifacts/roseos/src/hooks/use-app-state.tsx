@@ -46,6 +46,7 @@ import {
   getGetAppSettingsQueryKey,
   useListProjects,
   useListProjectBlockers,
+  useListProjectBuildPlans,
   useListCompanyRecords,
   useListDecisions,
   useListAutomations,
@@ -66,8 +67,14 @@ import {
   updateCompanyRecord,
   createProjectTask,
   updateProjectTask,
+  updateProjectBuildPlan,
+  createProjectBlocker,
+  updateProjectBlocker,
+  deleteProjectBlocker,
   getListCompanyRecordsQueryKey,
   getListProjectTasksQueryKey,
+  getListProjectBuildPlansQueryKey,
+  getListProjectBlockersQueryKey,
   type RecommendationRecord,
   type IdeaRecord,
   type MindMeldItemRecord,
@@ -82,6 +89,7 @@ import {
   type AppSettingsRecord,
   type ProjectRecord,
   type BlockerRecord,
+  type ProjectBuildPlanRecord,
   type CompanyRecord as ApiCompanyRecord,
   type DecisionRecord,
   type AutomationRecord,
@@ -109,6 +117,7 @@ import type {
   AppSettings,
   Project,
   Blocker,
+  ProjectBuildPlan,
   Task,
   CompanyRecord,
   Decision,
@@ -165,6 +174,7 @@ interface AppState extends PersistedState {
   settingsLoading: boolean;
   projects: Project[];
   blockers: Blocker[];
+  buildPlans: ProjectBuildPlan[];
   projectTasks: Task[];
   projectsLoading: boolean;
   companyRecords: CompanyRecord[];
@@ -277,6 +287,18 @@ interface AppState extends PersistedState {
     status: Task["status"];
     due: string | null;
   }>) => Promise<void>;
+  updateBuildPlanEntry: (projectId: string, patch: Partial<{
+    summary: string;
+    progress: number;
+    carmenPlanNotes: string;
+  }>) => Promise<void>;
+  createBlockerEntry: (input: {
+    title: string;
+    projectId: string;
+    owner?: string | null;
+    risk?: Blocker["risk"];
+  }) => Promise<void>;
+  deleteBlockerEntry: (id: string) => Promise<void>;
   resetData: () => void;
 }
 
@@ -522,6 +544,25 @@ function toProject(row: ProjectRecord): Project {
   };
 }
 
+function toBuildPlan(row: ProjectBuildPlanRecord): ProjectBuildPlan {
+  return {
+    id: String(row.id),
+    projectId: String(row.projectId),
+    summary: row.summary,
+    currentPhaseId: row.currentPhaseId,
+    currentPhaseTitle: row.currentPhaseTitle,
+    progress: row.progress,
+    visibleProgress: row.visibleProgress,
+    phases: row.phases,
+    roseInstructions: row.roseInstructions,
+    carmenPlanNotes: row.carmenPlanNotes,
+    source: row.source,
+    updatedBy: row.updatedBy,
+    canUnblock: row.canUnblock,
+    updatedAt: row.updatedAt,
+  };
+}
+
 function toBlocker(row: BlockerRecord): Blocker {
   return {
     id: String(row.id),
@@ -726,6 +767,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const { data: apiSettings, isLoading: settingsLoading } = useGetAppSettings();
   const { data: apiProjects = [], isLoading: projectsLoading } = useListProjects();
   const { data: apiBlockers = [], isLoading: blockersLoading } = useListProjectBlockers();
+  const { data: apiBuildPlans = [], isLoading: buildPlansLoading } = useListProjectBuildPlans();
   const { data: apiProjectTasks = [], isLoading: projectTasksLoading } = useListProjectTasks();
   const { data: apiCompanyRecords = [], isLoading: companyRecordsLoading } = useListCompanyRecords();
   const { data: apiDecisions = [], isLoading: decisionsLoading } = useListDecisions();
@@ -759,6 +801,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   );
   const projects = useMemo(() => apiProjects.map(toProject), [apiProjects]);
   const blockers = useMemo(() => apiBlockers.map(toBlocker), [apiBlockers]);
+  const buildPlans = useMemo(() => apiBuildPlans.map(toBuildPlan), [apiBuildPlans]);
   const projectTasks = useMemo(() => apiProjectTasks.map(toProjectTask), [apiProjectTasks]);
   const companyRecords = useMemo(() => apiCompanyRecords.map(toCompanyRecord), [apiCompanyRecords]);
   const decisions = useMemo(() => apiDecisions.map(toDecision), [apiDecisions]);
@@ -773,7 +816,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const mindFeed = useMemo(() => apiMindFeed.map(toMindFeedEntry), [apiMindFeed]);
   const agentWorkItems = useMemo(() => apiAgentWorkItems.map(toAgentWorkItem), [apiAgentWorkItems]);
   const mindMeldLoading = mindMeldItemsLoading || mindMeldHandoffsLoading || mindMeldTimelineLoading || mindFeedLoading;
-  const projectsLoadingCombined = projectsLoading || blockersLoading || projectTasksLoading;
+  const projectsLoadingCombined = projectsLoading || blockersLoading || buildPlansLoading || projectTasksLoading;
   const registryLoading =
     companyRecordsLoading ||
     decisionsLoading ||
@@ -816,6 +859,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
   const invalidateProjectTasks = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: getListProjectTasksQueryKey() });
+  }, [queryClient]);
+  const invalidateBuildPlans = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: getListProjectBuildPlansQueryKey() });
+  }, [queryClient]);
+  const invalidateBlockers = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: getListProjectBlockersQueryKey() });
   }, [queryClient]);
 
   const [state, setState] = useState<PersistedState>(() => freshState());
@@ -1413,6 +1462,47 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     [state.currentRole, invalidateProjectTasks],
   );
 
+  const updateBuildPlanEntry = useCallback(
+    async (projectId: string, patch: Partial<{
+      summary: string;
+      progress: number;
+      carmenPlanNotes: string;
+    }>) => {
+      if (!canSubmit(state.currentRole)) return;
+      await updateProjectBuildPlan(Number(projectId), patch);
+      await invalidateBuildPlans();
+    },
+    [state.currentRole, invalidateBuildPlans],
+  );
+
+  const createBlockerEntry = useCallback(
+    async (input: {
+      title: string;
+      projectId: string;
+      owner?: string | null;
+      risk?: Blocker["risk"];
+    }) => {
+      if (!canSubmit(state.currentRole)) return;
+      await createProjectBlocker({
+        title: input.title,
+        projectId: Number(input.projectId),
+        owner: input.owner ?? null,
+        risk: input.risk ?? "medium",
+      });
+      await invalidateBlockers();
+    },
+    [state.currentRole, invalidateBlockers],
+  );
+
+  const deleteBlockerEntry = useCallback(
+    async (id: string) => {
+      if (!canSubmit(state.currentRole)) return;
+      await deleteProjectBlocker(Number(id));
+      await invalidateBlockers();
+    },
+    [state.currentRole, invalidateBlockers],
+  );
+
   return (
     <AppStateContext.Provider
       value={{
@@ -1426,6 +1516,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         settingsLoading,
         projects,
         blockers,
+        buildPlans,
         projectTasks,
         projectsLoading: projectsLoadingCombined,
         companyRecords,
@@ -1484,6 +1575,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         updateCompanyRecordEntry,
         createProjectTaskEntry,
         updateProjectTaskEntry,
+        updateBuildPlanEntry,
+        createBlockerEntry,
+        deleteBlockerEntry,
         resetData,
       }}
     >

@@ -16,6 +16,21 @@ export const HUMAN_PROJECT_STATUS: Record<string, string> = {
   planning: "Planning",
 };
 
+export const HUMAN_PROJECT_TYPE: Record<string, string> = {
+  demo: "Demo",
+  live: "Live app",
+  planning: "Planning",
+  "merged-cc-host": "Command Center",
+};
+
+export const HUMAN_BUILD_PLAN_PHASE: Record<string, string> = {
+  not_started: "Not started",
+  in_progress: "In progress",
+  live_stable: "Live & stable",
+  maintenance: "Maintenance mode",
+  blocked: "Blocked",
+};
+
 export const HUMAN_AGENT_STATUS: Record<string, string> = {
   new: "New",
   triaged: "Sorted",

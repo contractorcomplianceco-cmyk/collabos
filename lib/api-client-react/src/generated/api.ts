@@ -32,7 +32,9 @@ import type {
   AuditLogEntry,
   AuthSession,
   AutomationRecord,
+  BlockerInput,
   BlockerRecord,
+  BlockerUpdate,
   BuildItemRecord,
   ChangePasswordInput,
   CompanyRecord,
@@ -70,14 +72,20 @@ import type {
   MockupVersionInput,
   MockupVersionRecord,
   ModuleSeenInput,
+  ProjectBuildPlanRecord,
+  ProjectBuildPlanUpdate,
+  ProjectHandoffRecord,
+  ProjectHandoffUpload,
   ProjectRecord,
   ProjectTaskInput,
   ProjectTaskRecord,
   ProjectTaskUpdate,
+  ProjectUpdate,
   RecommendationInput,
   RecommendationRecord,
   RecommendationStatusChange,
   ReportTemplateRecord,
+  RoseInstructionsUpdate,
   SentimentSignalRecord,
   SopRecord,
   TempPasswordResult,
@@ -3717,6 +3725,890 @@ export function useListProjectBlockers<TData = Awaited<ReturnType<typeof listPro
 
 
 
+
+export const getCreateProjectBlockerUrl = () => {
+
+
+
+
+  return `/api/projects/blockers`
+}
+
+/**
+ * @summary Create a manual project blocker
+ */
+export const createProjectBlocker = async (blockerInput: BlockerInput, options?: RequestInit): Promise<BlockerRecord> => {
+
+  return customFetch<BlockerRecord>(getCreateProjectBlockerUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      blockerInput,)
+  }
+);}
+
+
+
+
+export const getCreateProjectBlockerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProjectBlocker>>, TError,{data: BodyType<BlockerInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createProjectBlocker>>, TError,{data: BodyType<BlockerInput>}, TContext> => {
+
+const mutationKey = ['createProjectBlocker'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createProjectBlocker>>, {data: BodyType<BlockerInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createProjectBlocker(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateProjectBlockerMutationResult = NonNullable<Awaited<ReturnType<typeof createProjectBlocker>>>
+    export type CreateProjectBlockerMutationBody = BodyType<BlockerInput>
+    export type CreateProjectBlockerMutationError = ErrorType<void>
+
+    /**
+ * @summary Create a manual project blocker
+ */
+export const useCreateProjectBlocker = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProjectBlocker>>, TError,{data: BodyType<BlockerInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createProjectBlocker>>,
+        TError,
+        {data: BodyType<BlockerInput>},
+        TContext
+      > => {
+      return useMutation(getCreateProjectBlockerMutationOptions(options));
+    }
+
+export const getUpdateProjectBlockerUrl = (id: number,) => {
+
+
+
+
+  return `/api/projects/blockers/${id}`
+}
+
+/**
+ * @summary Update a manual project blocker
+ */
+export const updateProjectBlocker = async (id: number,
+    blockerUpdate: BlockerUpdate, options?: RequestInit): Promise<BlockerRecord> => {
+
+  return customFetch<BlockerRecord>(getUpdateProjectBlockerUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      blockerUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdateProjectBlockerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProjectBlocker>>, TError,{id: number;data: BodyType<BlockerUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateProjectBlocker>>, TError,{id: number;data: BodyType<BlockerUpdate>}, TContext> => {
+
+const mutationKey = ['updateProjectBlocker'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProjectBlocker>>, {id: number;data: BodyType<BlockerUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateProjectBlocker(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateProjectBlockerMutationResult = NonNullable<Awaited<ReturnType<typeof updateProjectBlocker>>>
+    export type UpdateProjectBlockerMutationBody = BodyType<BlockerUpdate>
+    export type UpdateProjectBlockerMutationError = ErrorType<void>
+
+    /**
+ * @summary Update a manual project blocker
+ */
+export const useUpdateProjectBlocker = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProjectBlocker>>, TError,{id: number;data: BodyType<BlockerUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateProjectBlocker>>,
+        TError,
+        {id: number;data: BodyType<BlockerUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateProjectBlockerMutationOptions(options));
+    }
+
+export const getDeleteProjectBlockerUrl = (id: number,) => {
+
+
+
+
+  return `/api/projects/blockers/${id}`
+}
+
+/**
+ * @summary Remove a manual project blocker
+ */
+export const deleteProjectBlocker = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteProjectBlockerUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteProjectBlockerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProjectBlocker>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteProjectBlocker>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteProjectBlocker'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteProjectBlocker>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteProjectBlocker(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteProjectBlockerMutationResult = NonNullable<Awaited<ReturnType<typeof deleteProjectBlocker>>>
+
+    export type DeleteProjectBlockerMutationError = ErrorType<void>
+
+    /**
+ * @summary Remove a manual project blocker
+ */
+export const useDeleteProjectBlocker = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProjectBlocker>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteProjectBlocker>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteProjectBlockerMutationOptions(options));
+    }
+
+export const getListProjectBuildPlansUrl = () => {
+
+
+
+
+  return `/api/projects/build-plans`
+}
+
+/**
+ * @summary List build plans for all projects
+ */
+export const listProjectBuildPlans = async ( options?: RequestInit): Promise<ProjectBuildPlanRecord[]> => {
+
+  return customFetch<ProjectBuildPlanRecord[]>(getListProjectBuildPlansUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListProjectBuildPlansQueryKey = () => {
+    return [
+    `/api/projects/build-plans`
+    ] as const;
+    }
+
+
+export const getListProjectBuildPlansQueryOptions = <TData = Awaited<ReturnType<typeof listProjectBuildPlans>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listProjectBuildPlans>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListProjectBuildPlansQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProjectBuildPlans>>> = ({ signal }) => listProjectBuildPlans({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProjectBuildPlans>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListProjectBuildPlansQueryResult = NonNullable<Awaited<ReturnType<typeof listProjectBuildPlans>>>
+export type ListProjectBuildPlansQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List build plans for all projects
+ */
+
+export function useListProjectBuildPlans<TData = Awaited<ReturnType<typeof listProjectBuildPlans>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listProjectBuildPlans>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListProjectBuildPlansQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetProjectBuildPlanUrl = (id: number,) => {
+
+
+
+
+  return `/api/projects/${id}/plan`
+}
+
+/**
+ * @summary Get build plan for a project
+ */
+export const getProjectBuildPlan = async (id: number, options?: RequestInit): Promise<ProjectBuildPlanRecord> => {
+
+  return customFetch<ProjectBuildPlanRecord>(getGetProjectBuildPlanUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetProjectBuildPlanQueryKey = (id: number,) => {
+    return [
+    `/api/projects/${id}/plan`
+    ] as const;
+    }
+
+
+export const getGetProjectBuildPlanQueryOptions = <TData = Awaited<ReturnType<typeof getProjectBuildPlan>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProjectBuildPlan>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProjectBuildPlanQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProjectBuildPlan>>> = ({ signal }) => getProjectBuildPlan(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProjectBuildPlan>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetProjectBuildPlanQueryResult = NonNullable<Awaited<ReturnType<typeof getProjectBuildPlan>>>
+export type GetProjectBuildPlanQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get build plan for a project
+ */
+
+export function useGetProjectBuildPlan<TData = Awaited<ReturnType<typeof getProjectBuildPlan>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProjectBuildPlan>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetProjectBuildPlanQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpdateProjectBuildPlanUrl = (id: number,) => {
+
+
+
+
+  return `/api/projects/${id}/plan`
+}
+
+/**
+ * @summary Update a project build plan (Rose/Carmen)
+ */
+export const updateProjectBuildPlan = async (id: number,
+    projectBuildPlanUpdate: ProjectBuildPlanUpdate, options?: RequestInit): Promise<ProjectBuildPlanRecord> => {
+
+  return customFetch<ProjectBuildPlanRecord>(getUpdateProjectBuildPlanUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      projectBuildPlanUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdateProjectBuildPlanMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProjectBuildPlan>>, TError,{id: number;data: BodyType<ProjectBuildPlanUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateProjectBuildPlan>>, TError,{id: number;data: BodyType<ProjectBuildPlanUpdate>}, TContext> => {
+
+const mutationKey = ['updateProjectBuildPlan'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProjectBuildPlan>>, {id: number;data: BodyType<ProjectBuildPlanUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateProjectBuildPlan(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateProjectBuildPlanMutationResult = NonNullable<Awaited<ReturnType<typeof updateProjectBuildPlan>>>
+    export type UpdateProjectBuildPlanMutationBody = BodyType<ProjectBuildPlanUpdate>
+    export type UpdateProjectBuildPlanMutationError = ErrorType<void>
+
+    /**
+ * @summary Update a project build plan (Rose/Carmen)
+ */
+export const useUpdateProjectBuildPlan = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProjectBuildPlan>>, TError,{id: number;data: BodyType<ProjectBuildPlanUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateProjectBuildPlan>>,
+        TError,
+        {id: number;data: BodyType<ProjectBuildPlanUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateProjectBuildPlanMutationOptions(options));
+    }
+
+export const getUpdateRoseInstructionsUrl = (id: number,) => {
+
+
+
+
+  return `/api/projects/${id}/rose-instructions`
+}
+
+/**
+ * @summary Update Rose handoff instructions for a project
+ */
+export const updateRoseInstructions = async (id: number,
+    roseInstructionsUpdate: RoseInstructionsUpdate, options?: RequestInit): Promise<ProjectBuildPlanRecord> => {
+
+  return customFetch<ProjectBuildPlanRecord>(getUpdateRoseInstructionsUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      roseInstructionsUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdateRoseInstructionsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRoseInstructions>>, TError,{id: number;data: BodyType<RoseInstructionsUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateRoseInstructions>>, TError,{id: number;data: BodyType<RoseInstructionsUpdate>}, TContext> => {
+
+const mutationKey = ['updateRoseInstructions'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateRoseInstructions>>, {id: number;data: BodyType<RoseInstructionsUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateRoseInstructions(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateRoseInstructionsMutationResult = NonNullable<Awaited<ReturnType<typeof updateRoseInstructions>>>
+    export type UpdateRoseInstructionsMutationBody = BodyType<RoseInstructionsUpdate>
+    export type UpdateRoseInstructionsMutationError = ErrorType<void>
+
+    /**
+ * @summary Update Rose handoff instructions for a project
+ */
+export const useUpdateRoseInstructions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRoseInstructions>>, TError,{id: number;data: BodyType<RoseInstructionsUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateRoseInstructions>>,
+        TError,
+        {id: number;data: BodyType<RoseInstructionsUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateRoseInstructionsMutationOptions(options));
+    }
+
+export const getUnblockProjectPhaseUrl = (id: number,) => {
+
+
+
+
+  return `/api/projects/${id}/unblock-phase`
+}
+
+/**
+ * @summary Rose unlocks the next visible phase without changing internal progress
+ */
+export const unblockProjectPhase = async (id: number, options?: RequestInit): Promise<ProjectBuildPlanRecord> => {
+
+  return customFetch<ProjectBuildPlanRecord>(getUnblockProjectPhaseUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getUnblockProjectPhaseMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unblockProjectPhase>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof unblockProjectPhase>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['unblockProjectPhase'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unblockProjectPhase>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  unblockProjectPhase(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UnblockProjectPhaseMutationResult = NonNullable<Awaited<ReturnType<typeof unblockProjectPhase>>>
+
+    export type UnblockProjectPhaseMutationError = ErrorType<void>
+
+    /**
+ * @summary Rose unlocks the next visible phase without changing internal progress
+ */
+export const useUnblockProjectPhase = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unblockProjectPhase>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof unblockProjectPhase>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getUnblockProjectPhaseMutationOptions(options));
+    }
+
+export const getListProjectHandoffsUrl = () => {
+
+
+
+
+  return `/api/projects/handoffs`
+}
+
+/**
+ * @summary List file handoffs for all projects
+ */
+export const listProjectHandoffs = async ( options?: RequestInit): Promise<ProjectHandoffRecord[]> => {
+
+  return customFetch<ProjectHandoffRecord[]>(getListProjectHandoffsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListProjectHandoffsQueryKey = () => {
+    return [
+    `/api/projects/handoffs`
+    ] as const;
+    }
+
+
+export const getListProjectHandoffsQueryOptions = <TData = Awaited<ReturnType<typeof listProjectHandoffs>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listProjectHandoffs>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListProjectHandoffsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProjectHandoffs>>> = ({ signal }) => listProjectHandoffs({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProjectHandoffs>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListProjectHandoffsQueryResult = NonNullable<Awaited<ReturnType<typeof listProjectHandoffs>>>
+export type ListProjectHandoffsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List file handoffs for all projects
+ */
+
+export function useListProjectHandoffs<TData = Awaited<ReturnType<typeof listProjectHandoffs>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listProjectHandoffs>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListProjectHandoffsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUploadProjectHandoffUrl = (id: number,) => {
+
+
+
+
+  return `/api/projects/${id}/handoffs`
+}
+
+/**
+ * @summary Upload a file handoff for a project
+ */
+export const uploadProjectHandoff = async (id: number,
+    projectHandoffUpload: ProjectHandoffUpload, options?: RequestInit): Promise<ProjectHandoffRecord> => {
+
+  return customFetch<ProjectHandoffRecord>(getUploadProjectHandoffUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      projectHandoffUpload,)
+  }
+);}
+
+
+
+
+export const getUploadProjectHandoffMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadProjectHandoff>>, TError,{id: number;data: BodyType<ProjectHandoffUpload>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadProjectHandoff>>, TError,{id: number;data: BodyType<ProjectHandoffUpload>}, TContext> => {
+
+const mutationKey = ['uploadProjectHandoff'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadProjectHandoff>>, {id: number;data: BodyType<ProjectHandoffUpload>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  uploadProjectHandoff(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadProjectHandoffMutationResult = NonNullable<Awaited<ReturnType<typeof uploadProjectHandoff>>>
+    export type UploadProjectHandoffMutationBody = BodyType<ProjectHandoffUpload>
+    export type UploadProjectHandoffMutationError = ErrorType<void>
+
+    /**
+ * @summary Upload a file handoff for a project
+ */
+export const useUploadProjectHandoff = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadProjectHandoff>>, TError,{id: number;data: BodyType<ProjectHandoffUpload>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadProjectHandoff>>,
+        TError,
+        {id: number;data: BodyType<ProjectHandoffUpload>},
+        TContext
+      > => {
+      return useMutation(getUploadProjectHandoffMutationOptions(options));
+    }
+
+export const getDownloadProjectHandoffUrl = (id: number,
+    handoffId: number,) => {
+
+
+
+
+  return `/api/projects/${id}/handoffs/${handoffId}/download`
+}
+
+/**
+ * @summary Download a project handoff file
+ */
+export const downloadProjectHandoff = async (id: number,
+    handoffId: number, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getDownloadProjectHandoffUrl(id,handoffId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getDownloadProjectHandoffQueryKey = (id: number,
+    handoffId: number,) => {
+    return [
+    `/api/projects/${id}/handoffs/${handoffId}/download`
+    ] as const;
+    }
+
+
+export const getDownloadProjectHandoffQueryOptions = <TData = Awaited<ReturnType<typeof downloadProjectHandoff>>, TError = ErrorType<void>>(id: number,
+    handoffId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadProjectHandoff>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadProjectHandoffQueryKey(id,handoffId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadProjectHandoff>>> = ({ signal }) => downloadProjectHandoff(id,handoffId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id && handoffId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadProjectHandoff>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type DownloadProjectHandoffQueryResult = NonNullable<Awaited<ReturnType<typeof downloadProjectHandoff>>>
+export type DownloadProjectHandoffQueryError = ErrorType<void>
+
+
+/**
+ * @summary Download a project handoff file
+ */
+
+export function useDownloadProjectHandoff<TData = Awaited<ReturnType<typeof downloadProjectHandoff>>, TError = ErrorType<void>>(
+ id: number,
+    handoffId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadProjectHandoff>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getDownloadProjectHandoffQueryOptions(id,handoffId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpdateProjectUrl = (id: number,) => {
+
+
+
+
+  return `/api/projects/${id}`
+}
+
+/**
+ * @summary Update project metadata (Rose/Carmen)
+ */
+export const updateProject = async (id: number,
+    projectUpdate: ProjectUpdate, options?: RequestInit): Promise<ProjectRecord> => {
+
+  return customFetch<ProjectRecord>(getUpdateProjectUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      projectUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdateProjectMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProject>>, TError,{id: number;data: BodyType<ProjectUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateProject>>, TError,{id: number;data: BodyType<ProjectUpdate>}, TContext> => {
+
+const mutationKey = ['updateProject'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProject>>, {id: number;data: BodyType<ProjectUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateProject(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateProjectMutationResult = NonNullable<Awaited<ReturnType<typeof updateProject>>>
+    export type UpdateProjectMutationBody = BodyType<ProjectUpdate>
+    export type UpdateProjectMutationError = ErrorType<void>
+
+    /**
+ * @summary Update project metadata (Rose/Carmen)
+ */
+export const useUpdateProject = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProject>>, TError,{id: number;data: BodyType<ProjectUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateProject>>,
+        TError,
+        {id: number;data: BodyType<ProjectUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateProjectMutationOptions(options));
+    }
 
 export const getListCompanyRecordsUrl = () => {
 

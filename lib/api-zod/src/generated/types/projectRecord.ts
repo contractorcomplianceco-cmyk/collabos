@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { ProjectRecordProjectType } from './projectRecordProjectType';
 import type { ProjectRecordRisk } from './projectRecordRisk';
 import type { ProjectStatus } from './projectStatus';
 
@@ -24,6 +25,8 @@ export interface ProjectRecord {
   /** @nullable */
   deadline: string | null;
   tags: string[];
+  /** @nullable */
+  projectType?: ProjectRecordProjectType;
   /** @nullable */
   lastSyncedAt?: Date | null;
 }

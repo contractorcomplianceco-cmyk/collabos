@@ -1013,6 +1013,267 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/BlockerRecord"
+    post:
+      operationId: createProjectBlocker
+      tags: [projects]
+      summary: Create a manual project blocker
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlockerInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockerRecord"
+        "404":
+          description: Project not found
+  /projects/blockers/{id}:
+    patch:
+      operationId: updateProjectBlocker
+      tags: [projects]
+      summary: Update a manual project blocker
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlockerUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockerRecord"
+        "403":
+          description: Sync blockers cannot be edited
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteProjectBlocker
+      tags: [projects]
+      summary: Remove a manual project blocker
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          description: Sync blockers cannot be removed
+        "404":
+          description: Not found
+  /projects/build-plans:
+    get:
+      operationId: listProjectBuildPlans
+      tags: [projects]
+      summary: List build plans for all projects
+      responses:
+        "200":
+          description: Build plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProjectBuildPlanRecord"
+  /projects/{id}/plan:
+    get:
+      operationId: getProjectBuildPlan
+      tags: [projects]
+      summary: Get build plan for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Build plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectBuildPlanRecord"
+        "404":
+          description: Project not found
+    patch:
+      operationId: updateProjectBuildPlan
+      tags: [projects]
+      summary: Update a project build plan (Rose/Carmen)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectBuildPlanUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectBuildPlanRecord"
+        "404":
+          description: Project not found
+  /projects/{id}/rose-instructions:
+    patch:
+      operationId: updateRoseInstructions
+      tags: [projects]
+      summary: Update Rose handoff instructions for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoseInstructionsUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectBuildPlanRecord"
+        "404":
+          description: Project not found
+  /projects/{id}/unblock-phase:
+    post:
+      operationId: unblockProjectPhase
+      tags: [projects]
+      summary: Rose unlocks the next visible phase without changing internal progress
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Phase unlocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectBuildPlanRecord"
+        "404":
+          description: Project not found
+  /projects/handoffs:
+    get:
+      operationId: listProjectHandoffs
+      tags: [projects]
+      summary: List file handoffs for all projects
+      responses:
+        "200":
+          description: Handoffs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProjectHandoffRecord"
+  /projects/{id}/handoffs:
+    post:
+      operationId: uploadProjectHandoff
+      tags: [projects]
+      summary: Upload a file handoff for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectHandoffUpload"
+      responses:
+        "201":
+          description: Uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectHandoffRecord"
+        "404":
+          description: Project not found
+  /projects/{id}/handoffs/{handoffId}/download:
+    get:
+      operationId: downloadProjectHandoff
+      tags: [projects]
+      summary: Download a project handoff file
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: handoffId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: File bytes
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Not found
+  /projects/{id}:
+    patch:
+      operationId: updateProject
+      tags: [projects]
+      summary: Update project metadata (Rose/Carmen)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectRecord"
+        "404":
+          description: Project not found
   /company-records:
     get:
       operationId: listCompanyRecords
@@ -2183,6 +2444,7 @@ components:
         lastActivity: { type: string }
         deadline: { type: ["string", "null"] }
         tags: { type: array, items: { type: string } }
+        projectType: { type: ["string", "null"], enum: [demo, live, planning, merged-cc-host, null] }
         lastSyncedAt: { type: ["string", "null"], format: date-time }
     BlockerRecord:
       type: object
@@ -2194,6 +2456,91 @@ components:
         owner: { type: ["string", "null"] }
         risk: { type: string, enum: [low, medium, high, critical] }
         age: { type: integer }
+    BlockerInput:
+      type: object
+      required: [title, projectId]
+      properties:
+        title: { type: string, minLength: 1 }
+        projectId: { type: integer }
+        owner: { type: ["string", "null"] }
+        risk: { type: string, enum: [low, medium, high, critical] }
+    BlockerUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        owner: { type: ["string", "null"] }
+        risk: { type: string, enum: [low, medium, high, critical] }
+    BuildPlanPhase:
+      type: object
+      required: [id, title, status]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        status: { type: string, enum: [locked, active, complete] }
+        visibleProgress: { type: integer, minimum: 0, maximum: 100 }
+        internalNotes: { type: string }
+    ProjectType:
+      type: string
+      enum: [demo, live, planning, merged-cc-host]
+    ProjectUpdate:
+      type: object
+      properties:
+        projectType: { $ref: "#/components/schemas/ProjectType" }
+    ProjectBuildPlanRecord:
+      type: object
+      required: [id, projectId, summary, currentPhaseId, currentPhaseTitle, progress, visibleProgress, phases, roseInstructions, carmenPlanNotes, source, updatedBy, canUnblock, updatedAt]
+      properties:
+        id: { type: integer }
+        projectId: { type: integer }
+        summary: { type: string }
+        currentPhaseId: { type: string }
+        currentPhaseTitle: { type: string }
+        progress: { type: integer, minimum: 0, maximum: 100 }
+        visibleProgress: { type: integer, minimum: 0, maximum: 100 }
+        phases:
+          type: array
+          items:
+            $ref: "#/components/schemas/BuildPlanPhase"
+        roseInstructions: { type: string }
+        carmenPlanNotes: { type: string }
+        source: { type: string, enum: [manual, sync] }
+        updatedBy: { type: ["string", "null"] }
+        canUnblock: { type: boolean }
+        updatedAt: { type: string, format: date-time }
+    ProjectBuildPlanUpdate:
+      type: object
+      properties:
+        summary: { type: string }
+        currentPhaseId: { type: string }
+        progress: { type: integer, minimum: 0, maximum: 100 }
+        phases:
+          type: array
+          items:
+            $ref: "#/components/schemas/BuildPlanPhase"
+        carmenPlanNotes: { type: string }
+    RoseInstructionsUpdate:
+      type: object
+      required: [roseInstructions]
+      properties:
+        roseInstructions: { type: string }
+    ProjectHandoffRecord:
+      type: object
+      required: [id, projectId, filename, mimeType, sizeBytes, uploadedBy, uploadedAt]
+      properties:
+        id: { type: integer }
+        projectId: { type: integer }
+        filename: { type: string }
+        mimeType: { type: ["string", "null"] }
+        sizeBytes: { type: integer }
+        uploadedBy: { type: string }
+        uploadedAt: { type: string, format: date-time }
+    ProjectHandoffUpload:
+      type: object
+      required: [filename, contentBase64]
+      properties:
+        filename: { type: string, minLength: 1 }
+        contentBase64: { type: string, minLength: 1 }
+        mimeType: { type: string }
     CompanyRecord:
       type: object
       required: [id, title, type, summary, source, classification, keywords]
