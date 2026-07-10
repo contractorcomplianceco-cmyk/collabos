@@ -195,6 +195,28 @@ export default function Dashboard() {
 
   const decisionCards: { id: string; title: string; detail: string; status: string; href: string; external?: boolean }[] = [
     {
+      id: "dec-core",
+      title: "ComplianceCore (Core)",
+      detail: "Whole Core foundation — migration and leadership approval are not done. Discovery prefill stays on Supabase until you approve Core as source of truth; no Supabase→intake wiring yet.",
+      status: "Needs your decision",
+      href: "/projects",
+    },
+    {
+      id: "dec-audit-engine",
+      title: "Audit Engine",
+      detail: "Protected scoring/intelligence layer exists, but approved outputs are not connected to Command Center entitlements yet. Needs your call before that wiring.",
+      status: "Needs your decision",
+      href: "/projects",
+    },
+    {
+      id: "dec-risk-audit",
+      title: "Risk Audit",
+      detail: "Audit Risk Model / risk audit still needs leadership sign-off before it is treated as an approved product path.",
+      status: "Needs your decision",
+      href: "https://audit.cagteam.net/",
+      external: true,
+    },
+    {
       id: "dec-docs",
       title: "Docs Collect — next steps",
       detail: "App is live at docs.cagteam.net for internal use. Still needs your call on live client email, client-facing launch (remove Basic Auth), and how far to wire Zoho CRM / WorkDrive.",
