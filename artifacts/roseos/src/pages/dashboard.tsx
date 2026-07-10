@@ -229,6 +229,35 @@ export default function Dashboard() {
           href: "https://docs.cagteam.net/",
           external: true,
         },
+        {
+          id: "dec-ai-audits",
+          title: "AI Audits — Research Hub findings",
+          detail: "AI audit worker is running (cca-research-hub-ai-audit-worker) with tooling at research.cagteam.net. Audits are in progress — review findings when they need your sign-off; do not treat the workstream as closed yet.",
+          status: "In progress — awaiting your review",
+          href: "https://research.cagteam.net/",
+          external: true,
+        },
+      ],
+    },
+    {
+      id: "grp-checks",
+      title: "Active checks & cleanup",
+      cards: [
+        {
+          id: "dec-ald",
+          title: "American Leak Detection (ALD)",
+          detail: "ALD project check is underway. PartnerConnect room content exists in the EC stack (same family as FRR/EC). Review findings when ready; dedicated ald.ccacompliancepartner.com host is not confirmed live separately.",
+          status: "Check in progress",
+          href: "https://ec.ccacompliancepartner.com/r/american-leak-detection",
+          external: true,
+        },
+        {
+          id: "dec-server-cleanup",
+          title: "Server cleanup — further deletions",
+          detail: "Standalone staff cockpit domains are already decommissioned (merged into Command Center). Further deleting old servers is ongoing — approve what can be removed before anything else is taken down.",
+          status: "Partial complete — needs your OK",
+          href: "/projects",
+        },
       ],
     },
     {

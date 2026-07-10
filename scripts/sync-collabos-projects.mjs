@@ -153,6 +153,63 @@ const EXTRA_ENTITIES = [
     lockProgress: true,
   },
   {
+    slug: "american-leak-detection",
+    name: "American Leak Detection (ALD)",
+    description:
+      "ALD project check underway. PartnerConnect room content exists in the EC PartnerConnect stack (slug american-leak-detection; same family as FRR/EC at ec.ccacompliancepartner.com/r/american-leak-detection). Dedicated ald.ccacompliancepartner.com host not confirmed live separately. AI audit / project check in progress — Rose should review findings when ready.",
+    department: "Partner Rooms",
+    source: "Architecture",
+    healthUrl: "https://ec.ccacompliancepartner.com/r/american-leak-detection",
+    repoPath: join(PROJECTS_ROOT, "EC-Company"),
+    tags: ["partnerconnect", "ald", "american-leak-detection", "awaiting-rose", "planning"],
+    presetStatus: "active",
+    presetProgress: 40,
+    lockProgress: true,
+  },
+  {
+    slug: "ai-audits",
+    name: "AI Audits",
+    description:
+      "Active AI audit workstream. Research Hub AI audit worker (PM2 cca-research-hub-ai-audit-worker) is online; tooling at research.cagteam.net. Progress is in flight — do not treat audits as closed until Rose reviews findings that need leadership sign-off.",
+    department: "Research",
+    source: "PM2 + Health Check",
+    pm2Process: "cca-research-hub-ai-audit-worker",
+    healthUrl: "https://research.cagteam.net",
+    repoPath: join(PROJECTS_ROOT, "cca-research-hub"),
+    tags: ["research.cagteam.net", "ai-audit", "live", "awaiting-rose"],
+    presetStatus: "active",
+    presetProgress: 55,
+    lockProgress: true,
+  },
+  {
+    slug: "server-cleanup",
+    name: "Server Cleanup",
+    description:
+      "Ops cleanup workstream. Standalone staff cockpit domains decommissioned 2026-07-09 (tony/jestina/landon/chloe/tara and peers → Command Center). Further deleting old servers / leftover cleanup is ongoing. Do not invent a deletion list — follow the CollabOS runbook and Rose/Carmen approval before removals.",
+    department: "Systems",
+    source: "Server Audit",
+    repoPath: join(PROJECTS_ROOT, "collabos"),
+    tags: ["ops", "cleanup", "cockpit-decommission-done"],
+    presetStatus: "active",
+    presetProgress: 45,
+    lockProgress: true,
+  },
+  {
+    slug: "research-hub",
+    name: "Research Hub",
+    description:
+      "Shared research workspace at research.cagteam.net — state licensing, compliance research, and AI audit pipeline. PM2 cca-research-hub + cca-research-hub-ai-audit-worker online. AI audits are an active workstream; findings may need Rose review.",
+    department: "Research",
+    source: "PM2 + Health Check",
+    pm2Process: "cca-research-hub",
+    healthUrl: "https://research.cagteam.net",
+    repoPath: join(PROJECTS_ROOT, "cca-research-hub"),
+    tags: ["research.cagteam.net", "live", "ai-audit"],
+    presetStatus: "active",
+    presetProgress: 85,
+    lockProgress: true,
+  },
+  {
     slug: "compliance-core",
     name: "ComplianceCore",
     description:
@@ -486,7 +543,8 @@ function loadRegistryEntities() {
           slug === "cag-website" ||
           slug === "landing-page" ||
           slug === "facility-intelligence-demo" ||
-          slug === "compliance-connect",
+          slug === "compliance-connect" ||
+          slug === "research-hub",
         presetProgress: slug === "biz-services-hub" ? 60 : undefined,
       });
       if (entities[entities.length - 1].skipSync) entities.pop();

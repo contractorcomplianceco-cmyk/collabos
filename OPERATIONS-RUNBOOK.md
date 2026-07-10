@@ -369,3 +369,13 @@ Fresh server scan (repos, PM2, nginx, HTTP health) and CollabOS project registry
 - **Updated to live reality:** Audit Risk Model (`audit.cagteam.net` + `cca-audit-api`), Discovery/intake (`intake.ccacontact.com`), Facility Intelligence demo, Compliance Connect prod+demo hosts, CAG/CCA public websites and contractor landing, ExamManagerOS / FRR / EC progress honesty.
 - Rose Decisions cards refreshed for websites, both investor rooms, Discovery intake URL, Client Experience, and live Risk Audit hosting.
 - Sync script: `lockProgress` for honest %; copy kept in both `collabos/scripts/` and `projects/scripts/`.
+
+## ALD / AI audits / server cleanup (2026-07-10)
+
+Active workstreams reflected honestly from server evidence + Rose/Carmen direction:
+
+- **American Leak Detection (ALD):** project check in progress. PartnerConnect room content in EC stack (`american-leak-detection`; path on `ec.ccacompliancepartner.com`). Same PartnerConnect family as FRR/EC. Dedicated `ald.ccacompliancepartner.com` not confirmed as a separate live host.
+- **AI Audits:** `cca-research-hub-ai-audit-worker` online; Research Hub at `research.cagteam.net`. Findings may need Rose review — not closed.
+- **Server cleanup:** cockpit domain decommission **done** (2026-07-09). Further deleting old servers / leftover cleanup **ongoing**; no invented deletion list — approve before removals.
+- Rose dashboard: **Active checks & cleanup** group + AI Audits under Core & audit.
+- Registry: ALD, AI Audits, Server Cleanup EXTRA entities; Research Hub description/progress updated for AI audit worker.
