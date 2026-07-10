@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { ensureStaffAccountsFromEnv } from "./lib/ensure-staff-accounts";
+import { seedIntegrationsIfEmpty } from "./lib/seed-integrations";
 
 const rawPort = process.env["PORT"];
 
@@ -18,6 +19,10 @@ if (Number.isNaN(port) || port <= 0) {
 
 ensureStaffAccountsFromEnv().catch((err) => {
   logger.error({ err }, "Failed to ensure staff accounts");
+});
+
+seedIntegrationsIfEmpty().catch((err) => {
+  logger.error({ err }, "Failed to seed integration status");
 });
 
 app.listen(port, (err) => {

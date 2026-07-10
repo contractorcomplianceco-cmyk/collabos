@@ -84,7 +84,25 @@ function bubbleColor(score: number) {
 }
 
 export default function Dashboard() {
-  const { ideas, recommendations, currentRole, setRecommendationStatus, intakeItems, meldTimeline, memoryCandidates, projects, projectTasks, companyRecords, duplicateRisks, sentimentSignals, competitors, reports } = useAppState();
+  const {
+    ideas,
+    recommendations,
+    currentRole,
+    setRecommendationStatus,
+    intakeItems,
+    meldTimeline,
+    memoryCandidates,
+    projects,
+    projectTasks,
+    companyRecords,
+    duplicateRisks,
+    sentimentSignals,
+    competitors,
+    reports,
+    decisions,
+    agentWorkItems,
+    integrations,
+  } = useAppState();
   const { sinceLastVisit, lastVisitLabel } = useActivityNotifications();
 
   const greeting =
@@ -117,6 +135,41 @@ export default function Dashboard() {
   if (awaitingMe.length > 0) {
     attentionItems.push({ id: "att-recs", label: `${awaitingMe.length} approval${awaitingMe.length === 1 ? "" : "s"} waiting on you`, detail: awaitingMe[0].recommendation, href: "/review-queue", tone: "rose" });
   }
+
+  const openDecisionsForMe = decisions.filter((d) => {
+    if (d.status !== "open") return false;
+    if (d.approvalRoute === "both") return isLeadership;
+    if (d.approvalRoute === "rose") return isRose;
+    if (d.approvalRoute === "carmen") return isCarmen;
+    return false;
+  });
+  if (openDecisionsForMe.length > 0) {
+    attentionItems.push({
+      id: "att-decisions",
+      label: `${openDecisionsForMe.length} decision${openDecisionsForMe.length === 1 ? "" : "s"} need${openDecisionsForMe.length === 1 ? "s" : ""} your call`,
+      detail: openDecisionsForMe[0].title,
+      href: "/projects",
+      tone: "amber",
+    });
+  }
+
+  const agentAwaitingMe = agentWorkItems.filter((item) => {
+    if (!["new", "triaged"].includes(item.status)) return false;
+    if (item.approvalRoute === "both") return isLeadership;
+    if (item.approvalRoute === "rose") return isRose;
+    if (item.approvalRoute === "carmen") return isCarmen;
+    return false;
+  });
+  if (agentAwaitingMe.length > 0) {
+    attentionItems.push({
+      id: "att-agent",
+      label: `${agentAwaitingMe.length} Cursor request${agentAwaitingMe.length === 1 ? "" : "s"} awaiting your approval`,
+      detail: agentAwaitingMe[0].title,
+      href: "/agent-queue",
+      tone: "violet",
+    });
+  }
+
   const newIntake = intakeItems.filter((it) => it.status === "new" || it.status === "needs_review");
   if (newIntake.length > 0) {
     const top = newIntake[0];
@@ -140,6 +193,52 @@ export default function Dashboard() {
     }
   }
 
+  const decisionCards: { id: string; title: string; detail: string; status: string; href: string; external?: boolean }[] = [
+    {
+      id: "dec-docs",
+      title: "Docs Collect — next steps",
+      detail: "App is live at docs.cagteam.net for internal use. Still needs your call on live client email, client-facing launch (remove Basic Auth), and how far to wire Zoho CRM / WorkDrive.",
+      status: "Needs your decision",
+      href: "https://docs.cagteam.net/",
+      external: true,
+    },
+    {
+      id: "dec-whatsapp",
+      title: "WhatsApp integration",
+      detail: "Not connected. Approve before any live WhatsApp intake is turned on.",
+      status: "Awaiting approval",
+      href: "/external-intake",
+    },
+    {
+      id: "dec-cliq",
+      title: "Zoho Cliq",
+      detail: "Test mode only in CollabOS. Approve before live Cliq messages flow in.",
+      status: "Awaiting approval",
+      href: "/external-intake",
+    },
+    {
+      id: "dec-email",
+      title: "Email alerts",
+      detail: "You can save the preference in Settings, but live email delivery stays off until you approve.",
+      status: "Awaiting approval",
+      href: "/settings",
+    },
+    {
+      id: "dec-gemini",
+      title: "Gemini AI",
+      detail: "Planned for CollabOS. Not connected here yet.",
+      status: "Planned",
+      href: "/settings",
+    },
+    {
+      id: "dec-zoho",
+      title: "Zoho CRM / WorkDrive",
+      detail: "Planned for CollabOS. Docs Collect has its own Zoho path that still needs leadership sign-off for live use.",
+      status: "Planned",
+      href: "/settings",
+    },
+  ];
+
   const ATT_TONE: Record<string, string> = {
     rose: "border-rose-100 bg-rose-50/70 text-rose-700",
     amber: "border-amber-100 bg-amber-50/70 text-amber-700",
@@ -147,6 +246,8 @@ export default function Dashboard() {
     violet: "border-violet-100 bg-violet-50/70 text-violet-700",
     emerald: "border-emerald-100 bg-emerald-50/70 text-emerald-700",
   };
+
+  const urgentCount = awaitingMe.length + openDecisionsForMe.length + agentAwaitingMe.length;
 
   return (
     <div className="space-y-7 p-6">
@@ -204,13 +305,14 @@ export default function Dashboard() {
         </p>
       </SectionCard>
 
-      {/* What Needs My Attention */}
+      {/* Waiting on you */}
       <SectionCard
-        title="What Needs My Attention?"
+        title="Waiting on you"
         icon={Sparkles}
         accent="rose"
-        action={<AttentionPulse count={attentionItems.length} urgent={awaitingMe.length} />}
+        action={<AttentionPulse count={attentionItems.length} urgent={urgentCount} />}
       >
+        <p className="mb-3 text-xs text-slate-500">Needs your decision or approval — not just a status update.</p>
         {attentionItems.length === 0 ? (
           <p className="rounded-xl bg-emerald-50 p-3 text-xs text-emerald-700">You're all caught up — nothing is waiting on you right now.</p>
         ) : (
@@ -224,9 +326,71 @@ export default function Dashboard() {
           </div>
         )}
         <p className="mt-2.5 text-[11px] text-slate-400">
-          Personalized for your role — items that need action right now, not just since your last visit.
+          Personalized for your role — Review Queue, decisions, Cursor requests, intake, and Mind Meld.
         </p>
       </SectionCard>
+
+      {isLeadership ? (
+        <SectionCard
+          title="Decisions & integrations"
+          icon={ClipboardCheck}
+          accent="amber"
+          action={<Link href="/settings" className="text-xs font-semibold text-amber-600 hover:underline">Settings</Link>}
+        >
+          <p className="mb-3 text-xs text-slate-500">
+            Main items still waiting on Rose or Carmen before we wire them live.
+          </p>
+          <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+            {decisionCards.map((card) =>
+              card.external ? (
+                <a
+                  key={card.id}
+                  href={card.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-xl border border-amber-100 bg-amber-50/50 p-3 transition hover:shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-xs font-semibold text-slate-800">{card.title}</p>
+                    <StatusChip label={card.status} tone="amber" />
+                  </div>
+                  <p className="mt-1.5 text-[11px] leading-relaxed text-slate-600">{card.detail}</p>
+                </a>
+              ) : (
+                <Link
+                  key={card.id}
+                  href={card.href}
+                  className="rounded-xl border border-amber-100 bg-amber-50/50 p-3 transition hover:shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-xs font-semibold text-slate-800">{card.title}</p>
+                    <StatusChip label={card.status} tone={card.status === "Planned" ? "sky" : "amber"} />
+                  </div>
+                  <p className="mt-1.5 text-[11px] leading-relaxed text-slate-600">{card.detail}</p>
+                </Link>
+              ),
+            )}
+          </div>
+          {openDecisionsForMe.length > 0 ? (
+            <div className="mt-3 rounded-xl border border-rose-100 bg-rose-50/40 p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-500">Open decision log</p>
+              <ul className="mt-2 space-y-1.5">
+                {openDecisionsForMe.slice(0, 5).map((d) => (
+                  <li key={d.id} className="text-xs text-slate-700">
+                    <span className="font-medium">{d.title}</span>
+                    <span className="text-slate-400"> — {d.context}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {integrations.length > 0 ? (
+            <p className="mt-2.5 text-[11px] text-slate-400">
+              Connection board: {integrations.map((i) => `${i.name} (${i.status})`).join(" · ")}
+            </p>
+          ) : null}
+        </SectionCard>
+      ) : null}
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

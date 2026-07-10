@@ -344,3 +344,20 @@ Reload: `sudo nginx -t && sudo systemctl reload nginx`.
 - TLS certs under `/etc/letsencrypt/live/` not deleted
 
 **Post-change checks:** all listed Command Center slugs and `https://ccacollab.com/` returned HTTP 200 after reload.
+
+## Progress reflect (2026-07-10)
+
+Registry and build plans updated to match live reality:
+
+- Merged staff cockpits (tony/jestina/landon/chloe/tara and peers): standalone domains removed; live in Command Center.
+- Command Center: integration + domain cleanup done; monitor PM2 restart count on `cca-command-center-cloud`.
+- CollabOS: build plans, handoffs, human copy, cookie auth, notifications, Mind Meld create, cache-bust.
+- **EC Electric PartnerConnect** added (`ec.ccacompliancepartner.com`, PM2 `ec-partnerconnect-api`).
+- Rose dashboard: **Waiting on you** + **Decisions & integrations** (Docs Collect, WhatsApp, Cliq, email alerts, Gemini, Zoho CRM/WorkDrive).
+
+Manual build plans use `source = 'manual'` so nightly sync does not overwrite them. Re-run sync after registry edits:
+
+```bash
+/home/ubuntu/projects/scripts/sync-collabos-projects.sh
+```
+
