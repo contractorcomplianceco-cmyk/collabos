@@ -361,3 +361,11 @@ Manual build plans use `source = 'manual'` so nightly sync does not overwrite th
 /home/ubuntu/projects/scripts/sync-collabos-projects.sh
 ```
 
+## Full registry resync (2026-07-10 later)
+
+Fresh server scan (repos, PM2, nginx, HTTP health) and CollabOS project registry update:
+
+- **Added:** VideoConnect (`ccavideoconnect.com`), CCA Client Experience (`experience.ccacontact.com`), CAG Investor Boardroom (`caginvestor.ccacontact.com`).
+- **Updated to live reality:** Audit Risk Model (`audit.cagteam.net` + `cca-audit-api`), Discovery/intake (`intake.ccacontact.com`), Facility Intelligence demo, Compliance Connect prod+demo hosts, CAG/CCA public websites and contractor landing, ExamManagerOS / FRR / EC progress honesty.
+- Rose Decisions cards refreshed for websites, both investor rooms, Discovery intake URL, Client Experience, and live Risk Audit hosting.
+- Sync script: `lockProgress` for honest %; copy kept in both `collabos/scripts/` and `projects/scripts/`.

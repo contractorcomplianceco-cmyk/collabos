@@ -90,12 +90,53 @@ const EXTRA_ENTITIES = [
     slug: "investor-boardroom",
     name: "Investor Boardroom",
     description:
-      "Investor-facing boardroom at investor.ccacontact.com — live but needs Rose confirmation that the experience is ready vs still in progress.",
+      "CCA Investor Boardroom at investor.ccacontact.com (CCA Growth Capital room). Live; needs Rose confirmation that the experience is ready vs still in progress. Separate from CAG Investor Boardroom.",
     department: "Leadership",
     source: "Nginx Config",
     healthUrl: "https://investor.ccacontact.com",
-    tags: ["investor.ccacontact.com", "live", "awaiting-rose"],
+    tags: ["investor.ccacontact.com", "live", "awaiting-rose", "cca"],
     presetProgress: 75,
+    lockProgress: true,
+  },
+  {
+    slug: "cag-investor-boardroom",
+    name: "CAG Investor Boardroom",
+    description:
+      "CAG Investor Boardroom at caginvestor.ccacontact.com — dual CCA+CAG platform boardrooms (Rose 2026-07-09 handoff). Separate from CCA investor.ccacontact.com. Live; confirm final experience with Rose if needed.",
+    department: "Leadership",
+    source: "Nginx Config",
+    healthUrl: "https://caginvestor.ccacontact.com",
+    repoPath: join(PROJECTS_ROOT, "cag-cca-investor-boardroom"),
+    tags: ["caginvestor.ccacontact.com", "live", "awaiting-rose", "cag"],
+    presetProgress: 85,
+    lockProgress: true,
+  },
+  {
+    slug: "video-connect",
+    name: "VideoConnect",
+    description:
+      "CCA VideoConnect at ccavideoconnect.com — walkthrough capture API for Bid Intelligence OS bridge. PM2 ccavideoconnect online; health at /health.",
+    department: "Sales",
+    source: "PM2 + Health Check",
+    pm2Process: "ccavideoconnect",
+    healthUrl: "https://ccavideoconnect.com/health",
+    repoPath: join(PROJECTS_ROOT, "cca-video-connect"),
+    tags: ["ccavideoconnect.com", "live", "bidos-bridge"],
+    presetProgress: 85,
+    lockProgress: true,
+  },
+  {
+    slug: "cca-client-experience",
+    name: "CCA Client Experience",
+    description:
+      "Client experience surface at experience.ccacontact.com — static live site. Confirm with Rose whether this is the finished client-facing experience or still evolving.",
+    department: "Client Experience",
+    source: "Nginx Config",
+    healthUrl: "https://experience.ccacontact.com",
+    repoPath: join(PROJECTS_ROOT, "cca-client-experience"),
+    tags: ["experience.ccacontact.com", "live", "awaiting-rose"],
+    presetProgress: 80,
+    lockProgress: true,
   },
   {
     slug: "ec-partnerconnect",
@@ -109,6 +150,7 @@ const EXTRA_ENTITIES = [
     repoPath: join(PROJECTS_ROOT, "EC-Company"),
     tags: ["ec.ccacompliancepartner.com", "ec-company", "partnerconnect", "live"],
     presetProgress: 85,
+    lockProgress: true,
   },
   {
     slug: "compliance-core",
@@ -140,25 +182,43 @@ const EXTRA_ENTITIES = [
     slug: "audit-risk-model",
     name: "Audit Risk Model",
     description:
-      "Risk Audit / Audit Risk Model at audit.cagteam.net. Source at Audit-Risk-Model. Leadership sign-off still needed before treating as an approved product path.",
+      "Risk Audit / Audit Risk Model live at audit.cagteam.net (PM2 cca-audit-api). Hosted and scoring work in progress; leadership sign-off still needed before treating as an approved product path.",
     department: "Compliance",
-    source: "Architecture",
+    source: "PM2 + Health Check",
+    pm2Process: "cca-audit-api",
     healthUrl: "https://audit.cagteam.net",
     repoPath: join(PROJECTS_ROOT, "Audit-Risk-Model"),
-    tags: ["compliance", "source-only", "risk-audit", "awaiting-rose", "audit.cagteam.net"],
-    presetStatus: "planning",
-    presetProgress: 40,
+    tags: ["compliance", "risk-audit", "awaiting-rose", "audit.cagteam.net", "live"],
+    presetStatus: "active",
+    presetProgress: 70,
+    lockProgress: true,
+  },
+  {
+    slug: "cca-discovery-form",
+    name: "CCA Discovery Form",
+    description:
+      "Discovery / intake live at intake.ccacontact.com (PM2 discovery-form-api). discovery.ccacontact.com redirects to the public CCA site. Still awaiting Rose on Core migration / Supabase path and what becomes the long-term live product.",
+    department: "Sales",
+    source: "PM2 + Health Check",
+    pm2Process: "discovery-form-api",
+    healthUrl: "https://intake.ccacontact.com/api/healthz",
+    repoPath: join(PROJECTS_ROOT, "CCA-Discovery-Form"),
+    tags: ["intake.ccacontact.com", "discovery", "live", "awaiting-rose"],
+    presetProgress: 80,
+    lockProgress: true,
   },
   {
     slug: "exammanageros",
     name: "ExamManagerOS",
-    description: "Internal exam-lifecycle operations — Manage. Prepare. Succeed. (RoseOS Ecosystem).",
+    description: "Internal exam-lifecycle operations — Manage. Prepare. Succeed. (RoseOS Ecosystem). Live at exams.cagteam.net.",
     department: "Compliance",
     source: "PM2 + Health Check",
     pm2Process: "exammanageros-api",
     healthUrl: "https://exams.cagteam.net/api/healthz",
     repoPath: join(PROJECTS_ROOT, "exammanageros"),
     tags: ["exams.cagteam.net", "roseos", "live"],
+    presetProgress: 90,
+    lockProgress: true,
   },
   {
     slug: "cca-portal-api",
@@ -230,21 +290,74 @@ const EXTRA_ENTITIES = [
     slug: "facility-intelligence-demo",
     name: "Facility Intelligence Demo",
     description:
-      "Facility intelligence walkthrough demo — Needs Review / Pending URL in registry until Rose confirms.",
+      "Facility intelligence demo live at demo.ccafacilityintelligence.com. Demo only until Rose confirms whether it becomes a real production app.",
     department: "Sales",
     source: "Health Check",
     healthUrl: "https://demo.ccafacilityintelligence.com",
     repoPath: join(PROJECTS_ROOT, "facility-demo"),
     tags: ["demo.ccafacilityintelligence.com", "demo", "awaiting-rose"],
-    presetStatus: "planning",
-    presetProgress: 40,
+    presetStatus: "active",
+    presetProgress: 75,
+    lockProgress: true,
+  },
+  {
+    slug: "compliance-connect",
+    name: "Compliance Connect Demo",
+    description:
+      "Compliance Connect — production at ccacomplianceconnect.com and demo at demo.ccacomplianceconnect.com (API on PM2 path via nginx). Confirm which host is canonical and whether this becomes the real product.",
+    department: "Sales",
+    source: "Health Check",
+    healthUrl: "https://ccacomplianceconnect.com",
+    tags: ["ccacomplianceconnect.com", "demo.ccacomplianceconnect.com", "demo", "awaiting-rose", "live"],
+    presetStatus: "active",
+    presetProgress: 80,
+    lockProgress: true,
+  },
+  {
+    slug: "cag-parent-website",
+    name: "CAG Parent Website",
+    description:
+      "CAG parent site live at complianceauthoritygroup.com. Confirm with Rose that production URL and launch readiness are final (Command Center registry still shows Pending URL).",
+    department: "Marketing",
+    source: "Health Check",
+    healthUrl: "https://complianceauthoritygroup.com",
+    repoPath: join(PROJECTS_ROOT, "cag-parent-website"),
+    tags: ["complianceauthoritygroup.com", "website", "live", "awaiting-rose"],
+    presetStatus: "active",
+    presetProgress: 85,
+    lockProgress: true,
+  },
+  {
+    slug: "cca-corporate-website",
+    name: "CCA Corporate Website",
+    description:
+      "CCA corporate / contractor site live at contractor-compliance-authority.com. Confirm with Rose that production URL and launch readiness are final.",
+    department: "Marketing",
+    source: "Health Check",
+    healthUrl: "https://contractor-compliance-authority.com",
+    repoPath: join(PROJECTS_ROOT, "cca-website"),
+    tags: ["contractor-compliance-authority.com", "website", "live", "awaiting-rose"],
+    presetStatus: "active",
+    presetProgress: 85,
+    lockProgress: true,
+  },
+  {
+    slug: "cca-contractor-landing",
+    name: "CCA Contractor Landing",
+    description:
+      "Contractor landing live at ccacontractor.com (and related contractor domains). Confirm with Rose that production URL and launch readiness are final.",
+    department: "Marketing",
+    source: "Health Check",
+    healthUrl: "https://ccacontractor.com",
+    repoPath: join(PROJECTS_ROOT, "cca-landing"),
+    tags: ["ccacontractor.com", "landing", "live", "awaiting-rose"],
+    presetStatus: "active",
+    presetProgress: 85,
+    lockProgress: true,
   },
 ];
 
 const REPO_ONLY = [
-  { slug: "audit-risk-model", name: "Audit Risk Model", repoDir: "Audit-Risk-Model", department: "Compliance", tags: ["compliance", "source-only"] },
-  { slug: "cag-parent-website", name: "CAG Parent Website", repoDir: "cag-parent-website", department: "Marketing", tags: ["website", "source-only"] },
-  { slug: "cca-discovery-form", name: "CCA Discovery Form", repoDir: "CCA-Discovery-Form", department: "Sales", tags: ["intake", "source-only"] },
   { slug: "facility-demo", name: "Facility Demo Walkthrough", repoDir: "facility-demo", department: "Sales", tags: ["demo", "facility"] },
   { slug: "govconnect-archive", name: "GovConnect Source Archive", repoDir: "govconect-source-20260706-1045", department: "Systems", tags: ["archive", "govconnect"], status: "complete", progress: 100 },
   { slug: "profitpulse-archive", name: "ProfitPulse Empty Archive", repoDir: "profitpulse-empty-github-20260629-011142", department: "Finance", tags: ["archive", "empty"], status: "complete", progress: 0 },
@@ -336,13 +449,13 @@ function loadRegistryEntities() {
             : slug === "profitpulse"
               ? "ProfitPulse demo at demo.ccaprofitpulse.com — demo host only until Rose confirms it becomes a real app."
               : slug === "compliance-connect"
-                ? "Compliance Connect demo at demo.ccacomplianceconnect.com — Needs review; confirm demo vs production path with Rose."
+                ? "Compliance Connect — production at ccacomplianceconnect.com and demo at demo.ccacomplianceconnect.com. Confirm demo vs production path with Rose."
                 : slug === "voiceconnect-demo"
                   ? "VoiceConnect demo at demo.ccavoiceconnect.com — demo only until Rose confirms production path."
                   : slug === "facility-intelligence-demo"
-                    ? "Facility Intelligence demo — registry still Pending URL / Needs Review; confirm with Rose before treating as production."
+                    ? "Facility Intelligence demo at demo.ccafacilityintelligence.com — confirm with Rose before treating as production."
                     : slug === "main-website" || slug === "cag-website" || slug === "landing-page"
-                      ? `${mapRegistryName(app)} — public site still Pending URL / planning in registry. Needs Rose confirmation on production URL and launch.`
+                      ? `${mapRegistryName(app)} — public site is live; confirm production URL and launch readiness with Rose.`
                       : (app.description || app.appName || slug).slice(0, 500),
         department: (app.department || "Systems").split("/")[0].trim(),
         source,
@@ -361,14 +474,19 @@ function loadRegistryEntities() {
             ? "complete"
             : slug === "biz-services-hub"
               ? "at-risk"
-              : slug === "main-website" || slug === "cag-website" || slug === "landing-page" || slug === "facility-intelligence-demo"
-                ? "planning"
-                : // Stale Pending URL registry rows must not downgrade live apps
-                  slug === "bid-intelligence" || slug === "voiceconnect-demo" || slug === "audit-os"
-                    ? undefined
-                    : undefined,
-        // Skip syncing stale Pending-URL registry shells when a stronger live entity exists
-        skipSync: slug === "bid-intelligence" || slug === "voiceconnect-demo" || slug === "audit-os",
+              : slug === "compliance-connect"
+                ? "active"
+                : undefined,
+        // Skip stale Pending-URL registry shells when a stronger live EXTRA entity exists
+        skipSync:
+          slug === "bid-intelligence" ||
+          slug === "voiceconnect-demo" ||
+          slug === "audit-os" ||
+          slug === "main-website" ||
+          slug === "cag-website" ||
+          slug === "landing-page" ||
+          slug === "facility-intelligence-demo" ||
+          slug === "compliance-connect",
         presetProgress: slug === "biz-services-hub" ? 60 : undefined,
       });
       if (entities[entities.length - 1].skipSync) entities.pop();
@@ -511,6 +629,16 @@ function assessEntity(entity, pm2Map) {
   let status = entity.presetStatus || "active";
   let progress = entity.presetProgress ?? 50;
   let risk = "medium";
+
+  if (entity.lockProgress && entity.presetProgress != null) {
+    progress = entity.presetProgress;
+    status = entity.presetStatus || (pm2Online === false || (entity.healthUrl && httpOk === false) ? "at-risk" : "active");
+    if (blockers.some((b) => b.risk === "critical")) risk = "critical";
+    else if (blockers.some((b) => b.risk === "high") || status === "at-risk" || status === "blocked") risk = "high";
+    else if (status === "planning") risk = "low";
+    else if (status === "active" && httpOk !== false) risk = "low";
+    return { status, progress, risk, blockers, httpStatus, pm2Restarts, pm2Online, httpOk };
+  }
 
   if (entity.source === "Source Repo" || (!entity.pm2Process && !entity.healthUrl)) {
     status = entity.presetStatus || "planning";
