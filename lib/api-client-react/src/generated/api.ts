@@ -79,6 +79,7 @@ import type {
   ProjectHandoffRecord,
   ProjectHandoffUpload,
   ProjectRecord,
+  ProjectReorder,
   ProjectTaskInput,
   ProjectTaskRecord,
   ProjectTaskUpdate,
@@ -3650,6 +3651,77 @@ export function useListProjects<TData = Awaited<ReturnType<typeof listProjects>>
 
 
 
+
+export const getReorderProjectsUrl = () => {
+
+
+
+
+  return `/api/projects/reorder`
+}
+
+/**
+ * @summary Set project priority order (Rose/Carmen)
+ */
+export const reorderProjects = async (projectReorder: ProjectReorder, options?: RequestInit): Promise<ProjectRecord[]> => {
+
+  return customFetch<ProjectRecord[]>(getReorderProjectsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      projectReorder,)
+  }
+);}
+
+
+
+
+export const getReorderProjectsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reorderProjects>>, TError,{data: BodyType<ProjectReorder>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reorderProjects>>, TError,{data: BodyType<ProjectReorder>}, TContext> => {
+
+const mutationKey = ['reorderProjects'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reorderProjects>>, {data: BodyType<ProjectReorder>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  reorderProjects(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReorderProjectsMutationResult = NonNullable<Awaited<ReturnType<typeof reorderProjects>>>
+    export type ReorderProjectsMutationBody = BodyType<ProjectReorder>
+    export type ReorderProjectsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Set project priority order (Rose/Carmen)
+ */
+export const useReorderProjects = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reorderProjects>>, TError,{data: BodyType<ProjectReorder>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reorderProjects>>,
+        TError,
+        {data: BodyType<ProjectReorder>},
+        TContext
+      > => {
+      return useMutation(getReorderProjectsMutationOptions(options));
+    }
 
 export const getListProjectBlockersUrl = () => {
 

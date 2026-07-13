@@ -1342,9 +1342,41 @@ export const ListProjectsResponseItem = zod.object({
   "deadline": zod.string().nullable(),
   "tags": zod.array(zod.string()),
   "projectType": zod.union([zod.literal('demo'),zod.literal('live'),zod.literal('planning'),zod.literal('merged-cc-host'),zod.literal(null)]).nullish(),
-  "lastSyncedAt": zod.coerce.date().nullish()
+  "lastSyncedAt": zod.coerce.date().nullish(),
+  "sortOrder": zod.number()
 })
 export const ListProjectsResponse = zod.array(ListProjectsResponseItem)
+
+
+/**
+ * @summary Set project priority order (Rose/Carmen)
+ */
+
+
+
+export const ReorderProjectsBody = zod.object({
+  "orderedIds": zod.array(zod.number()).min(1)
+})
+
+export const ReorderProjectsResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "department": zod.string(),
+  "owner": zod.string().nullable(),
+  "status": zod.enum(['active', 'at-risk', 'blocked', 'stale', 'complete', 'planning']),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "progress": zod.number(),
+  "source": zod.string(),
+  "classification": zod.string(),
+  "lastActivity": zod.string(),
+  "deadline": zod.string().nullable(),
+  "tags": zod.array(zod.string()),
+  "projectType": zod.union([zod.literal('demo'),zod.literal('live'),zod.literal('planning'),zod.literal('merged-cc-host'),zod.literal(null)]).nullish(),
+  "lastSyncedAt": zod.coerce.date().nullish(),
+  "sortOrder": zod.number()
+})
+export const ReorderProjectsResponse = zod.array(ReorderProjectsResponseItem)
 
 
 /**
@@ -1692,7 +1724,8 @@ export const UpdateProjectParams = zod.object({
 })
 
 export const UpdateProjectBody = zod.object({
-  "projectType": zod.enum(['demo', 'live', 'planning', 'merged-cc-host']).optional()
+  "projectType": zod.enum(['demo', 'live', 'planning', 'merged-cc-host']).optional(),
+  "sortOrder": zod.number().optional()
 })
 
 export const UpdateProjectResponse = zod.object({
@@ -1710,7 +1743,8 @@ export const UpdateProjectResponse = zod.object({
   "deadline": zod.string().nullable(),
   "tags": zod.array(zod.string()),
   "projectType": zod.union([zod.literal('demo'),zod.literal('live'),zod.literal('planning'),zod.literal('merged-cc-host'),zod.literal(null)]).nullish(),
-  "lastSyncedAt": zod.coerce.date().nullish()
+  "lastSyncedAt": zod.coerce.date().nullish(),
+  "sortOrder": zod.number()
 })
 
 

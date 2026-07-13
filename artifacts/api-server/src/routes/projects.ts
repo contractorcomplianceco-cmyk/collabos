@@ -49,7 +49,49 @@ async function getProjectOr404(id: number, res: Parameters<typeof requireAuth>[1
 }
 
 router.get("/projects", requireAuth, requireDashboard, async (_req, res) => {
-  const rows = await db.select().from(projectsTable).orderBy(asc(projectsTable.name));
+  const rows = await db.select().from(projectsTable).orderBy(asc(projectsTable.sortOrder), asc(projectsTable.name));
+  res.json(rows.map(serializeProject));
+});
+
+router.post("/projects/reorder", requireAuth, requireDashboard, async (req, res) => {
+  const actor = req.user!;
+  if (!isPlanEditor(actor.role)) {
+    res.status(403).json({ message: "Only Rose or Carmen can reorder projects" });
+    return;
+  }
+  const orderedIds = Array.isArray(req.body?.orderedIds)
+    ? req.body.orderedIds.map((id: unknown) => Number(id)).filter((id: number) => Number.isInteger(id))
+    : [];
+  if (orderedIds.length === 0) {
+    res.status(400).json({ message: "orderedIds is required" });
+    return;
+  }
+
+  const existing = await db.select({ id: projectsTable.id }).from(projectsTable);
+  const existingIds = new Set(existing.map((r) => r.id));
+  if (orderedIds.some((id: number) => !existingIds.has(id))) {
+    res.status(400).json({ message: "One or more project ids are invalid" });
+    return;
+  }
+
+  for (let i = 0; i < orderedIds.length; i++) {
+    await db
+      .update(projectsTable)
+      .set({ sortOrder: i + 1 })
+      .where(eq(projectsTable.id, orderedIds[i]!));
+  }
+
+  await logAudit({
+    actorId: actor.id,
+    actorName: actor.name,
+    action: "project_updated",
+    targetType: "project",
+    targetId: "bulk",
+    sourceArea: "projects",
+    details: `Reordered ${orderedIds.length} projects`,
+  });
+
+  const rows = await db.select().from(projectsTable).orderBy(asc(projectsTable.sortOrder), asc(projectsTable.name));
   res.json(rows.map(serializeProject));
 });
 
@@ -208,6 +250,14 @@ router.patch("/projects/:id", requireAuth, requireDashboard, async (req, res) =>
       return;
     }
     patch.projectType = req.body.projectType as ProjectType;
+  }
+  if (req.body?.sortOrder !== undefined) {
+    const sortOrder = Number(req.body.sortOrder);
+    if (!Number.isInteger(sortOrder)) {
+      res.status(400).json({ message: "Invalid sortOrder" });
+      return;
+    }
+    patch.sortOrder = sortOrder;
   }
 
   if (Object.keys(patch).length === 0) {

@@ -1079,8 +1079,9 @@ async function main() {
       summary.push(`update ${entity.name} status=${assessment.status} progress=${assessment.progress}% blockers=${assessment.blockers.length}`);
     } else if (entity.repoPath && existsSync(entity.repoPath)) {
       const { rows } = await client.query(
-        `INSERT INTO projects (name, description, department, owner, status, risk, progress, source, classification, last_activity, deadline, tags, last_synced_at)
-         VALUES ($1, $2, $3, NULL, $4, $5, $6, $7, 'documented-fact', $8, NULL, $9::jsonb, $10)
+        `INSERT INTO projects (name, description, department, owner, status, risk, progress, source, classification, last_activity, deadline, tags, last_synced_at, sort_order)
+         VALUES ($1, $2, $3, NULL, $4, $5, $6, $7, 'documented-fact', $8, NULL, $9::jsonb, $10,
+           (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM projects))
          RETURNING id`,
         [
           entity.name,

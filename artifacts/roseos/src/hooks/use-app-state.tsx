@@ -213,7 +213,7 @@ interface AppState extends PersistedState {
   setRoseBrainContext: (ctx: string) => void;
   submitIdea: (idea: Omit<Idea, "id" | "createdAt">) => void;
   updateIdeaStatus: (id: string, status: IdeaStatus) => void;
-  setRecommendationStatus: (id: string, status: ApprovalStatus, actor: string) => Promise<void>;
+  setRecommendationStatus: (id: string, status: ApprovalStatus, actor: string) => Promise<boolean>;
   addRecommendation: (rec: Omit<Recommendation, "id" | "history" | "status">) => Promise<void>;
   carmenfy: (itemId: string, note: string) => void;
   rosify: (itemId: string, note: string) => void;
@@ -541,6 +541,7 @@ function toProject(row: ProjectRecord): Project {
     deadline: row.deadline,
     tags: row.tags,
     lastSyncedAt: row.lastSyncedAt ?? null,
+    sortOrder: row.sortOrder ?? Number(row.id),
   };
 }
 
@@ -921,14 +922,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   );
 
   const setRecommendationStatus = useCallback(
-    async (id: string, nextStatus: ApprovalStatus, actor: string) => {
+    async (id: string, nextStatus: ApprovalStatus, actor: string): Promise<boolean> => {
       const rec = recommendations.find((r) => r.id === id);
-      if (!rec || !canApprove(actor as Role, rec.requiredApprover)) return;
+      if (!rec || !canApprove(actor as Role, rec.requiredApprover)) return false;
       try {
         await changeRecommendationStatus(Number(id), { status: nextStatus });
         await invalidateRecommendations();
+        return true;
       } catch {
-        /* keep queue stable if the request fails */
+        return false;
       }
     },
     [recommendations, invalidateRecommendations],

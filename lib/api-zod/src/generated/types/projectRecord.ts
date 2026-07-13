@@ -29,4 +29,5 @@ export interface ProjectRecord {
   projectType?: ProjectRecordProjectType;
   /** @nullable */
   lastSyncedAt?: Date | null;
+  sortOrder: number;
 }

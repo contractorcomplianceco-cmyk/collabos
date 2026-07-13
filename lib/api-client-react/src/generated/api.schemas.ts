@@ -1145,6 +1145,7 @@ export interface ProjectRecord {
   projectType?: ProjectRecordProjectType;
   /** @nullable */
   lastSyncedAt?: string | null;
+  sortOrder: number;
 }
 
 export type BlockerRecordRisk = typeof BlockerRecordRisk[keyof typeof BlockerRecordRisk];
@@ -1237,6 +1238,12 @@ export const ProjectType = {
 
 export interface ProjectUpdate {
   projectType?: ProjectType;
+  sortOrder?: number;
+}
+
+export interface ProjectReorder {
+  /** @minItems 1 */
+  orderedIds: number[];
 }
 
 export type ProjectBuildPlanRecordSource = typeof ProjectBuildPlanRecordSource[keyof typeof ProjectBuildPlanRecordSource];

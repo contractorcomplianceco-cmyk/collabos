@@ -999,6 +999,26 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ProjectRecord"
+  /projects/reorder:
+    post:
+      operationId: reorderProjects
+      tags: [projects]
+      summary: Set project priority order (Rose/Carmen)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectReorder"
+      responses:
+        "200":
+          description: Reordered projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProjectRecord"
   /projects/blockers:
     get:
       operationId: listProjectBlockers
@@ -2506,7 +2526,7 @@ components:
       enum: [active, at-risk, blocked, stale, complete, planning]
     ProjectRecord:
       type: object
-      required: [id, name, description, department, owner, status, risk, progress, source, classification, lastActivity, deadline, tags]
+      required: [id, name, description, department, owner, status, risk, progress, source, classification, lastActivity, deadline, tags, sortOrder]
       properties:
         id: { type: integer }
         name: { type: string }
@@ -2523,6 +2543,7 @@ components:
         tags: { type: array, items: { type: string } }
         projectType: { type: ["string", "null"], enum: [demo, live, planning, merged-cc-host, null] }
         lastSyncedAt: { type: ["string", "null"], format: date-time }
+        sortOrder: { type: integer }
     BlockerRecord:
       type: object
       required: [id, projectId, title, owner, risk, age]
@@ -2563,6 +2584,15 @@ components:
       type: object
       properties:
         projectType: { $ref: "#/components/schemas/ProjectType" }
+        sortOrder: { type: integer }
+    ProjectReorder:
+      type: object
+      required: [orderedIds]
+      properties:
+        orderedIds:
+          type: array
+          items: { type: integer }
+          minItems: 1
     ProjectBuildPlanRecord:
       type: object
       required: [id, projectId, summary, currentPhaseId, currentPhaseTitle, progress, visibleProgress, phases, roseInstructions, carmenPlanNotes, source, updatedBy, canUnblock, updatedAt]

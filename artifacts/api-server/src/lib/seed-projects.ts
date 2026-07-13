@@ -35,6 +35,7 @@ export function serializeProject(row: ProjectRow) {
     tags: row.tags,
     projectType: row.projectType ?? null,
     lastSyncedAt: row.lastSyncedAt?.toISOString() ?? null,
+    sortOrder: row.sortOrder ?? row.id,
   };
 }
 

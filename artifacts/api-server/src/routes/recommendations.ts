@@ -113,14 +113,20 @@ router.post("/recommendations/:id/status", requireAuth, requirePermission("revie
   let approvals = { ...(row.approvals ?? { rose: false, carmen: false }) };
   let historyAction = `Marked ${requested}`;
 
-  if (requested === "approved" && row.requiredApprover === "both") {
+  if (requested === "approved") {
     if (actor.role === "rose_admin" || actor.role === "super_admin") approvals.rose = true;
     if (actor.role === "carmen_admin" || actor.role === "super_admin") approvals.carmen = true;
-    const fully = approvals.rose && approvals.carmen;
-    nextStatus = fully ? "approved" : "pending";
-    historyAction = fully
-      ? "Final approval recorded (Rose + Carmen)"
-      : `Approved by ${actorName} — awaiting ${approvals.rose ? "Carmen" : "Rose"}`;
+    if (row.requiredApprover === "both") {
+      const fully = approvals.rose && approvals.carmen;
+      nextStatus = fully ? "approved" : "pending";
+      historyAction = fully
+        ? "Final approval recorded (Rose + Carmen)"
+        : `Signed off by ${actorName} — awaiting ${approvals.rose ? "Carmen" : "Rose"}`;
+    } else {
+      historyAction = `Signed off by ${actorName}`;
+    }
+  } else if (requested === "rejected") {
+    historyAction = `Sent back by ${actorName}`;
   }
 
   const history: RecommendationHistoryEntry[] = [

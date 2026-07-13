@@ -10,6 +10,7 @@ import {
   Download,
   Unlock,
   Save,
+  GripVertical,
 } from "lucide-react";
 import {
   useListProjects,
@@ -20,11 +21,13 @@ import {
   updateProjectBuildPlan,
   uploadProjectHandoff,
   unblockProjectPhase,
+  reorderProjects,
   getListProjectBuildPlansQueryKey,
   getListProjectHandoffsQueryKey,
   getListProjectsQueryKey,
   type ProjectBuildPlanRecord,
   type ProjectHandoffRecord,
+  type ProjectRecord,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader, SectionCard, StatusChip, RiskBadge, EmptyState } from "@/components/shared";
@@ -343,15 +346,20 @@ export default function ProjectsPage() {
   const { user } = useAuth();
   const { projectTasks, projectsLoading } = useAppState();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { data: projects = [], isLoading: apiProjectsLoading } = useListProjects();
   const { data: blockers = [] } = useListProjectBlockers();
   const { data: buildPlans = [], isLoading: plansLoading } = useListProjectBuildPlans();
   const { data: handoffs = [] } = useListProjectHandoffs();
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [ordered, setOrdered] = useState<ProjectRecord[] | null>(null);
+  const [dragId, setDragId] = useState<number | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
 
   const role = user?.role ?? "";
   const isRose = role === "rose_admin" || role === "super_admin";
   const isCarmen = role === "carmen_admin" || role === "super_admin";
+  const canReorder = isRose || isCarmen;
 
   const planByProject = useMemo(
     () => Object.fromEntries(buildPlans.map((p) => [p.projectId, p])),
@@ -385,22 +393,54 @@ export default function ProjectsPage() {
     void queryClient.invalidateQueries({ queryKey: getListProjectsQueryKey() });
   }
 
-  const sorted = [...projects].sort((a, b) => {
-    const priority: Record<ProjectStatus, number> = {
-      blocked: 0,
-      "at-risk": 1,
-      stale: 2,
-      active: 3,
-      planning: 4,
-      complete: 5,
-    };
-    const planA = planByProject[a.id];
-    const planB = planByProject[b.id];
-    return (
-      priority[a.status] - priority[b.status] ||
-      (planB?.visibleProgress ?? b.progress) - (planA?.visibleProgress ?? a.progress)
+  // Priority order from API (sortOrder). Local drag state overlays until save completes.
+  const sorted = useMemo(() => {
+    if (ordered) return ordered;
+    return [...projects].sort(
+      (a, b) => (a.sortOrder ?? a.id) - (b.sortOrder ?? b.id) || a.name.localeCompare(b.name),
     );
-  });
+  }, [projects, ordered]);
+
+  async function persistOrder(next: ProjectRecord[]) {
+    setSavingOrder(true);
+    try {
+      const updated = await reorderProjects({ orderedIds: next.map((p) => p.id) });
+      setOrdered(updated);
+      void queryClient.invalidateQueries({ queryKey: getListProjectsQueryKey() });
+      toast({ title: "Priority order saved", description: "Carmen will see this as her work path." });
+    } catch {
+      setOrdered(null);
+      toast({ title: "Could not save order", description: "Try dragging again.", variant: "destructive" });
+    } finally {
+      setSavingOrder(false);
+    }
+  }
+
+  function onDragStart(id: number) {
+    if (!canReorder || savingOrder) return;
+    setDragId(id);
+  }
+
+  function onDragOver(e: React.DragEvent, overId: number) {
+    e.preventDefault();
+    if (!canReorder || dragId === null || dragId === overId) return;
+    const list = [...sorted];
+    const from = list.findIndex((p) => p.id === dragId);
+    const to = list.findIndex((p) => p.id === overId);
+    if (from < 0 || to < 0) return;
+    const [item] = list.splice(from, 1);
+    list.splice(to, 0, item!);
+    setOrdered(list);
+  }
+
+  function onDragEnd() {
+    if (!canReorder || dragId === null) {
+      setDragId(null);
+      return;
+    }
+    setDragId(null);
+    if (ordered) void persistOrder(ordered);
+  }
 
   const loading = projectsLoading || apiProjectsLoading || plansLoading;
 
@@ -445,31 +485,58 @@ export default function ProjectsPage() {
           </div>
 
           <SectionCard title="All Projects" icon={FolderKanban} accent="blue">
+            {canReorder ? (
+              <p className="mb-3 text-xs text-slate-500">
+                {isRose
+                  ? "Drag to set Carmen’s work order · Priority order (Rose sets this)"
+                  : "Drag to set Carmen’s work order · You and Rose can reorder this list"}
+                {savingOrder ? " · Saving…" : null}
+              </p>
+            ) : (
+              <p className="mb-3 text-xs text-slate-500">Priority order (Rose sets this) — top of the list is Carmen’s next focus.</p>
+            )}
             <ul className="space-y-3">
-              {sorted.map((p) => {
+              {sorted.map((p, index) => {
                 const plan = planByProject[p.id];
                 const displayProgress = plan?.visibleProgress ?? p.progress;
                 const expanded = expandedId === p.id;
                 return (
-                  <li key={p.id} className="rounded-xl border border-slate-100 bg-slate-50/40 p-4">
+                  <li
+                    key={p.id}
+                    draggable={canReorder}
+                    onDragStart={() => onDragStart(p.id)}
+                    onDragOver={(e) => onDragOver(e, p.id)}
+                    onDragEnd={onDragEnd}
+                    className={`rounded-xl border border-slate-100 bg-slate-50/40 p-4 ${canReorder ? "cursor-grab active:cursor-grabbing" : ""} ${dragId === p.id ? "opacity-60 ring-2 ring-sky-300" : ""}`}
+                  >
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-sm font-semibold text-slate-800">{p.name}</h3>
-                          <StatusChip label={humanLabel(HUMAN_PROJECT_STATUS, p.status)} tone={STATUS_TONE[p.status]} />
-                          {p.projectType ? (
-                            <StatusChip
-                              label={PROJECT_TYPE_LABEL[p.projectType] ?? p.projectType}
-                              tone={PROJECT_TYPE_TONE[p.projectType] ?? "slate"}
-                            />
-                          ) : null}
-                          <RiskBadge value={p.risk} />
-                        </div>
-                        <p className="mt-1 text-sm text-slate-600">{p.description}</p>
-                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-400">
-                          <span>{p.department}</span>
-                          <span>{p.owner ?? "Unassigned"}</span>
-                          {plan?.currentPhaseTitle ? <span>Phase: {plan.currentPhaseTitle}</span> : null}
+                      <div className="flex min-w-0 flex-1 gap-2">
+                        {canReorder ? (
+                          <span className="mt-0.5 shrink-0 text-slate-300" title="Drag to reorder" aria-hidden>
+                            <GripVertical className="h-4 w-4" />
+                          </span>
+                        ) : null}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded bg-slate-200/80 px-1.5 text-[10px] font-bold text-slate-600">
+                              {index + 1}
+                            </span>
+                            <h3 className="text-sm font-semibold text-slate-800">{p.name}</h3>
+                            <StatusChip label={humanLabel(HUMAN_PROJECT_STATUS, p.status)} tone={STATUS_TONE[p.status]} />
+                            {p.projectType ? (
+                              <StatusChip
+                                label={PROJECT_TYPE_LABEL[p.projectType] ?? p.projectType}
+                                tone={PROJECT_TYPE_TONE[p.projectType] ?? "slate"}
+                              />
+                            ) : null}
+                            <RiskBadge value={p.risk} />
+                          </div>
+                          <p className="mt-1 text-sm text-slate-600">{p.description}</p>
+                          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-400">
+                            <span>{p.department}</span>
+                            <span>{p.owner ?? "Unassigned"}</span>
+                            {plan?.currentPhaseTitle ? <span>Phase: {plan.currentPhaseTitle}</span> : null}
+                          </div>
                         </div>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-2">

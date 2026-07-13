@@ -4,6 +4,8 @@ import {
   detectDuplicates,
   routeApproval,
   canApprove,
+  needsMySignOff,
+  waitingOnLabel,
   canAccessMindMeld,
   canSubmit,
   mapServerRole,
@@ -92,6 +94,20 @@ describe("canApprove (permission visibility)", () => {
     expect(canSubmit("Viewer")).toBe(false);
     expect(canSubmit("Guest")).toBe(false);
     expect(canSubmit("Team Member")).toBe(true);
+  });
+});
+
+describe("needsMySignOff", () => {
+  it("Rose needs sign-off on rose and unfinished both items", () => {
+    expect(needsMySignOff("Rose", "rose", { rose: false, carmen: false })).toBe(true);
+    expect(needsMySignOff("Rose", "both", { rose: false, carmen: true })).toBe(true);
+    expect(needsMySignOff("Rose", "both", { rose: true, carmen: false })).toBe(false);
+    expect(needsMySignOff("Carmen", "rose")).toBe(false);
+  });
+
+  it("waitingOnLabel is human-readable", () => {
+    expect(waitingOnLabel("rose")).toBe("Waiting on Rose");
+    expect(waitingOnLabel("both")).toBe("Waiting on Rose + Carmen");
   });
 });
 

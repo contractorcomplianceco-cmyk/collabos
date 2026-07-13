@@ -106,6 +106,31 @@ export function canApprove(role: Role, route: ApprovalRoute): boolean {
   return false;
 }
 
+/** Whether this role still owes a stamp on a pending item. */
+export function needsMySignOff(
+  role: Role,
+  route: ApprovalRoute,
+  approvals?: { rose?: boolean; carmen?: boolean },
+  status: string = "pending",
+): boolean {
+  if (status !== "pending") return false;
+  if (!canApprove(role, route)) return false;
+  if (route === "both") {
+    if (role === "Admin") return !(approvals?.rose && approvals?.carmen);
+    if (role === "Rose") return !approvals?.rose;
+    if (role === "Carmen") return !approvals?.carmen;
+  }
+  return true;
+}
+
+/** Human waiting copy when the current user cannot act. */
+export function waitingOnLabel(route: ApprovalRoute): string {
+  if (route === "both") return "Waiting on Rose + Carmen";
+  if (route === "rose") return "Waiting on Rose";
+  if (route === "carmen") return "Waiting on Carmen";
+  return "No sign-off needed";
+}
+
 /** Permission visibility helper: can a role enter the Mind Meld Room? */
 export function canAccessMindMeld(role: Role): boolean {
   return role === "Rose" || role === "Carmen" || role === "Admin";

@@ -141,6 +141,7 @@ export * from './projectHandoffUpload';
 export * from './projectRecord';
 export * from './projectRecordProjectType';
 export * from './projectRecordRisk';
+export * from './projectReorder';
 export * from './projectStatus';
 export * from './projectTaskInput';
 export * from './projectTaskInputSource';

@@ -35,6 +35,7 @@ export const projectsTable = pgTable("projects", {
   tags: jsonb("tags").$type<string[]>().notNull().default([]),
   projectType: text("project_type", { enum: PROJECT_TYPES }),
   lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+  sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

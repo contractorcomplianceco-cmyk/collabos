@@ -9,4 +9,5 @@ import type { ProjectType } from './projectType';
 
 export interface ProjectUpdate {
   projectType?: ProjectType;
+  sortOrder?: number;
 }
