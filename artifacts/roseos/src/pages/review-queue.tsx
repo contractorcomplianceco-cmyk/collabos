@@ -115,7 +115,7 @@ export default function ReviewQueue() {
     <div className="space-y-6 p-6">
       <PageHeader
         title="Review Queue"
-        subtitle="Stamp decisions — things that need your sign-off. Nothing here is approved automatically."
+        subtitle="Stamp decisions — things that need your sign-off. Nothing here is approved automatically. When Rose Signs off, Carmen’s open work and today’s path update next."
         icon={ClipboardCheck}
         accent="rose"
       />
