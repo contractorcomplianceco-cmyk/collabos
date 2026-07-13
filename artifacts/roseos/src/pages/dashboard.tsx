@@ -202,14 +202,15 @@ export default function Dashboard() {
         {
           id: "dec-core",
           title: "ComplianceCore (Core)",
-          detail: "Whole Core foundation — migration and leadership approval are not done. Discovery prefill stays on Supabase until you approve Core as source of truth; no Supabase→intake wiring yet.",
+          detail: "Sprint A staff Clients registry is live at command.cagteam.net/os/clients (cca_client_*), but Core is not production master yet. Approve cutover before Discovery leaves Supabase, module auto-links, or treating ComplianceCoreOS™ as source of truth.",
           status: "Needs your decision",
-          href: "/projects",
+          href: "https://command.cagteam.net/os/clients",
+          external: true,
         },
         {
           id: "dec-audit-engine",
           title: "Audit Engine",
-          detail: "Protected scoring/intelligence layer exists, but approved outputs are not connected to Command Center entitlements yet. Needs your call before that wiring.",
+          detail: "Protected scoring/intelligence layer (trust_score + risk_audit). Approved outputs are not connected to Command Center entitlements yet. Needs your call before that wiring.",
           status: "Needs your decision",
           href: "/projects",
         },
@@ -223,8 +224,8 @@ export default function Dashboard() {
         },
         {
           id: "dec-docs",
-          title: "Docs Collect — next steps",
-          detail: "App is live at docs.cagteam.net for internal use. Still needs your call on live client email, client-facing launch (remove Basic Auth), and how far to wire Zoho CRM / WorkDrive.",
+          title: "Document Collection Center — next steps",
+          detail: "Docs Collect (module docs_collect) is live at docs.cagteam.net for internal fulfillment. Still needs your call on live client email, client-facing launch (remove Basic Auth), Client-ID ↔ Core wiring, and how far to wire Zoho CRM / WorkDrive.",
           status: "Needs your decision",
           href: "https://docs.cagteam.net/",
           external: true,
@@ -246,9 +247,9 @@ export default function Dashboard() {
         {
           id: "dec-ald",
           title: "American Leak Detection (ALD)",
-          detail: "ALD project check is underway. PartnerConnect room content exists in the EC stack (same family as FRR/EC). Review findings when ready; dedicated ald.ccacompliancepartner.com host is not confirmed live separately.",
-          status: "Check in progress",
-          href: "https://ec.ccacompliancepartner.com/r/american-leak-detection",
+          detail: "ALD PartnerConnect room is live at ald.ccacompliancepartner.com (PM2 ald-partner-room-api; same family as FRR/EC). Fulfillment map treats it as a real partner room — still review AI-audit / project-check findings before calling the engagement finished.",
+          status: "Live room — findings review open",
+          href: "https://ald.ccacompliancepartner.com/",
           external: true,
         },
         {
@@ -266,8 +267,8 @@ export default function Dashboard() {
       cards: [
         {
           id: "dec-biz-hub",
-          title: "Business Services Hub — redesign",
-          detail: "Live at business-services.cagteam.net, but work is paused for your redesign. Do not treat the current UI as final until you reshape it.",
+          title: "EntityConnectOS / Business Hub — redesign",
+          detail: "Business Services Hub (EntityConnectOS™, module business_hub) is live at business-services.cagteam.net, but paused for your redesign. Fulfillment map marks entity services as not ready — do not treat the current UI as final.",
           status: "Awaiting redesign",
           href: "https://business-services.cagteam.net/",
           external: true,
@@ -275,7 +276,7 @@ export default function Dashboard() {
         {
           id: "dec-demos",
           title: "Demo apps → real?",
-          detail: "GovConnect, ProfitPulse, Voice Connect, Facility Intelligence, and Compliance Connect (prod + demo hosts) are demo/staging until you say otherwise. Confirm which should become real production apps.",
+          detail: "GovConnect, ProfitPulse, Voice Connect, Facility Intelligence, and ComplianceConnect™ (prod + demo hosts; module compliance_connect) are demo/staging until you say otherwise. Confirm which should become real production apps.",
           status: "Needs your confirmation",
           href: "/projects",
         },

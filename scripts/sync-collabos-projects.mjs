@@ -142,13 +142,13 @@ const EXTRA_ENTITIES = [
     slug: "ec-partnerconnect",
     name: "EC Electric PartnerConnect",
     description:
-      "EC Company / EC Electric PartnerConnect Room — private password-gated partner workspace at ec.ccacompliancepartner.com (same PartnerConnect family as FRR). Live on AWS; Zoho Cliq support wiring pending operational approval.",
+      "EC Electric PartnerConnect room (client code EC) — private password-gated partner workspace at ec.ccacompliancepartner.com (same PartnerConnect family as FRR/ALD). Live on AWS; Zoho Cliq support wiring pending operational approval.",
     department: "Partner Rooms",
     source: "PM2 + Health Check",
     pm2Process: "ec-partnerconnect-api",
     healthUrl: "https://ec.ccacompliancepartner.com/api/healthz",
     repoPath: join(PROJECTS_ROOT, "EC-Company"),
-    tags: ["ec.ccacompliancepartner.com", "ec-company", "partnerconnect", "live"],
+    tags: ["ec.ccacompliancepartner.com", "ec-company", "partnerconnect", "client-code:EC", "live"],
     presetProgress: 85,
     lockProgress: true,
   },
@@ -156,14 +156,23 @@ const EXTRA_ENTITIES = [
     slug: "american-leak-detection",
     name: "American Leak Detection (ALD)",
     description:
-      "ALD project check underway. PartnerConnect room content exists in the EC PartnerConnect stack (slug american-leak-detection; same family as FRR/EC at ec.ccacompliancepartner.com/r/american-leak-detection). Dedicated ald.ccacompliancepartner.com host not confirmed live separately. AI audit / project check in progress — Rose should review findings when ready.",
+      "ALD PartnerConnect room (client code ALD) live at ald.ccacompliancepartner.com → /r/american-leak-detection (PM2 ald-partner-room-api). Same PartnerConnect family as FRR/EC; fulfillment map treats it as a real partner delivery room. Rose still needs to review AI-audit / project-check findings before calling the engagement finished.",
     department: "Partner Rooms",
-    source: "Architecture",
-    healthUrl: "https://ec.ccacompliancepartner.com/r/american-leak-detection",
-    repoPath: join(PROJECTS_ROOT, "EC-Company"),
-    tags: ["partnerconnect", "ald", "american-leak-detection", "awaiting-rose", "planning"],
+    source: "PM2 + Health Check",
+    pm2Process: "ald-partner-room-api",
+    healthUrl: "https://ald.ccacompliancepartner.com/api/healthz",
+    repoPath: "/home/ubuntu/ald-partner-room",
+    tags: [
+      "partnerconnect",
+      "ald",
+      "client-code:ALD",
+      "american-leak-detection",
+      "ald.ccacompliancepartner.com",
+      "live",
+      "awaiting-rose",
+    ],
     presetStatus: "active",
-    presetProgress: 40,
+    presetProgress: 80,
     lockProgress: true,
   },
   {
@@ -213,25 +222,26 @@ const EXTRA_ENTITIES = [
     slug: "compliance-core",
     name: "ComplianceCore",
     description:
-      "CCA ComplianceCore™ — core foundation / single source of truth (cca_client_* in Command Center). Migration and Rose leadership approval not done. Discovery stays on Supabase until Core is approved; do not wire Supabase→intake prefill or treat Core as live master yet.",
+      "CCA ComplianceCoreOS™ — core foundation / single source of truth (cca_client_* on Command Center). Sprint A staff Clients registry is live at command.cagteam.net/os/clients, but Core is not the live master yet: Rose leadership approval, Discovery Supabase→Core cutover, and module auto-link flows are still open. Fulfillment briefing still marks Core as future — do not treat as production master.",
     department: "Compliance",
     source: "Architecture",
     healthUrl: "https://command.cagteam.net/os/clients",
     repoPath: join(PROJECTS_ROOT, "cca-command-center-cloud"),
-    tags: ["compliancecore", "core", "awaiting-rose", "planning"],
-    presetStatus: "planning",
-    presetProgress: 35,
+    tags: ["compliancecore", "compliancecoreos", "core", "awaiting-rose", "sprint-a"],
+    presetStatus: "active",
+    presetProgress: 50,
+    lockProgress: true,
   },
   {
     slug: "audit-engine",
     name: "Audit Engine",
     description:
-      "CCA Audit Engine™ — protected scoring/intelligence layer. Approved outputs (TrustScore / risk) are not connected to Command Center entitlements yet. Awaiting Rose decision before entitlement wiring.",
+      "CCA Audit Engine™ — protected scoring/intelligence layer (module codes trust_score + risk_audit). Approved outputs are not connected to Command Center entitlements yet. Fulfillment map marks Audit Engine as future Rose work — awaiting Rose packaging/decision before entitlement wiring.",
     department: "Compliance",
     source: "Architecture",
     healthUrl: "https://command.cagteam.net",
     repoPath: join(PROJECTS_ROOT, "cca-command-center-cloud"),
-    tags: ["audit-engine", "awaiting-rose", "planning"],
+    tags: ["audit-engine", "trust_score", "risk_audit", "awaiting-rose", "planning"],
     presetStatus: "planning",
     presetProgress: 30,
   },
@@ -280,33 +290,38 @@ const EXTRA_ENTITIES = [
   {
     slug: "cca-portal-api",
     name: "CCA Client Portal API",
-    description: "Client portal API backend (internal).",
+    description:
+      "Backend API for CCA ComplianceConnect™ (module code compliance_connect) / Client Portal — PM2 cca-portal-api. Public portal surfaces are ccacomplianceconnect.com + demo.ccacomplianceconnect.com; this process is API-only on this server.",
     department: "Systems",
     source: "PM2",
     pm2Process: "cca-portal-api",
     repoPath: join(PROJECTS_ROOT, "client-portal"),
-    tags: ["internal", "api-only"],
+    tags: ["internal", "api-only", "compliance_connect", "complianceconnect"],
   },
   {
     slug: "services-hub-api",
     name: "Services Hub API",
-    description: "Business Services Hub API process.",
+    description:
+      "API for Business Services Hub / CCA EntityConnectOS™ (module code business_hub) — PM2 cca-services-hub-api.",
     department: "Business Services",
     source: "PM2",
     pm2Process: "cca-services-hub-api",
     repoPath: join(PROJECTS_ROOT, "business-services-hub"),
-    tags: ["internal", "api"],
+    tags: ["internal", "api", "business_hub", "entityconnectos"],
   },
   {
     slug: "frr-government-growth-stack",
     name: "FRR Government Growth Stack",
-    description: "FRR government growth portal at frr.ccacompliancepartner.com.",
-    department: "Compliance",
+    description:
+      "FRR PartnerConnect room (client code FRR) at frr.ccacompliancepartner.com — live partner delivery room (fulfillment map SoR). PM2 frr-portal-api online.",
+    department: "Partner Rooms",
     source: "PM2 + Health Check",
     pm2Process: "frr-portal-api",
-    healthUrl: "https://frr.ccacompliancepartner.com",
+    healthUrl: "https://frr.ccacompliancepartner.com/api/healthz",
     repoPath: join(PROJECTS_ROOT, "frr-government-growth-stack"),
-    tags: ["frr.ccacompliancepartner.com", "live"],
+    tags: ["frr.ccacompliancepartner.com", "partnerconnect", "client-code:FRR", "frr", "live"],
+    presetProgress: 85,
+    lockProgress: true,
   },
   {
     slug: "govconnect-demo",
@@ -361,11 +376,20 @@ const EXTRA_ENTITIES = [
     slug: "compliance-connect",
     name: "Compliance Connect Demo",
     description:
-      "Compliance Connect — production at ccacomplianceconnect.com and demo at demo.ccacomplianceconnect.com (API on PM2 path via nginx). Confirm which host is canonical and whether this becomes the real product.",
-    department: "Sales",
+      "CCA ComplianceConnect™ (module code compliance_connect) — production at ccacomplianceconnect.com and demo at demo.ccacomplianceconnect.com. Rose map: paid client portal attached to ComplianceCoreOS profiles (not the master registry). Confirm canonical host and production path with Rose; registry still points staff at the demo route.",
+    department: "Client Experience",
     source: "Health Check",
     healthUrl: "https://ccacomplianceconnect.com",
-    tags: ["ccacomplianceconnect.com", "demo.ccacomplianceconnect.com", "demo", "awaiting-rose", "live"],
+    repoPath: join(PROJECTS_ROOT, "client-portal"),
+    tags: [
+      "ccacomplianceconnect.com",
+      "demo.ccacomplianceconnect.com",
+      "compliance_connect",
+      "complianceconnect",
+      "demo",
+      "awaiting-rose",
+      "live",
+    ],
     presetStatus: "active",
     presetProgress: 80,
     lockProgress: true,
@@ -502,11 +526,13 @@ function loadRegistryEntities() {
         name: mapRegistryName(app),
         description:
           slug === "biz-services-hub"
-            ? "Business Services Hub at business-services.cagteam.net — live but paused for Rose redesign. Do not treat current UI as final."
+            ? "CCA EntityConnectOS™ (module code business_hub) — Business Services Hub at business-services.cagteam.net. Live but paused for Rose redesign; fulfillment map marks entity services as not ready. Do not treat current UI as final. Attaches to ComplianceCoreOS via module links; hub clientId stays module-local."
             : slug === "profitpulse"
               ? "ProfitPulse demo at demo.ccaprofitpulse.com — demo host only until Rose confirms it becomes a real app."
               : slug === "compliance-connect"
-                ? "Compliance Connect — production at ccacomplianceconnect.com and demo at demo.ccacomplianceconnect.com. Confirm demo vs production path with Rose."
+                ? "CCA ComplianceConnect™ (module code compliance_connect) — production at ccacomplianceconnect.com and demo at demo.ccacomplianceconnect.com. Confirm demo vs production path with Rose."
+                : slug === "doc-collection"
+                  ? "CCA Document Collection Center™ (module code docs_collect) — Docs Collect at docs.cagteam.net. Staff QA fulfillment SoR for documents; client launch / live email / Zoho depth still need Rose. Audit/report/score surfaces belong to Audit Engine / ComplianceConnect — not Docs Collect."
                 : slug === "voiceconnect-demo"
                   ? "VoiceConnect demo at demo.ccavoiceconnect.com — demo only until Rose confirms production path."
                   : slug === "facility-intelligence-demo"
@@ -591,6 +617,9 @@ function buildRegistryTags(app) {
   else if (app.systemState === "LIVE" || app.systemState === "PREVIEW") tags.push("live");
   const host = (app.liveUrl || "").match(/https?:\/\/([^/]+)/);
   if (host) tags.push(host[1]);
+  if (app.id === "biz-services-hub") tags.push("business_hub", "entityconnectos");
+  if (app.id === "doc-collection") tags.push("docs_collect", "document-collection-center");
+  if (app.id === "compliance-connect") tags.push("compliance_connect", "complianceconnect");
   return tags;
 }
 
