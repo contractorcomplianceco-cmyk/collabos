@@ -2142,3 +2142,49 @@ export const AddAgentWorkEventResponse = zod.object({
 })
 
 
+/**
+ * @summary List attachments on a Cursor Direct Request
+ */
+export const ListAgentWorkAttachmentsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ListAgentWorkAttachmentsResponseItem = zod.object({
+  "id": zod.number(),
+  "agentWorkItemId": zod.number(),
+  "filename": zod.string(),
+  "mimeType": zod.string().nullable(),
+  "sizeBytes": zod.number(),
+  "uploadedBy": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})
+export const ListAgentWorkAttachmentsResponse = zod.array(ListAgentWorkAttachmentsResponseItem)
+
+
+/**
+ * @summary Upload an attachment for a Cursor Direct Request
+ */
+export const UploadAgentWorkAttachmentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+
+export const UploadAgentWorkAttachmentBody = zod.object({
+  "filename": zod.string().min(1),
+  "contentBase64": zod.string().min(1),
+  "mimeType": zod.string().optional()
+})
+
+
+/**
+ * @summary Download a Cursor Direct Request attachment
+ */
+export const DownloadAgentWorkAttachmentParams = zod.object({
+  "id": zod.coerce.number(),
+  "attachmentId": zod.coerce.number()
+})
+
+

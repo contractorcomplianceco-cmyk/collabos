@@ -6,6 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './agentWorkAttachmentRecord';
+export * from './agentWorkAttachmentUpload';
 export * from './agentWorkEventInput';
 export * from './agentWorkEventRecord';
 export * from './agentWorkItemInput';

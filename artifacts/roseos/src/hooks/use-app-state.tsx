@@ -232,7 +232,7 @@ interface AppState extends PersistedState {
     risk: AgentWorkItem["risk"];
     source?: string;
     verificationSteps?: string[];
-  }) => Promise<void>;
+  }) => Promise<{ id: number } | null>;
   updateAgentWork: (id: string, patch: Partial<Pick<AgentWorkItem, "priority" | "status" | "owner" | "approvalRoute" | "risk" | "branchName" | "commitSha" | "mergeRequestUrl" | "verificationSteps" | "agentNotes" | "finalOutcome">>) => Promise<void>;
   addAgentWorkItemEvent: (id: string, action: string, note?: string, actor?: string) => Promise<void>;
   updateSettings: (patch: Partial<AppSettings>) => void;
@@ -1044,9 +1044,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       source?: string;
       verificationSteps?: string[];
     }) => {
-      if (!canSubmit(state.currentRole)) return;
+      if (!canSubmit(state.currentRole)) return null;
       try {
-        await createAgentWorkItem({
+        const created = await createAgentWorkItem({
           title: input.title,
           description: input.description,
           requestType: input.requestType,
@@ -1060,8 +1060,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           verificationSteps: input.verificationSteps ?? [],
         });
         await invalidateAgentWork();
+        return created;
       } catch {
-        /* ignore */
+        return null;
       }
     },
     [state.currentRole, invalidateAgentWork],

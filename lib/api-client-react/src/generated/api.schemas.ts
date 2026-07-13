@@ -1855,3 +1855,22 @@ export interface AgentWorkEventInput {
   note?: string;
 }
 
+export interface AgentWorkAttachmentRecord {
+  id: number;
+  agentWorkItemId: number;
+  filename: string;
+  /** @nullable */
+  mimeType: string | null;
+  sizeBytes: number;
+  uploadedBy: string;
+  uploadedAt: string;
+}
+
+export interface AgentWorkAttachmentUpload {
+  /** @minLength 1 */
+  filename: string;
+  /** @minLength 1 */
+  contentBase64: string;
+  mimeType?: string;
+}
+

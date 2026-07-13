@@ -60,6 +60,19 @@ export const agentWorkItemsTable = pgTable("agent_work_items", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 
+export const agentWorkAttachmentsTable = pgTable("agent_work_attachments", {
+  id: serial("id").primaryKey(),
+  agentWorkItemId: integer("agent_work_item_id")
+    .notNull()
+    .references(() => agentWorkItemsTable.id, { onDelete: "cascade" }),
+  filename: text("filename").notNull(),
+  mimeType: text("mime_type"),
+  sizeBytes: integer("size_bytes").notNull(),
+  storagePath: text("storage_path").notNull(),
+  uploadedBy: text("uploaded_by").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const insertAgentWorkItemSchema = createInsertSchema(agentWorkItemsTable).omit({
   id: true,
   events: true,
@@ -68,3 +81,4 @@ export const insertAgentWorkItemSchema = createInsertSchema(agentWorkItemsTable)
 });
 export type InsertAgentWorkItem = z.infer<typeof insertAgentWorkItemSchema>;
 export type AgentWorkItemRow = typeof agentWorkItemsTable.$inferSelect;
+export type AgentWorkAttachmentRow = typeof agentWorkAttachmentsTable.$inferSelect;

@@ -20,6 +20,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AgentWorkAttachmentRecord,
+  AgentWorkAttachmentUpload,
   AgentWorkEventInput,
   AgentWorkItemInput,
   AgentWorkItemRecord,
@@ -5957,4 +5959,235 @@ export const useAddAgentWorkEvent = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getAddAgentWorkEventMutationOptions(options));
     }
+
+export const getListAgentWorkAttachmentsUrl = (id: number,) => {
+
+
+
+
+  return `/api/agent-work/items/${id}/attachments`
+}
+
+/**
+ * @summary List attachments on a Cursor Direct Request
+ */
+export const listAgentWorkAttachments = async (id: number, options?: RequestInit): Promise<AgentWorkAttachmentRecord[]> => {
+
+  return customFetch<AgentWorkAttachmentRecord[]>(getListAgentWorkAttachmentsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAgentWorkAttachmentsQueryKey = (id: number,) => {
+    return [
+    `/api/agent-work/items/${id}/attachments`
+    ] as const;
+    }
+
+
+export const getListAgentWorkAttachmentsQueryOptions = <TData = Awaited<ReturnType<typeof listAgentWorkAttachments>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAgentWorkAttachments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAgentWorkAttachmentsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAgentWorkAttachments>>> = ({ signal }) => listAgentWorkAttachments(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAgentWorkAttachments>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAgentWorkAttachmentsQueryResult = NonNullable<Awaited<ReturnType<typeof listAgentWorkAttachments>>>
+export type ListAgentWorkAttachmentsQueryError = ErrorType<void>
+
+
+/**
+ * @summary List attachments on a Cursor Direct Request
+ */
+
+export function useListAgentWorkAttachments<TData = Awaited<ReturnType<typeof listAgentWorkAttachments>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAgentWorkAttachments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAgentWorkAttachmentsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUploadAgentWorkAttachmentUrl = (id: number,) => {
+
+
+
+
+  return `/api/agent-work/items/${id}/attachments`
+}
+
+/**
+ * @summary Upload an attachment for a Cursor Direct Request
+ */
+export const uploadAgentWorkAttachment = async (id: number,
+    agentWorkAttachmentUpload: AgentWorkAttachmentUpload, options?: RequestInit): Promise<AgentWorkAttachmentRecord> => {
+
+  return customFetch<AgentWorkAttachmentRecord>(getUploadAgentWorkAttachmentUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      agentWorkAttachmentUpload,)
+  }
+);}
+
+
+
+
+export const getUploadAgentWorkAttachmentMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadAgentWorkAttachment>>, TError,{id: number;data: BodyType<AgentWorkAttachmentUpload>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadAgentWorkAttachment>>, TError,{id: number;data: BodyType<AgentWorkAttachmentUpload>}, TContext> => {
+
+const mutationKey = ['uploadAgentWorkAttachment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadAgentWorkAttachment>>, {id: number;data: BodyType<AgentWorkAttachmentUpload>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  uploadAgentWorkAttachment(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadAgentWorkAttachmentMutationResult = NonNullable<Awaited<ReturnType<typeof uploadAgentWorkAttachment>>>
+    export type UploadAgentWorkAttachmentMutationBody = BodyType<AgentWorkAttachmentUpload>
+    export type UploadAgentWorkAttachmentMutationError = ErrorType<void>
+
+    /**
+ * @summary Upload an attachment for a Cursor Direct Request
+ */
+export const useUploadAgentWorkAttachment = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadAgentWorkAttachment>>, TError,{id: number;data: BodyType<AgentWorkAttachmentUpload>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadAgentWorkAttachment>>,
+        TError,
+        {id: number;data: BodyType<AgentWorkAttachmentUpload>},
+        TContext
+      > => {
+      return useMutation(getUploadAgentWorkAttachmentMutationOptions(options));
+    }
+
+export const getDownloadAgentWorkAttachmentUrl = (id: number,
+    attachmentId: number,) => {
+
+
+
+
+  return `/api/agent-work/items/${id}/attachments/${attachmentId}/download`
+}
+
+/**
+ * @summary Download a Cursor Direct Request attachment
+ */
+export const downloadAgentWorkAttachment = async (id: number,
+    attachmentId: number, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getDownloadAgentWorkAttachmentUrl(id,attachmentId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getDownloadAgentWorkAttachmentQueryKey = (id: number,
+    attachmentId: number,) => {
+    return [
+    `/api/agent-work/items/${id}/attachments/${attachmentId}/download`
+    ] as const;
+    }
+
+
+export const getDownloadAgentWorkAttachmentQueryOptions = <TData = Awaited<ReturnType<typeof downloadAgentWorkAttachment>>, TError = ErrorType<void>>(id: number,
+    attachmentId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadAgentWorkAttachment>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadAgentWorkAttachmentQueryKey(id,attachmentId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadAgentWorkAttachment>>> = ({ signal }) => downloadAgentWorkAttachment(id,attachmentId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id && attachmentId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadAgentWorkAttachment>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type DownloadAgentWorkAttachmentQueryResult = NonNullable<Awaited<ReturnType<typeof downloadAgentWorkAttachment>>>
+export type DownloadAgentWorkAttachmentQueryError = ErrorType<void>
+
+
+/**
+ * @summary Download a Cursor Direct Request attachment
+ */
+
+export function useDownloadAgentWorkAttachment<TData = Awaited<ReturnType<typeof downloadAgentWorkAttachment>>, TError = ErrorType<void>>(
+ id: number,
+    attachmentId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadAgentWorkAttachment>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getDownloadAgentWorkAttachmentQueryOptions(id,attachmentId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 

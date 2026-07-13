@@ -1591,6 +1591,83 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AgentWorkItemRecord"
+  /agent-work/items/{id}/attachments:
+    get:
+      operationId: listAgentWorkAttachments
+      tags: [agentWork]
+      summary: List attachments on a Cursor Direct Request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Attachments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AgentWorkAttachmentRecord"
+        "404":
+          description: Not found
+    post:
+      operationId: uploadAgentWorkAttachment
+      tags: [agentWork]
+      summary: Upload an attachment for a Cursor Direct Request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentWorkAttachmentUpload"
+      responses:
+        "201":
+          description: Uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentWorkAttachmentRecord"
+        "400":
+          description: Invalid file
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+  /agent-work/items/{id}/attachments/{attachmentId}/download:
+    get:
+      operationId: downloadAgentWorkAttachment
+      tags: [agentWork]
+      summary: Download a Cursor Direct Request attachment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: attachmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: File bytes
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Not found
 components:
   schemas:
     HealthStatus:
@@ -2815,3 +2892,21 @@ components:
         actor: { type: string }
         action: { type: string, minLength: 1 }
         note: { type: string }
+    AgentWorkAttachmentRecord:
+      type: object
+      required: [id, agentWorkItemId, filename, mimeType, sizeBytes, uploadedBy, uploadedAt]
+      properties:
+        id: { type: integer }
+        agentWorkItemId: { type: integer }
+        filename: { type: string }
+        mimeType: { type: ["string", "null"] }
+        sizeBytes: { type: integer }
+        uploadedBy: { type: string }
+        uploadedAt: { type: string, format: date-time }
+    AgentWorkAttachmentUpload:
+      type: object
+      required: [filename, contentBase64]
+      properties:
+        filename: { type: string, minLength: 1 }
+        contentBase64: { type: string, minLength: 1 }
+        mimeType: { type: string }
