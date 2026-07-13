@@ -1,5 +1,5 @@
-import { useMemo, useState, useRef } from "react";
-import { Link } from "wouter";
+import { useEffect, useMemo, useState, useRef } from "react";
+import { Link, useSearch } from "wouter";
 import {
   FolderKanban,
   ArrowRight,
@@ -11,6 +11,9 @@ import {
   Unlock,
   Save,
   GripVertical,
+  Pin,
+  ListChecks,
+  Bot,
 } from "lucide-react";
 import {
   useListProjects,
@@ -33,7 +36,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader, SectionCard, StatusChip, RiskBadge, EmptyState } from "@/components/shared";
 import { useAuth } from "@/hooks/use-auth";
 import { useAppState } from "@/hooks/use-app-state";
-import { humanLabel, HUMAN_PROJECT_STATUS } from "@/lib/ui-labels";
+import { humanLabel, HUMAN_PROJECT_STATUS, HUMAN_TASK_STATUS, HUMAN_AGENT_STATUS, HUMAN_REVIEW_STATUS } from "@/lib/ui-labels";
+import { getPinnedProjectIds, pushRecent, togglePinnedProject } from "@/lib/nav-prefs";
 import { useToast } from "@/hooks/use-toast";
 import type { ProjectStatus } from "@/types";
 
@@ -90,6 +94,7 @@ function formatBytes(n: number): string {
 
 function ProjectDetailPanel({
   projectId,
+  projectName,
   plan,
   handoffs,
   blockerCount,
@@ -99,6 +104,7 @@ function ProjectDetailPanel({
   onRefresh,
 }: {
   projectId: number;
+  projectName: string;
   plan: ProjectBuildPlanRecord | undefined;
   handoffs: ProjectHandoffRecord[];
   blockerCount: number;
@@ -108,6 +114,7 @@ function ProjectDetailPanel({
   onRefresh: () => void;
 }) {
   const { toast } = useToast();
+  const { projectTasks, recommendations, agentWorkItems } = useAppState();
   const fileRef = useRef<HTMLInputElement>(null);
   const [roseText, setRoseText] = useState(plan?.roseInstructions ?? "");
   const [carmenSummary, setCarmenSummary] = useState(plan?.summary ?? "");
@@ -116,6 +123,36 @@ function ProjectDetailPanel({
   const [busy, setBusy] = useState(false);
 
   const visibleProgress = plan?.visibleProgress ?? plan?.progress ?? 0;
+  const idStr = String(projectId);
+
+  const hubTasks = useMemo(
+    () => projectTasks.filter((t) => t.projectId === idStr && t.status !== "done").slice(0, 8),
+    [projectTasks, idStr],
+  );
+  const hubDecisions = useMemo(
+    () =>
+      recommendations
+        .filter(
+          (r) =>
+            r.projectId === idStr ||
+            r.recommendation.toLowerCase().includes(projectName.toLowerCase()),
+        )
+        .slice(0, 6),
+    [recommendations, idStr, projectName],
+  );
+  const hubCursor = useMemo(
+    () =>
+      agentWorkItems
+        .filter(
+          (w) =>
+            w.relatedProjectId === idStr ||
+            w.title.toLowerCase().includes(projectName.toLowerCase()) ||
+            w.affectedModule.toLowerCase().includes(projectName.toLowerCase()),
+        )
+        .filter((w) => w.status !== "done" && w.status !== "rejected")
+        .slice(0, 6),
+    [agentWorkItems, idStr, projectName],
+  );
 
   async function saveRoseInstructions() {
     setBusy(true);
@@ -206,6 +243,96 @@ function ProjectDetailPanel({
           <p className="mt-1 text-sm font-semibold text-slate-800">
             {blockerCount} blocker{blockerCount === 1 ? "" : "s"} · {openTaskCount} task{openTaskCount === 1 ? "" : "s"}
           </p>
+        </div>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-3">
+        <div className="rounded-xl border border-slate-200 bg-white p-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+              <ListChecks className="h-3.5 w-3.5 text-sky-500" /> Tasks
+            </p>
+            <Link href={`/project-tasks?project=${encodeURIComponent(idStr)}`} className="text-[10px] font-semibold text-sky-600 hover:underline">
+              All tasks
+            </Link>
+          </div>
+          {hubTasks.length === 0 ? (
+            <p className="text-xs text-slate-400">No open tasks for this project yet.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {hubTasks.map((t) => (
+                <li key={t.id}>
+                  <Link
+                    href={`/project-tasks?task=${encodeURIComponent(t.id)}&project=${encodeURIComponent(idStr)}`}
+                    className="block rounded-lg bg-slate-50 px-2 py-1.5 hover:bg-sky-50"
+                  >
+                    <p className="text-xs font-medium text-slate-800">{t.title}</p>
+                    <p className="text-[10px] text-slate-400">
+                      {humanLabel(HUMAN_TASK_STATUS, t.status)}
+                      {t.owner ? ` · ${t.owner}` : ""}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+              <ClipboardCheck className="h-3.5 w-3.5 text-rose-500" /> Linked decisions
+            </p>
+            <Link href="/review-queue" className="text-[10px] font-semibold text-rose-600 hover:underline">
+              Review Queue
+            </Link>
+          </div>
+          {hubDecisions.length === 0 ? (
+            <p className="text-xs text-slate-400">No decisions linked to this project yet.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {hubDecisions.map((r) => (
+                <li key={r.id}>
+                  <Link
+                    href={`/review-queue?focus=${encodeURIComponent(r.id)}`}
+                    className="block rounded-lg bg-slate-50 px-2 py-1.5 hover:bg-rose-50"
+                  >
+                    <p className="line-clamp-2 text-xs font-medium text-slate-800">{r.recommendation}</p>
+                    <p className="text-[10px] text-slate-400">{humanLabel(HUMAN_REVIEW_STATUS, r.status)}</p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+              <Bot className="h-3.5 w-3.5 text-violet-500" /> Cursor requests
+            </p>
+            <Link href="/agent-queue" className="text-[10px] font-semibold text-violet-600 hover:underline">
+              All requests
+            </Link>
+          </div>
+          {hubCursor.length === 0 ? (
+            <p className="text-xs text-slate-400">No open Cursor requests for this project.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {hubCursor.map((w) => (
+                <li key={w.id}>
+                  <Link
+                    href={`/agent-queue?focus=${encodeURIComponent(w.id)}`}
+                    className="block rounded-lg bg-slate-50 px-2 py-1.5 hover:bg-violet-50"
+                  >
+                    <p className="text-xs font-medium text-slate-800">{w.title}</p>
+                    <p className="text-[10px] text-slate-400">
+                      {humanLabel(HUMAN_AGENT_STATUS, w.status)}
+                      {(w.attachmentCount ?? 0) > 0 ? ` · ${w.attachmentCount} file${w.attachmentCount === 1 ? "" : "s"}` : ""}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
 
@@ -367,6 +494,8 @@ function ProjectDetailPanel({
 export default function ProjectsPage() {
   const { user } = useAuth();
   const { projectTasks, projectsLoading, recommendations } = useAppState();
+  const search = useSearch();
+  const userKey = user?.email ?? String(user?.id ?? "anon");
   const pendingProjectRecs = useMemo(
     () => recommendations.filter((r) => r.status === "pending").map((r) => ({
       projectId: r.projectId,
@@ -382,9 +511,22 @@ export default function ProjectsPage() {
   const { data: buildPlans = [], isLoading: plansLoading } = useListProjectBuildPlans();
   const { data: handoffs = [] } = useListProjectHandoffs();
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [pinnedIds, setPinnedIds] = useState<string[]>(() => getPinnedProjectIds(userKey));
   const [ordered, setOrdered] = useState<ProjectRecord[] | null>(null);
   const [dragId, setDragId] = useState<number | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+    const expand = params.get("expand");
+    if (expand && /^\d+$/.test(expand)) {
+      setExpandedId(Number(expand));
+    }
+  }, [search]);
+
+  useEffect(() => {
+    setPinnedIds(getPinnedProjectIds(userKey));
+  }, [userKey]);
 
   const role = user?.role ?? "";
   const isRose = role === "rose_admin" || role === "super_admin";
@@ -478,7 +620,7 @@ export default function ProjectsPage() {
     <div className="space-y-6 p-6">
       <PageHeader
         title="Projects"
-        subtitle="Where each app stands — Rose's direction, Carmen's build plan, blockers, and handoff files."
+        subtitle="Open a project hub for tasks, decisions, Cursor requests, and handoff files in one place."
         icon={FolderKanban}
         accent="sky"
       />
@@ -603,16 +745,47 @@ export default function ProjectsPage() {
                         </Link>
                         <button
                           type="button"
-                          onClick={() => setExpandedId(expanded ? null : p.id)}
+                          onClick={() => {
+                            const next = togglePinnedProject(userKey, String(p.id));
+                            setPinnedIds(next);
+                            toast({
+                              title: next.includes(String(p.id)) ? "Pinned" : "Unpinned",
+                              description: next.includes(String(p.id))
+                                ? `${p.name} stays on your dashboard and sidebar.`
+                                : `${p.name} removed from pinned.`,
+                            });
+                          }}
+                          className={`inline-flex items-center gap-1 text-xs font-semibold ${
+                            pinnedIds.includes(String(p.id)) ? "text-amber-600" : "text-slate-500 hover:text-amber-600"
+                          }`}
+                          title={pinnedIds.includes(String(p.id)) ? "Unpin project" : "Pin project"}
+                        >
+                          <Pin className={`h-3.5 w-3.5 ${pinnedIds.includes(String(p.id)) ? "fill-amber-500" : ""}`} />
+                          {pinnedIds.includes(String(p.id)) ? "Pinned" : "Pin"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = expanded ? null : p.id;
+                            setExpandedId(next);
+                            if (next != null) {
+                              pushRecent(userKey, {
+                                id: String(p.id),
+                                kind: "project",
+                                label: p.name,
+                                href: `/projects?expand=${p.id}`,
+                              });
+                            }
+                          }}
                           className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-sky-600"
                         >
                           {expanded ? (
                             <>
-                              Hide details <ChevronUp className="h-3.5 w-3.5" />
+                              Hide hub <ChevronUp className="h-3.5 w-3.5" />
                             </>
                           ) : (
                             <>
-                              View plan & handoffs <ChevronDown className="h-3.5 w-3.5" />
+                              Open project hub <ChevronDown className="h-3.5 w-3.5" />
                             </>
                           )}
                         </button>
@@ -632,6 +805,7 @@ export default function ProjectsPage() {
                     {expanded ? (
                       <ProjectDetailPanel
                         projectId={p.id}
+                        projectName={p.name}
                         plan={plan}
                         handoffs={handoffsByProject[p.id] ?? []}
                         blockerCount={blockerCountByProject[p.id] ?? 0}
