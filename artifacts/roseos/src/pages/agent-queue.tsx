@@ -21,8 +21,10 @@ import { ApprovalRouteBadge, EmptyState, PageHeader, RiskBadge, SectionCard, Sta
 import { useAppState } from "@/hooks/use-app-state";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { getStickyFilter, setStickyFilter } from "@/lib/nav-prefs";
 import { humanLabel, HUMAN_AGENT_STATUS } from "@/lib/ui-labels";
 import type { AgentWorkItem, AgentWorkPriority, AgentWorkStatus, AgentWorkType, ApprovalRoute, RiskLevel } from "@/types";
+import { useSearch } from "wouter";
 
 const WORK_TYPES: AgentWorkType[] = ["bug", "fix", "improvement", "ops", "question", "integration-prep"];
 const PRIORITIES: AgentWorkPriority[] = ["low", "medium", "high", "urgent"];
@@ -210,14 +212,16 @@ function WorkItemCard({
   canUpload,
   onUpdate,
   onEvent,
+  focused,
 }: {
   item: AgentWorkItem;
   canManage: boolean;
   canUpload: boolean;
   onUpdate: (id: string, patch: Parameters<ReturnType<typeof useAppState>["updateAgentWork"]>[1]) => void;
   onEvent: (id: string, action: string, note?: string) => void;
+  focused?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(focused ?? false);
   const [status, setStatus] = useState<AgentWorkStatus>(item.status);
   const [priority, setPriority] = useState<AgentWorkPriority>(item.priority);
   const [agentNotes, setAgentNotes] = useState(item.agentNotes);
@@ -250,7 +254,7 @@ function WorkItemCard({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className={`rounded-2xl border bg-white p-5 shadow-sm ${focused ? "border-violet-300 ring-2 ring-violet-100" : "border-slate-200"}`}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -356,8 +360,10 @@ function WorkItemCard({
 
 export default function AgentQueue() {
   const { agentWorkItems, agentWorkLoading, createAgentWork, updateAgentWork, addAgentWorkItemEvent } = useAppState();
-  const { hasPermission } = useAuth();
+  const { user, hasPermission } = useAuth();
   const { toast } = useToast();
+  const search = useSearch();
+  const userKey = user?.email ?? String(user?.id ?? "anon");
   const canManage = hasPermission("agent_work_manage");
   const canUpload =
     hasPermission("agent_work_manage") ||
@@ -365,8 +371,24 @@ export default function AgentQueue() {
     hasPermission("external_intake_act");
   const createFileRef = useRef<HTMLInputElement>(null);
   const [showForm, setShowForm] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<AgentWorkStatus | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<AgentWorkStatus | "all">(() => {
+    const saved = getStickyFilter(userKey, "agent-queue");
+    if (saved === "all" || (STATUSES as string[]).includes(saved)) return saved as AgentWorkStatus | "all";
+    return "all";
+  });
+  const [focusId, setFocusId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+    const focus = params.get("focus");
+    if (focus) setFocusId(focus);
+  }, [search]);
+
+  const chooseStatus = (status: AgentWorkStatus | "all") => {
+    setStatusFilter(status);
+    setStickyFilter(userKey, "agent-queue", status);
+  };
   const [description, setDescription] = useState("");
   const [requestType, setRequestType] = useState<AgentWorkType>("fix");
   const [priority, setPriority] = useState<AgentWorkPriority>("medium");
@@ -577,12 +599,13 @@ export default function AgentQueue() {
         </SectionCard>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {(["all", ...STATUSES] as const).map((status) => (
-          <button key={status} onClick={() => setStatusFilter(status)} className={`rounded-full px-3 py-1 text-xs font-medium capitalize transition ${statusFilter === status ? "bg-violet-500 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"}`}>
+          <button key={status} onClick={() => chooseStatus(status)} className={`rounded-full px-3 py-1 text-xs font-medium capitalize transition ${statusFilter === status ? "bg-violet-500 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"}`}>
             {status === "all" ? "All" : humanLabel(HUMAN_AGENT_STATUS, status)}
           </button>
         ))}
+        {statusFilter !== "all" ? <span className="text-[10px] text-slate-400">Filters remembered for you</span> : null}
       </div>
 
       <div className="space-y-3">
@@ -598,7 +621,7 @@ export default function AgentQueue() {
             action={
               statusFilter !== "all" && agentWorkItems.length > 0 ? (
                 <button
-                  onClick={() => setStatusFilter("all")}
+                  onClick={() => chooseStatus("all")}
                   className="rounded-lg bg-violet-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-600"
                 >
                   Show All ({agentWorkItems.length})
@@ -608,7 +631,7 @@ export default function AgentQueue() {
           />
         )}
         {!agentWorkLoading && filtered.map((item) => (
-          <WorkItemCard key={item.id} item={item} canManage={canManage} canUpload={canUpload} onUpdate={update} onEvent={addEvent} />
+          <WorkItemCard key={item.id} item={item} canManage={canManage} canUpload={canUpload} onUpdate={update} onEvent={addEvent} focused={focusId === item.id} />
         ))}
       </div>
     </div>

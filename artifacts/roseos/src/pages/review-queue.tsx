@@ -1,27 +1,48 @@
-import React, { useMemo, useState } from "react";
-import { Link } from "wouter";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useSearch } from "wouter";
 import { ClipboardCheck, Check, X, RefreshCw, History, Filter, FolderKanban } from "lucide-react";
 import { PageHeader, ClassificationBadge, RiskBadge, ApprovalRouteBadge, StatusChip, EmptyState, ApprovalPassport } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
 import { useAuth } from "@/hooks/use-auth";
 import { canApprove, mapServerRole, needsMySignOff, waitingOnLabel } from "@/lib/helpers";
 import { useToast } from "@/hooks/use-toast";
+import { getStickyFilter, setStickyFilter } from "@/lib/nav-prefs";
 import { humanLabel, HUMAN_REVIEW_CATEGORY, HUMAN_REVIEW_STATUS } from "@/lib/ui-labels";
 import type { Role } from "@/types";
 
 const CATEGORIES = ["all", "duplicate", "team-pulse", "automation", "market", "mind-meld-handoff", "final-decision", "mockup-prompt", "external-intake"] as const;
 const STATUS_TONE: Record<string, "amber" | "emerald" | "rose" | "sky"> = { pending: "amber", approved: "emerald", rejected: "rose", "needs-revision": "sky" };
 
+function initialCategory(userKey: string): (typeof CATEGORIES)[number] {
+  const saved = getStickyFilter(userKey, "review-queue");
+  return (CATEGORIES as readonly string[]).includes(saved) ? (saved as (typeof CATEGORIES)[number]) : "all";
+}
+
 export default function ReviewQueue() {
   const { user } = useAuth();
   const { recommendations, recommendationsLoading, setRecommendationStatus, currentRole, projects } = useAppState();
   const { toast } = useToast();
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("all");
+  const search = useSearch();
+  const userKey = user?.email ?? String(user?.id ?? currentRole);
+  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>(() => initialCategory(userKey));
   const [expanded, setExpanded] = useState<string | null>(null);
   const [actingId, setActingId] = useState<string | null>(null);
+  const [filtersRemembered, setFiltersRemembered] = useState(false);
 
   // Prefer live auth role so Rose always gets Sign off when her account is rose_admin.
   const role: Role = user ? mapServerRole(user.role) : currentRole;
+
+  useEffect(() => {
+    const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+    const focus = params.get("focus");
+    if (focus) setExpanded(focus);
+  }, [search]);
+
+  const chooseCategory = (c: (typeof CATEGORIES)[number]) => {
+    setCategory(c);
+    setStickyFilter(userKey, "review-queue", c);
+    setFiltersRemembered(true);
+  };
 
   const projectNameById = useMemo(
     () => Object.fromEntries(projects.map((p) => [p.id, p.name])),
@@ -105,7 +126,7 @@ export default function ReviewQueue() {
           return (
             <button
               key={c}
-              onClick={() => setCategory(c)}
+              onClick={() => chooseCategory(c)}
               className={`rounded-full px-3 py-1 text-xs font-medium capitalize transition ${selected ? "bg-rose-500 text-white shadow-sm" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"}`}
             >
               {humanLabel(HUMAN_REVIEW_CATEGORY, c)}
@@ -117,6 +138,9 @@ export default function ReviewQueue() {
             </button>
           );
         })}
+        {filtersRemembered || getStickyFilter(userKey, "review-queue") ? (
+          <span className="text-[10px] text-slate-400">Filters remembered for you</span>
+        ) : null}
       </div>
 
       <div className="space-y-3">
@@ -131,14 +155,14 @@ export default function ReviewQueue() {
               category !== "all" && pending.length > 0 ? (
                 <div className="flex flex-wrap justify-center gap-2">
                   <button
-                    onClick={() => setCategory("all")}
+                    onClick={() => chooseCategory("all")}
                     className="rounded-lg bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-600"
                   >
                     Show All ({pending.length})
                   </button>
                   {(countsByCategory["final-decision"] ?? 0) > 0 && category !== "final-decision" && (
                     <button
-                      onClick={() => setCategory("final-decision")}
+                      onClick={() => chooseCategory("final-decision")}
                       className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
                     >
                       Final decisions ({countsByCategory["final-decision"]})
@@ -155,7 +179,7 @@ export default function ReviewQueue() {
           const busy = actingId === r.id;
           const projectName = r.projectId ? projectNameById[r.projectId] : null;
           return (
-            <div key={r.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div key={r.id} className={`rounded-2xl border bg-white p-5 shadow-sm ${expanded === r.id ? "border-rose-300 ring-2 ring-rose-100" : "border-slate-200"}`}>
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-2">

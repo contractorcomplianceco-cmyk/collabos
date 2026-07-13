@@ -1,14 +1,16 @@
-import { useState } from "react";
-import { Link } from "wouter";
+import { useEffect, useState } from "react";
+import { Link, useSearch } from "wouter";
 import { ClipboardCheck, FolderKanban, Plus, Check, Users } from "lucide-react";
 import { PageHeader, SectionCard, StatusChip, EmptyState } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
+import { useAuth } from "@/hooks/use-auth";
 import { canSubmit } from "@/lib/helpers";
 import {
   bucketProjectTaskOwner,
   formatProjectTaskCompletedDate,
   projectTaskCompletedSortKey,
 } from "@/lib/project-task-owners";
+import { getStickyFilter, setStickyFilter } from "@/lib/nav-prefs";
 import { useToast } from "@/hooks/use-toast";
 import { humanLabel, HUMAN_TASK_STATUS } from "@/lib/ui-labels";
 import type { Task } from "@/types";
@@ -21,10 +23,14 @@ const TASK_TONE: Record<Task["status"], "slate" | "sky" | "amber" | "emerald"> =
 };
 
 const STATUSES: Task["status"][] = ["todo", "in-progress", "review", "done"];
+const OWNER_FILTERS = ["all", "rose", "carmen", "team"] as const;
 
 export default function ProjectTasksPage() {
   const { projectTasks, projects, projectsLoading, currentRole, createProjectTaskEntry, updateProjectTaskEntry } = useAppState();
+  const { user } = useAuth();
   const { toast } = useToast();
+  const search = useSearch();
+  const userKey = user?.email ?? String(user?.id ?? currentRole);
   const projectsByPriority = [...projects].sort(
     (a, b) => (a.sortOrder ?? Number(a.id)) - (b.sortOrder ?? Number(b.id)) || a.name.localeCompare(b.name),
   );
@@ -42,17 +48,49 @@ export default function ProjectTasksPage() {
   const [editOwner, setEditOwner] = useState("");
   const [editDue, setEditDue] = useState("");
   const [editStatus, setEditStatus] = useState<Task["status"]>("todo");
+  const [projectFilter, setProjectFilter] = useState(() => getStickyFilter(userKey, "project-tasks-project") || "all");
+  const [ownerFilter, setOwnerFilter] = useState<(typeof OWNER_FILTERS)[number]>(() => {
+    const saved = getStickyFilter(userKey, "project-tasks-owner");
+    return (OWNER_FILTERS as readonly string[]).includes(saved) ? (saved as (typeof OWNER_FILTERS)[number]) : "all";
+  });
+  const [focusTaskId, setFocusTaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+    const task = params.get("task");
+    const project = params.get("project");
+    if (task) setFocusTaskId(task);
+    if (project) {
+      setProjectFilter(project);
+      setStickyFilter(userKey, "project-tasks-project", project);
+    }
+  }, [search, userKey]);
+
+  const chooseProjectFilter = (id: string) => {
+    setProjectFilter(id);
+    setStickyFilter(userKey, "project-tasks-project", id);
+  };
+  const chooseOwnerFilter = (o: (typeof OWNER_FILTERS)[number]) => {
+    setOwnerFilter(o);
+    setStickyFilter(userKey, "project-tasks-owner", o);
+  };
 
   const byProjectPriority = (a: Task, b: Task) =>
     (projectOrderById[a.projectId] ?? Number.MAX_SAFE_INTEGER) - (projectOrderById[b.projectId] ?? Number.MAX_SAFE_INTEGER) ||
     a.title.localeCompare(b.title);
 
-  const openTasks = projectTasks.filter((t) => t.status !== "done");
+  const matchesFilters = (t: Task) => {
+    if (projectFilter !== "all" && t.projectId !== projectFilter) return false;
+    if (ownerFilter === "all") return true;
+    return bucketProjectTaskOwner(t.owner, t.title) === ownerFilter;
+  };
+
+  const openTasks = projectTasks.filter((t) => t.status !== "done" && matchesFilters(t));
   const roseOpen = openTasks.filter((t) => bucketProjectTaskOwner(t.owner, t.title) === "rose").sort(byProjectPriority);
   const carmenOpen = openTasks.filter((t) => bucketProjectTaskOwner(t.owner, t.title) === "carmen").sort(byProjectPriority);
   const teamOpen = openTasks.filter((t) => bucketProjectTaskOwner(t.owner, t.title) === "team").sort(byProjectPriority);
   const doneTasks = projectTasks
-    .filter((t) => t.status === "done")
+    .filter((t) => t.status === "done" && matchesFilters(t))
     .slice()
     .sort((a, b) => projectTaskCompletedSortKey(b) - projectTaskCompletedSortKey(a));
 
@@ -120,9 +158,16 @@ export default function ProjectTasksPage() {
     }
 
     const completedLabel = opts?.showCompletedDate ? formatProjectTaskCompletedDate(task) : null;
+    const focused = focusTaskId === task.id;
 
     return (
-      <li key={task.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-2.5">
+      <li
+        key={task.id}
+        id={`task-${task.id}`}
+        className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 ${
+          focused ? "border-sky-300 bg-sky-50/50 ring-2 ring-sky-100" : "border-slate-100"
+        }`}
+      >
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-slate-700">{task.title}</p>
           <p className="truncate text-[11px] text-slate-400">
@@ -164,6 +209,36 @@ export default function ProjectTasksPage() {
           </div>
         }
       />
+
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Project</label>
+        <select
+          value={projectFilter}
+          onChange={(e) => chooseProjectFilter(e.target.value)}
+          className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700"
+        >
+          <option value="all">All projects</option>
+          {projectsByPriority.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
+        <label className="ml-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Owner</label>
+        {OWNER_FILTERS.map((o) => (
+          <button
+            key={o}
+            type="button"
+            onClick={() => chooseOwnerFilter(o)}
+            className={`rounded-full px-3 py-1 text-xs font-medium capitalize transition ${
+              ownerFilter === o ? "bg-sky-500 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            {o === "all" ? "All owners" : o}
+          </button>
+        ))}
+        {(projectFilter !== "all" || ownerFilter !== "all") ? (
+          <span className="text-[10px] text-slate-400">Filters remembered for you</span>
+        ) : null}
+      </div>
 
       {projects.length === 0 && !projectsLoading ? (
         <EmptyState
