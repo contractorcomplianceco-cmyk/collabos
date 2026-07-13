@@ -77,7 +77,7 @@ export const GetCurrentUserResponse = zod.object({
  * @summary Record that the user visited a workspace module
  */
 export const MarkModuleSeenBody = zod.object({
-  "module": zod.enum(['dashboard', 'review-queue', 'mind-meld', 'agent-queue', 'external-intake', 'project-tasks'])
+  "module": zod.enum(['dashboard', 'review-queue', 'mind-meld', 'agent-queue', 'external-intake', 'project-tasks', 'carmen-path', 'projects'])
 })
 
 export const MarkModuleSeenResponse = zod.object({
@@ -662,7 +662,8 @@ export const CreateRecommendationBody = zod.object({
   "recommendation": zod.string().min(1),
   "classification": zod.enum(['documented-fact', 'user-update', 'ai-recommendation', 'draft-idea', 'pending-approval', 'approved-decision', 'sensitive']),
   "risk": zod.enum(['low', 'medium', 'high', 'critical']),
-  "requiredApprover": zod.enum(['rose', 'carmen', 'both', 'none'])
+  "requiredApprover": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "projectId": zod.number().nullish()
 })
 
 
@@ -696,6 +697,7 @@ export const ChangeRecommendationStatusResponse = zod.object({
   "actor": zod.string(),
   "action": zod.string()
 })),
+  "projectId": zod.number().nullish(),
   "createdById": zod.number().nullish(),
   "createdByName": zod.string().nullish(),
   "createdAt": zod.string(),
@@ -2038,7 +2040,8 @@ export const ListAgentWorkItemsResponseItem = zod.object({
 })),
   "createdByName": zod.string().nullable(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "attachmentCount": zod.number().default(0)
 })
 export const ListAgentWorkItemsResponse = zod.array(ListAgentWorkItemsResponseItem)
 

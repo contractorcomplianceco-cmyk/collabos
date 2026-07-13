@@ -19,4 +19,6 @@ export interface RecommendationInput {
   classification: RecommendationClassification;
   risk: RecommendationRiskLevel;
   requiredApprover: RecommendationApprovalRoute;
+  /** @nullable */
+  projectId?: number | null;
 }

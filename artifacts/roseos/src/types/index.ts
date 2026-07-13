@@ -409,6 +409,7 @@ export interface Recommendation {
   status: ApprovalStatus;
   approvals?: { rose: boolean; carmen: boolean };
   history: AuditEntry[];
+  projectId?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -459,6 +460,7 @@ export interface AgentWorkItem {
   createdByName: string | null;
   createdAt: string;
   updatedAt: string;
+  attachmentCount?: number;
 }
 
 export interface IntegrationStatus {

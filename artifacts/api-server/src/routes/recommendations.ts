@@ -10,6 +10,7 @@ import {
 import { desc, eq } from "drizzle-orm";
 import { logAudit } from "../lib/audit";
 import { hasPermission } from "../lib/permissions";
+import { resolveProjectForRecommendation } from "../lib/match-project";
 import {
   actorLabel,
   canApproveRecommendation,
@@ -17,6 +18,7 @@ import {
   historyTimestamp,
 } from "../lib/recommendation-approval";
 import { serializeRecommendation } from "../lib/seed-recommendations";
+import { applySignoffFollowUp } from "../lib/signoff-followup";
 import { requireAuth, requirePermission } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -57,6 +59,13 @@ router.post("/recommendations", requireAuth, async (req, res) => {
     },
   ];
 
+  const explicitProjectId = parsed.data.projectId ?? null;
+  const match = await resolveProjectForRecommendation(
+    parsed.data.recommendation,
+    parsed.data.source,
+    explicitProjectId,
+  );
+
   const [created] = await db
     .insert(recommendationsTable)
     .values({
@@ -69,6 +78,7 @@ router.post("/recommendations", requireAuth, async (req, res) => {
       status: "pending",
       approvals: { rose: false, carmen: false },
       history,
+      projectId: match?.id ?? null,
       createdById: actor.id,
       createdByName: actor.name,
     })
@@ -145,6 +155,14 @@ router.post("/recommendations/:id/status", requireAuth, requirePermission("revie
     .where(eq(recommendationsTable.id, id))
     .returning();
 
+  let followUp = null;
+  if (requested === "approved") {
+    followUp = await applySignoffFollowUp(updated, actor.role);
+    if (followUp.projectId && followUp.projectId !== updated.projectId) {
+      updated.projectId = followUp.projectId;
+    }
+  }
+
   await logAudit({
     actorId: actor.id,
     actorName: actor.name,
@@ -152,10 +170,16 @@ router.post("/recommendations/:id/status", requireAuth, requirePermission("revie
     targetType: "recommendation",
     targetId: String(id),
     sourceArea: "review_queue",
-    details: `${row.status} -> ${nextStatus}`,
+    details: followUp?.taskId
+      ? `${row.status} -> ${nextStatus}; task #${followUp.taskId} for ${followUp.taskOwner}`
+      : `${row.status} -> ${nextStatus}`,
   });
 
-  res.json(serializeRecommendation(updated));
+  const refreshed = await findRecommendation(id);
+  res.json({
+    ...serializeRecommendation(refreshed ?? updated),
+    followUp,
+  });
 });
 
 export default router;

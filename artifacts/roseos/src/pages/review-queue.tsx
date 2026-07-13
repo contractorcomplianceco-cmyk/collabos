@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { ClipboardCheck, Check, X, RefreshCw, History, Filter } from "lucide-react";
+import { Link } from "wouter";
+import { ClipboardCheck, Check, X, RefreshCw, History, Filter, FolderKanban } from "lucide-react";
 import { PageHeader, ClassificationBadge, RiskBadge, ApprovalRouteBadge, StatusChip, EmptyState, ApprovalPassport } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,7 +14,7 @@ const STATUS_TONE: Record<string, "amber" | "emerald" | "rose" | "sky"> = { pend
 
 export default function ReviewQueue() {
   const { user } = useAuth();
-  const { recommendations, recommendationsLoading, setRecommendationStatus, currentRole } = useAppState();
+  const { recommendations, recommendationsLoading, setRecommendationStatus, currentRole, projects } = useAppState();
   const { toast } = useToast();
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("all");
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -21,6 +22,11 @@ export default function ReviewQueue() {
 
   // Prefer live auth role so Rose always gets Sign off when her account is rose_admin.
   const role: Role = user ? mapServerRole(user.role) : currentRole;
+
+  const projectNameById = useMemo(
+    () => Object.fromEntries(projects.map((p) => [p.id, p.name])),
+    [projects],
+  );
 
   const pending = useMemo(() => recommendations.filter((r) => r.status === "pending"), [recommendations]);
   const countsByCategory = useMemo(() => {
@@ -68,9 +74,15 @@ export default function ReviewQueue() {
         });
         return;
       }
-      const title =
-        status === "approved" ? "Signed off" : status === "rejected" ? "Sent back" : "Marked for revision";
-      toast({ title, description: "Saved to the shared review queue." });
+      if (status === "approved") {
+        toast({
+          title: "Signed off — added to Carmen’s open work",
+          description: "A project task was created or updated so Carmen can pick it up in today’s path.",
+        });
+      } else {
+        const title = status === "rejected" ? "Sent back" : "Marked for revision";
+        toast({ title, description: "Saved to the shared review queue." });
+      }
     } finally {
       setActingId(null);
     }
@@ -78,7 +90,12 @@ export default function ReviewQueue() {
 
   return (
     <div className="space-y-6 p-6">
-      <PageHeader title="Review Queue" subtitle="Things that need your sign-off. Nothing here is approved automatically." icon={ClipboardCheck} accent="rose" />
+      <PageHeader
+        title="Review Queue"
+        subtitle="Stamp decisions — things that need your sign-off. Nothing here is approved automatically."
+        icon={ClipboardCheck}
+        accent="rose"
+      />
 
       <div className="flex flex-wrap items-center gap-2">
         <Filter className="h-4 w-4 text-slate-400" />
@@ -136,6 +153,7 @@ export default function ReviewQueue() {
           const allowed = canApprove(role, r.requiredApprover);
           const myTurn = needsMySignOff(role, r.requiredApprover, r.approvals, r.status);
           const busy = actingId === r.id;
+          const projectName = r.projectId ? projectNameById[r.projectId] : null;
           return (
             <div key={r.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -145,6 +163,15 @@ export default function ReviewQueue() {
                     <ClassificationBadge value={r.classification} />
                     <RiskBadge value={r.risk} />
                     <ApprovalRouteBadge value={r.requiredApprover} />
+                    {projectName ? (
+                      <Link
+                        href="/projects"
+                        className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-0.5 text-[11px] font-semibold text-sky-700 ring-1 ring-sky-100 hover:bg-sky-100"
+                      >
+                        <FolderKanban className="h-3 w-3" />
+                        {projectName}
+                      </Link>
+                    ) : null}
                   </div>
                   <p className="mt-3 text-sm font-medium text-slate-800">{r.recommendation}</p>
                   <button onClick={() => setExpanded(expanded === r.id ? null : r.id)} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-600">

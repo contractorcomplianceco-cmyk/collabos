@@ -477,6 +477,30 @@ export default function Dashboard() {
         </p>
       </SectionCard>
 
+      {(isRose || isCarmen) && (
+        <SectionCard
+          title="Carmen’s path today"
+          icon={FolderKanban}
+          accent="violet"
+          action={<Link href="/carmen-path" className="text-xs font-semibold text-violet-600 hover:underline">Open path</Link>}
+        >
+          <p className="mb-2 text-xs text-slate-500">
+            Work order Rose set — projects in her priority order, with Carmen’s open tasks and blockers under each.
+          </p>
+          <div className="flex flex-wrap gap-2 text-xs">
+            <Link href="/carmen-path" className="rounded-lg bg-violet-500 px-3 py-1.5 font-semibold text-white hover:bg-violet-600">
+              View Carmen’s path
+            </Link>
+            <Link href="/projects" className="rounded-lg bg-white px-3 py-1.5 font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50">
+              Reorder on Projects
+            </Link>
+            <Link href="/project-tasks" className="rounded-lg bg-white px-3 py-1.5 font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50">
+              All tasks
+            </Link>
+          </div>
+        </SectionCard>
+      )}
+
       {isLeadership ? (
         <SectionCard
           title="Decisions & integrations"

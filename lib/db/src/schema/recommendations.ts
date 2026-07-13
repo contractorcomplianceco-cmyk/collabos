@@ -2,6 +2,7 @@ import { pgTable, text, serial, integer, timestamp, jsonb } from "drizzle-orm/pg
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
+import { projectsTable } from "./projects";
 
 export const RECOMMENDATION_CATEGORIES = [
   "duplicate",
@@ -63,6 +64,7 @@ export const recommendationsTable = pgTable("recommendations", {
   status: text("status", { enum: RECOMMENDATION_STATUSES }).notNull().default("pending"),
   approvals: jsonb("approvals").$type<RecommendationApprovals>().notNull().default({ rose: false, carmen: false }),
   history: jsonb("history").$type<RecommendationHistoryEntry[]>().notNull().default([]),
+  projectId: integer("project_id").references(() => projectsTable.id, { onDelete: "set null" }),
   createdById: integer("created_by_id").references(() => usersTable.id, { onDelete: "set null" }),
   createdByName: text("created_by_name"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

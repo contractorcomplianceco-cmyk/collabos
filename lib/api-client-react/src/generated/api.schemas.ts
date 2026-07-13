@@ -61,6 +61,8 @@ export const ModuleSeenInputModule = {
   'agent-queue': 'agent-queue',
   'external-intake': 'external-intake',
   'project-tasks': 'project-tasks',
+  'carmen-path': 'carmen-path',
+  projects: 'projects',
 } as const;
 
 export interface ModuleSeenInput {
@@ -379,6 +381,8 @@ export interface RecommendationRecord {
   approvals: RecommendationApprovals;
   history: RecommendationHistoryEntry[];
   /** @nullable */
+  projectId?: number | null;
+  /** @nullable */
   createdById?: number | null;
   /** @nullable */
   createdByName?: string | null;
@@ -395,6 +399,8 @@ export interface RecommendationInput {
   classification: RecommendationClassification;
   risk: RecommendationRiskLevel;
   requiredApprover: RecommendationApprovalRoute;
+  /** @nullable */
+  projectId?: number | null;
 }
 
 export interface RecommendationStatusChange {
@@ -1771,6 +1777,7 @@ export interface AgentWorkItemRecord {
   createdByName: string | null;
   createdAt: string;
   updatedAt: string;
+  attachmentCount: number;
 }
 
 export type AgentWorkItemInputApprovalRoute = typeof AgentWorkItemInputApprovalRoute[keyof typeof AgentWorkItemInputApprovalRoute];

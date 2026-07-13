@@ -1748,6 +1748,8 @@ components:
             - agent-queue
             - external-intake
             - project-tasks
+            - carmen-path
+            - projects
     LoginInput:
       type: object
       required: [email, password]
@@ -2025,6 +2027,7 @@ components:
         history:
           type: array
           items: { $ref: "#/components/schemas/RecommendationHistoryEntry" }
+        projectId: { type: ["integer", "null"] }
         createdById: { type: ["integer", "null"] }
         createdByName: { type: ["string", "null"] }
         createdAt: { type: string }
@@ -2039,6 +2042,7 @@ components:
         classification: { $ref: "#/components/schemas/RecommendationClassification" }
         risk: { $ref: "#/components/schemas/RecommendationRiskLevel" }
         requiredApprover: { $ref: "#/components/schemas/RecommendationApprovalRoute" }
+        projectId: { type: ["integer", "null"] }
     RecommendationStatusChange:
       type: object
       required: [status]
@@ -2858,6 +2862,7 @@ components:
         - createdByName
         - createdAt
         - updatedAt
+        - attachmentCount
       properties:
         id: { type: integer }
         title: { type: string }
@@ -2884,6 +2889,7 @@ components:
         createdByName: { type: ["string", "null"] }
         createdAt: { type: string }
         updatedAt: { type: string }
+        attachmentCount: { type: integer }
     AgentWorkItemInput:
       type: object
       required: [title, description, requestType, priority, affectedModule, desiredOutcome, approvalRoute, risk]

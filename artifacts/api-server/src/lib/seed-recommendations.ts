@@ -70,6 +70,7 @@ function serializeRecommendation(row: Recommendation) {
     status: row.status,
     approvals: row.approvals,
     history: row.history,
+    projectId: row.projectId ?? null,
     createdById: row.createdById,
     createdByName: row.createdByName,
     createdAt: row.createdAt.toISOString(),

@@ -362,6 +362,7 @@ function toRecommendation(rec: RecommendationRecord): Recommendation {
     status: rec.status,
     approvals: rec.approvals,
     history: rec.history,
+    projectId: rec.projectId != null ? String(rec.projectId) : null,
     createdAt: rec.createdAt,
     updatedAt: rec.updatedAt,
   };
@@ -750,6 +751,7 @@ function toAgentWorkItem(row: AgentWorkItemRecord): AgentWorkItem {
     createdByName: row.createdByName,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    attachmentCount: row.attachmentCount ?? 0,
   };
 }
 
@@ -927,13 +929,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       if (!rec || !canApprove(actor as Role, rec.requiredApprover)) return false;
       try {
         await changeRecommendationStatus(Number(id), { status: nextStatus });
-        await invalidateRecommendations();
+        await Promise.all([invalidateRecommendations(), invalidateProjectTasks()]);
         return true;
       } catch {
         return false;
       }
     },
-    [recommendations, invalidateRecommendations],
+    [recommendations, invalidateRecommendations, invalidateProjectTasks],
   );
 
   const addRecommendation = useCallback(
