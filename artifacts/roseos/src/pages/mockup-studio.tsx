@@ -655,7 +655,7 @@ function ReviewTab({ mockup, draft }: { mockup: MockupRecord; draft: { title: st
         <pre className="max-h-80 overflow-y-auto whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-[11px] leading-relaxed text-slate-600">{handoff}</pre>
       </SectionCard>
       <SectionCard
-        title="Replit build prompt"
+        title="Build prompt"
         icon={Wand2}
         accent="rose"
         action={<button onClick={() => copy(prompt, "Build prompt")} className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-slate-200"><Copy className="h-3 w-3" /> Copy</button>}

@@ -35,7 +35,7 @@ const SEED_AGENT_WORK = [
   },
 ];
 
-export function serializeAgentWorkItem(row: AgentWorkItemRow) {
+export function serializeAgentWorkItem(row: AgentWorkItemRow, attachmentCount = 0) {
   return {
     id: row.id,
     title: row.title,
@@ -62,6 +62,7 @@ export function serializeAgentWorkItem(row: AgentWorkItemRow) {
     createdByName: row.createdByName,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+    attachmentCount,
   };
 }
 

@@ -9,7 +9,7 @@ import {
   type AgentWorkAttachmentRow,
   type AgentWorkItemRow,
 } from "@workspace/db";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { logAudit } from "../lib/audit";
 import { hasPermission } from "../lib/permissions";
 import { agentWorkEvent, serializeAgentWorkItem } from "../lib/seed-agent-work";
@@ -90,7 +90,15 @@ async function findAgentWorkItem(id: number): Promise<AgentWorkItemRow | undefin
 
 router.get("/agent-work/items", requireAuth, requirePermission("agent_work_view"), async (_req, res) => {
   const rows = await db.select().from(agentWorkItemsTable).orderBy(desc(agentWorkItemsTable.updatedAt));
-  res.json(rows.map(serializeAgentWorkItem));
+  const countRows = await db
+    .select({
+      agentWorkItemId: agentWorkAttachmentsTable.agentWorkItemId,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(agentWorkAttachmentsTable)
+    .groupBy(agentWorkAttachmentsTable.agentWorkItemId);
+  const countById = new Map(countRows.map((r) => [r.agentWorkItemId, Number(r.count)]));
+  res.json(rows.map((row) => serializeAgentWorkItem(row, countById.get(row.id) ?? 0)));
 });
 
 router.post("/agent-work/items", requireAuth, async (req, res) => {

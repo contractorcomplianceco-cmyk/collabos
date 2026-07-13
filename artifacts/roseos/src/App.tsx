@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Target, Users, Search, Lightbulb, PenTool, FileBarChart,
   Activity, Brain, ClipboardCheck, Settings as SettingsIcon, Bell, Lock, Menu, X,
   Sparkles, Send, AlertTriangle, Inbox, LogOut, UserCog, ScrollText, Wand2, Bot,
-  FolderKanban, ListChecks,
+  FolderKanban, ListChecks, Route as RouteIcon,
 } from "lucide-react";
 import { canAccessMindMeld, canViewModule, mapServerRole, canSubmit, classifyIntakeMessage, detectDuplicates } from "@/lib/helpers";
 import { useActivityNotifications } from "@/hooks/use-activity-notifications";
@@ -35,6 +35,7 @@ import UserManagement from "@/pages/user-management";
 import AuditLogs from "@/pages/audit-logs";
 import ProjectsPage from "@/pages/projects";
 import ProjectTasksPage from "@/pages/project-tasks";
+import CarmenPathPage from "@/pages/carmen-path";
 
 const queryClient = new QueryClient();
 
@@ -44,11 +45,13 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   ctx: string;
   gated?: boolean;
+  blurb?: string;
 }
 
 const NAV: NavItem[] = [
   { href: "/", label: "Collab Dashboard", icon: LayoutDashboard, ctx: "Collab Dashboard" },
   { href: "/projects", label: "Projects", icon: FolderKanban, ctx: "Projects" },
+  { href: "/carmen-path", label: "Carmen’s Path", icon: RouteIcon, ctx: "Carmen’s Path Today" },
   { href: "/project-tasks", label: "Project Tasks", icon: ListChecks, ctx: "Project Tasks" },
   { href: "/duplicate-radar", label: "Duplicate Radar", icon: Target, ctx: "Duplicate Radar" },
   { href: "/team-pulse", label: "Team Pulse", icon: Users, ctx: "Team Pulse" },
@@ -57,8 +60,8 @@ const NAV: NavItem[] = [
   { href: "/mockup-studio", label: "Mockup Studio", icon: PenTool, ctx: "Mockup Studio" },
   { href: "/executive-reports", label: "Executive Reports", icon: FileBarChart, ctx: "Executive Reports" },
   { href: "/market-pulse", label: "Market Pulse", icon: Activity, ctx: "Market Pulse" },
-  { href: "/mind-meld", label: "Mind Meld Room", icon: Brain, ctx: "Mind Meld Room", gated: true },
-  { href: "/review-queue", label: "Review Queue", icon: ClipboardCheck, ctx: "Review Queue" },
+  { href: "/mind-meld", label: "Mind Meld Room", icon: Brain, ctx: "Mind Meld Room", gated: true, blurb: "Think together" },
+  { href: "/review-queue", label: "Review Queue", icon: ClipboardCheck, ctx: "Review Queue", blurb: "Stamp decisions" },
   { href: "/agent-queue", label: "Cursor Direct Requests", icon: Bot, ctx: "Cursor Direct Requests" },
   { href: "/external-intake", label: "Incoming Messages", icon: Inbox, ctx: "Incoming Messages" },
   { href: "/settings", label: "Settings", icon: SettingsIcon, ctx: "Settings" },
@@ -67,6 +70,7 @@ const NAV: NavItem[] = [
 const ROSE_BRAIN_TIPS: Record<string, string[]> = {
   "Collab Dashboard": ["Your workspace starts empty — add projects and ideas as you go.", "I can summarize what's happening when your team adds data.", "Want a one-paragraph executive brief?"],
   "Projects": ["Create projects to track work across departments.", "Open the task list to see follow-ups by project.", "Unowned work can be flagged for leadership review."],
+  "Carmen’s Path Today": ["Projects appear in the order Rose dragged on Projects.", "Carmen’s open tasks and blockers sit under each project.", "Rose attachments on Cursor requests show at the top when present."],
   "Project Tasks": ["Open tasks are grouped from your shared project list.", "Filter by project from the Projects page.", "Completed tasks stay visible for reference."],
   "Duplicate Radar": ["I can flag overlaps as your project list grows.", "I can draft a merge recommendation for review.", "Add how-we-work records to improve duplicate detection."],
   "Team Pulse": ["Submit feedback to surface where teams need support.", "I can suggest a supportive follow-up plan.", "Team mood signals appear as feedback is collected."],
@@ -75,8 +79,8 @@ const ROSE_BRAIN_TIPS: Record<string, string[]> = {
   "Mockup Studio": ["Describe an idea and I'll structure a build brief.", "I can generate a ready-to-use build prompt.", "Send any concept to the Review Queue."],
   "Executive Reports": ["I can generate report types from live workspace data.", "Reports fill in as projects and team data grow.", "Export creates a leadership-ready summary."],
   "Market Pulse": ["Add competitors and keywords in Settings to start monitoring.", "Signals appear as market data is captured.", "I can suggest a recommended response per signal."],
-  "Mind Meld Room": ["This space is private to Rose and Carmen.", "Send to Carmen for systems; send to Rose for direction.", "Handoffs never auto-create official decisions."],
-  "Review Queue": ["Suggestions are never auto-approved.", "Items appear here when something needs your sign-off.", "Every decision is saved for reference."],
+  "Mind Meld Room": ["Think together — private space for Rose and Carmen.", "Send to Carmen for systems; send to Rose for direction.", "Handoffs never auto-create official decisions — stamp those in Review Queue."],
+  "Review Queue": ["Stamp decisions — suggestions are never auto-approved.", "Items appear here when something needs your sign-off.", "Sign-off adds the item to Carmen’s open work."],
   "Cursor Direct Requests": ["Only approved requests are ready for Cursor.", "Use this for fixes, bugs, day-to-day ops, and setup work.", "Every Cursor update should include what changed."],
   "Incoming Messages": ["Messages stay drafts until a person reviews them.", "Sensitive items stay with leadership.", "Routing suggestions still need your approval."],
   "Settings": ["Adjust duplicate sensitivity and alert thresholds.", "Connections stay off until you approve them.", "Your shared workspace is saved on the server."],
@@ -143,7 +147,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${cls}`}
             >
               <Icon className={`h-4 w-4 ${iconCls}`} />
-              <span className="flex-1">{l.label}</span>
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span>{l.label}</span>
+                {l.blurb ? (
+                  <span className={`text-[10px] font-normal ${active ? (l.gated ? "text-white/80" : "text-rose-400") : "text-slate-400"}`}>
+                    {l.blurb}
+                  </span>
+                ) : null}
+              </span>
               {l.gated && (locked
                 ? <Lock className={`h-3.5 w-3.5 ${active ? "text-white/70" : "text-violet-300"}`} />
                 : <span className={`h-1.5 w-1.5 rounded-full ${active ? "bg-white" : "bg-violet-400"}`} />)}
@@ -581,6 +592,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/projects">{() => <Guarded href="/projects"><ProjectsPage /></Guarded>}</Route>
+        <Route path="/carmen-path">{() => <Guarded href="/carmen-path"><CarmenPathPage /></Guarded>}</Route>
         <Route path="/project-tasks">{() => <Guarded href="/project-tasks"><ProjectTasksPage /></Guarded>}</Route>
         <Route path="/duplicate-radar">{() => <Guarded href="/duplicate-radar"><DuplicateRadar /></Guarded>}</Route>
         <Route path="/team-pulse">{() => <Guarded href="/team-pulse"><TeamPulse /></Guarded>}</Route>

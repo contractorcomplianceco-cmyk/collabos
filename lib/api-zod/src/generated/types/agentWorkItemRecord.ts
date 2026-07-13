@@ -47,4 +47,5 @@ export interface AgentWorkItemRecord {
   createdByName: string | null;
   createdAt: string;
   updatedAt: string;
+  attachmentCount: number;
 }

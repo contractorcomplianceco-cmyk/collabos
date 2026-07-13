@@ -48,17 +48,39 @@ const STATUS_TONE: Record<ProjectStatus, "sky" | "rose" | "amber" | "slate" | "e
 
 const PROJECT_TYPE_LABEL: Record<string, string> = {
   demo: "Demo",
-  live: "Live app",
+  live: "Live",
   planning: "Planning",
   "merged-cc-host": "Command Center",
 };
 
-const PROJECT_TYPE_TONE: Record<string, "amber" | "emerald" | "violet" | "sky"> = {
+const PROJECT_TYPE_TONE: Record<string, "amber" | "emerald" | "violet" | "sky" | "rose"> = {
   demo: "amber",
   live: "emerald",
   planning: "violet",
   "merged-cc-host": "sky",
 };
+
+function clientCodeBadges(tags: string[]): string[] {
+  return (tags ?? [])
+    .filter((t) => t.toLowerCase().startsWith("client-code:"))
+    .map((t) => t.slice("client-code:".length).toUpperCase())
+    .filter(Boolean);
+}
+
+function isAwaitingRose(
+  tags: string[],
+  pendingRecs: Array<{ projectId?: string | null; recommendation: string; status: string }>,
+  projectId: string | number,
+  projectName: string,
+): boolean {
+  const id = String(projectId);
+  if ((tags ?? []).some((t) => t.toLowerCase() === "awaiting-rose")) return true;
+  return pendingRecs.some(
+    (r) =>
+      r.status === "pending" &&
+      (r.projectId === id || r.recommendation.toLowerCase().includes(projectName.toLowerCase())),
+  );
+}
 
 function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`;
@@ -344,7 +366,15 @@ function ProjectDetailPanel({
 
 export default function ProjectsPage() {
   const { user } = useAuth();
-  const { projectTasks, projectsLoading } = useAppState();
+  const { projectTasks, projectsLoading, recommendations } = useAppState();
+  const pendingProjectRecs = useMemo(
+    () => recommendations.filter((r) => r.status === "pending").map((r) => ({
+      projectId: r.projectId,
+      recommendation: r.recommendation,
+      status: r.status,
+    })),
+    [recommendations],
+  );
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data: projects = [], isLoading: apiProjectsLoading } = useListProjects();
@@ -524,10 +554,30 @@ export default function ProjectsPage() {
                             <h3 className="text-sm font-semibold text-slate-800">{p.name}</h3>
                             <StatusChip label={humanLabel(HUMAN_PROJECT_STATUS, p.status)} tone={STATUS_TONE[p.status]} />
                             {p.projectType ? (
-                              <StatusChip
-                                label={PROJECT_TYPE_LABEL[p.projectType] ?? p.projectType}
-                                tone={PROJECT_TYPE_TONE[p.projectType] ?? "slate"}
-                              />
+                              <span
+                                className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ring-2 ${
+                                  p.projectType === "live"
+                                    ? "bg-emerald-500 text-white ring-emerald-200"
+                                    : p.projectType === "demo"
+                                      ? "bg-amber-400 text-amber-950 ring-amber-200"
+                                      : "bg-slate-700 text-white ring-slate-300"
+                                }`}
+                              >
+                                {PROJECT_TYPE_LABEL[p.projectType] ?? p.projectType}
+                              </span>
+                            ) : null}
+                            {clientCodeBadges(p.tags).map((code) => (
+                              <span
+                                key={code}
+                                className="inline-flex items-center rounded-md bg-sky-600 px-2 py-0.5 text-[11px] font-bold tracking-wide text-white"
+                              >
+                                {code}
+                              </span>
+                            ))}
+                            {isAwaitingRose(p.tags, pendingProjectRecs, p.id, p.name) ? (
+                              <span className="inline-flex items-center rounded-md bg-rose-600 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white ring-2 ring-rose-200">
+                                Awaiting Rose
+                              </span>
                             ) : null}
                             <RiskBadge value={p.risk} />
                           </div>
