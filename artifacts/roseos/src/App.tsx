@@ -15,6 +15,8 @@ import {
 import { canAccessMindMeld, canViewModule, mapServerRole, canSubmit, classifyIntakeMessage, detectDuplicates } from "@/lib/helpers";
 import { useActivityNotifications } from "@/hooks/use-activity-notifications";
 import { pathToActivityModule } from "@/lib/activity-notifications";
+import { getPinnedProjectIds, getRecent, pushRecent, type RecentEntry } from "@/lib/nav-prefs";
+import { searchWorkspace, SEARCH_KIND_LABEL, type SearchHit, type SearchHitKind } from "@/lib/workspace-search";
 import collabosLogo from "@/assets/collabos-logo.png";
 import LoginPage from "@/pages/login";
 
@@ -49,10 +51,10 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { href: "/", label: "Collab Dashboard", icon: LayoutDashboard, ctx: "Collab Dashboard" },
-  { href: "/projects", label: "Projects", icon: FolderKanban, ctx: "Projects" },
-  { href: "/carmen-path", label: "Carmen’s Path", icon: RouteIcon, ctx: "Carmen’s Path Today" },
-  { href: "/project-tasks", label: "Project Tasks", icon: ListChecks, ctx: "Project Tasks" },
+  { href: "/", label: "Collab Dashboard", icon: LayoutDashboard, ctx: "Collab Dashboard", blurb: "Start your day" },
+  { href: "/projects", label: "Projects", icon: FolderKanban, ctx: "Projects", blurb: "All apps & hubs" },
+  { href: "/carmen-path", label: "Carmen’s Path", icon: RouteIcon, ctx: "Carmen’s Path Today", blurb: "Today’s work order" },
+  { href: "/project-tasks", label: "Project Tasks", icon: ListChecks, ctx: "Project Tasks", blurb: "Open follow-ups" },
   { href: "/duplicate-radar", label: "Duplicate Radar", icon: Target, ctx: "Duplicate Radar" },
   { href: "/team-pulse", label: "Team Pulse", icon: Users, ctx: "Team Pulse" },
   { href: "/solution-finder", label: "Solution Finder", icon: Search, ctx: "Solution Finder" },
@@ -62,9 +64,18 @@ const NAV: NavItem[] = [
   { href: "/market-pulse", label: "Market Pulse", icon: Activity, ctx: "Market Pulse" },
   { href: "/mind-meld", label: "Mind Meld Room", icon: Brain, ctx: "Mind Meld Room", gated: true, blurb: "Think together" },
   { href: "/review-queue", label: "Review Queue", icon: ClipboardCheck, ctx: "Review Queue", blurb: "Stamp decisions" },
-  { href: "/agent-queue", label: "Cursor Direct Requests", icon: Bot, ctx: "Cursor Direct Requests" },
+  { href: "/agent-queue", label: "Cursor Direct Requests", icon: Bot, ctx: "Cursor Direct Requests", blurb: "Build & fix requests" },
   { href: "/external-intake", label: "Incoming Messages", icon: Inbox, ctx: "Incoming Messages" },
   { href: "/settings", label: "Settings", icon: SettingsIcon, ctx: "Settings" },
+];
+
+/** Workflow groups for the sidebar — Projects & Carmen’s Path stay near the top of Build. */
+const NAV_GROUPS: { id: string; label: string; hrefs: string[] }[] = [
+  { id: "home", label: "Home", hrefs: ["/"] },
+  { id: "decide", label: "Decide", hrefs: ["/review-queue", "/mind-meld", "/external-intake"] },
+  { id: "build", label: "Build", hrefs: ["/projects", "/carmen-path", "/project-tasks", "/agent-queue", "/innovation-lab", "/mockup-studio"] },
+  { id: "track", label: "Track", hrefs: ["/duplicate-radar", "/team-pulse", "/solution-finder", "/executive-reports", "/market-pulse"] },
+  { id: "account", label: "Account", hrefs: ["/settings"] },
 ];
 
 const ROSE_BRAIN_TIPS: Record<string, string[]> = {
@@ -95,10 +106,67 @@ const ROLE_IDENTITY: Record<string, { name: string; title: string; initials: str
   Viewer: { name: "Viewer", title: "Read-only", initials: "VW" },
 };
 
+function navLinkClass(active: boolean, gated?: boolean) {
+  if (active) {
+    return gated
+      ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-sm"
+      : "bg-gradient-to-r from-rose-50 to-fuchsia-50 text-rose-600 ring-1 ring-rose-100";
+  }
+  return gated
+    ? "bg-violet-50/70 text-violet-700 ring-1 ring-violet-100 hover:bg-violet-100"
+    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900";
+}
+
+function SidebarNavLink({
+  item,
+  active,
+  onNavigate,
+}: {
+  item: NavItem;
+  active: boolean;
+  onNavigate?: () => void;
+}) {
+  const { currentRole, setRoseBrainContext } = useAppState();
+  const Icon = item.icon;
+  const locked = item.gated && !canAccessMindMeld(currentRole);
+  const iconCls = active
+    ? (item.gated ? "text-white" : "text-rose-500")
+    : (item.gated ? "text-violet-500" : "text-slate-400");
+  return (
+    <Link
+      href={item.href}
+      onClick={() => { setRoseBrainContext(item.ctx); onNavigate?.(); }}
+      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${navLinkClass(active, item.gated)}`}
+    >
+      <Icon className={`h-4 w-4 ${iconCls}`} />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span>{item.label}</span>
+        {item.blurb ? (
+          <span className={`text-[10px] font-normal ${active ? (item.gated ? "text-white/80" : "text-rose-400") : "text-slate-400"}`}>
+            {item.blurb}
+          </span>
+        ) : null}
+      </span>
+      {item.gated && (locked
+        ? <Lock className={`h-3.5 w-3.5 ${active ? "text-white/70" : "text-violet-300"}`} />
+        : <span className={`h-1.5 w-1.5 rounded-full ${active ? "bg-white" : "bg-violet-400"}`} />)}
+    </Link>
+  );
+}
+
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const [location] = useLocation();
-  const { currentRole, setRoseBrainContext, setRoseBrainOpen } = useAppState();
+  const { currentRole, setRoseBrainOpen, projects } = useAppState();
   const { user, hasPermission } = useAuth();
+  const userKey = user?.email ?? String(user?.id ?? currentRole);
+  const [recent, setRecent] = useState<RecentEntry[]>(() => getRecent(userKey));
+  const [pinnedIds, setPinnedIds] = useState<string[]>(() => getPinnedProjectIds(userKey));
+
+  useEffect(() => {
+    setRecent(getRecent(userKey));
+    setPinnedIds(getPinnedProjectIds(userKey));
+  }, [userKey, location]);
+
   const fallback = ROLE_IDENTITY[currentRole] ?? ROLE_IDENTITY.Rose;
   const me = user
     ? {
@@ -115,50 +183,74 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       ? [{ href: "/audit-logs", label: "Audit Logs", icon: ScrollText, ctx: "Audit Logs" }]
       : []),
   ];
-  const visibleNav = [
-    ...NAV.filter((l) => canViewModule(currentRole, l.href)),
-    ...adminNav,
-  ];
+  const byHref = Object.fromEntries(NAV.map((n) => [n.href, n]));
+  const pinnedProjects = pinnedIds
+    .map((id) => projects.find((p) => String(p.id) === id))
+    .filter(Boolean);
+
   return (
     <>
       <div className="flex items-center justify-center px-6 py-5">
         <img src={collabosLogo} alt="CollabOS logo" className="w-36 shrink-0 object-contain" />
       </div>
-      <nav className="flex-1 space-y-0.5 px-3 pb-4">
-        {visibleNav.map((l) => {
-          const Icon = l.icon;
-          const active = location === l.href;
-          const locked = l.gated && !canAccessMindMeld(currentRole);
-          const cls = active
-            ? (l.gated
-                ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-sm"
-                : "bg-gradient-to-r from-rose-50 to-fuchsia-50 text-rose-600 ring-1 ring-rose-100")
-            : (l.gated
-                ? "bg-violet-50/70 text-violet-700 ring-1 ring-violet-100 hover:bg-violet-100"
-                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900");
-          const iconCls = active
-            ? (l.gated ? "text-white" : "text-rose-500")
-            : (l.gated ? "text-violet-500" : "text-slate-400");
+      <nav className="flex-1 space-y-3 overflow-y-auto px-3 pb-4">
+        {(pinnedProjects.length > 0 || recent.length > 0) && (
+          <div className="space-y-1 rounded-xl bg-slate-50/80 px-1 py-2">
+            {pinnedProjects.length > 0 && (
+              <>
+                <p className="px-2 pb-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Pinned</p>
+                {pinnedProjects.map((p) => (
+                  <Link
+                    key={p!.id}
+                    href={`/projects?expand=${encodeURIComponent(p!.id)}`}
+                    onClick={() => {
+                      pushRecent(userKey, { id: String(p!.id), kind: "project", label: p!.name, href: `/projects?expand=${p!.id}` });
+                      onNavigate?.();
+                    }}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-white"
+                  >
+                    <FolderKanban className="h-3.5 w-3.5 text-amber-500" />
+                    <span className="truncate">{p!.name}</span>
+                  </Link>
+                ))}
+              </>
+            )}
+            {recent.length > 0 && (
+              <>
+                <p className="px-2 pb-0.5 pt-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Recent</p>
+                {recent.slice(0, 5).map((r) => (
+                  <Link
+                    key={`${r.kind}:${r.id}`}
+                    href={r.href}
+                    onClick={() => onNavigate?.()}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 hover:bg-white"
+                  >
+                    <span className="truncate">{r.label}</span>
+                  </Link>
+                ))}
+              </>
+            )}
+          </div>
+        )}
+        {NAV_GROUPS.map((group) => {
+          const items = group.hrefs
+            .map((h) => byHref[h])
+            .filter((l): l is NavItem => !!l && canViewModule(currentRole, l.href));
+          const extra = group.id === "account" ? adminNav : [];
+          const all = [...items, ...extra];
+          if (all.length === 0) return null;
           return (
-            <Link
-              key={l.href}
-              href={l.href}
-              onClick={() => { setRoseBrainContext(l.ctx); onNavigate?.(); }}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${cls}`}
-            >
-              <Icon className={`h-4 w-4 ${iconCls}`} />
-              <span className="flex min-w-0 flex-1 flex-col">
-                <span>{l.label}</span>
-                {l.blurb ? (
-                  <span className={`text-[10px] font-normal ${active ? (l.gated ? "text-white/80" : "text-rose-400") : "text-slate-400"}`}>
-                    {l.blurb}
-                  </span>
-                ) : null}
-              </span>
-              {l.gated && (locked
-                ? <Lock className={`h-3.5 w-3.5 ${active ? "text-white/70" : "text-violet-300"}`} />
-                : <span className={`h-1.5 w-1.5 rounded-full ${active ? "bg-white" : "bg-violet-400"}`} />)}
-            </Link>
+            <div key={group.id} className="space-y-0.5">
+              <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">{group.label}</p>
+              {all.map((l) => (
+                <SidebarNavLink
+                  key={l.href}
+                  item={l}
+                  active={location === l.href || (l.href !== "/" && location.startsWith(l.href))}
+                  onNavigate={onNavigate}
+                />
+              ))}
+            </div>
           );
         })}
       </nav>
@@ -270,8 +362,18 @@ function ModuleSeenTracker() {
   return null;
 }
 
+const HIT_ICONS: Record<SearchHitKind, React.ComponentType<{ className?: string }>> = {
+  page: LayoutDashboard,
+  project: FolderKanban,
+  task: ListChecks,
+  decision: ClipboardCheck,
+  cursor: Bot,
+};
+
 function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { currentRole, submitIdea, projects } = useAppState();
+  const { currentRole, submitIdea, projects, projectTasks, recommendations, agentWorkItems } = useAppState();
+  const { user } = useAuth();
+  const userKey = user?.email ?? String(user?.id ?? currentRole);
   const [, navigate] = useLocation();
   const [query, setQuery] = useState("");
   const [smartResult, setSmartResult] = useState<{ title: string; lines: string[] } | null>(null);
@@ -292,15 +394,47 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  const visibleNav = useMemo(
+    () => NAV.filter((n) => canViewModule(currentRole, n.href) && (!n.gated || canAccessMindMeld(currentRole))),
+    [currentRole],
+  );
+
+  const hits = useMemo(
+    () =>
+      searchWorkspace({
+        query,
+        nav: visibleNav,
+        projects,
+        tasks: projectTasks,
+        recommendations,
+        agentWork: agentWorkItems,
+      }),
+    [query, visibleNav, projects, projectTasks, recommendations, agentWorkItems],
+  );
+
+  const grouped = useMemo(() => {
+    const order: SearchHitKind[] = ["project", "task", "decision", "cursor", "page"];
+    const map = new Map<SearchHitKind, SearchHit[]>();
+    for (const h of hits) {
+      const list = map.get(h.kind) ?? [];
+      list.push(h);
+      map.set(h.kind, list);
+    }
+    return order.filter((k) => (map.get(k)?.length ?? 0) > 0).map((k) => ({ kind: k, items: map.get(k)! }));
+  }, [hits]);
+
   if (!open) return null;
 
   const q = query.trim();
-  const navMatches = NAV.filter(
-    (n) => canViewModule(currentRole, n.href) && (!n.gated || canAccessMindMeld(currentRole)) &&
-      (q === "" || n.label.toLowerCase().includes(q.toLowerCase())),
-  );
-
-  const go = (href: string) => { onClose(); navigate(href); };
+  const go = (href: string, hit?: SearchHit) => {
+    if (hit?.kind === "project") {
+      pushRecent(userKey, { id: hit.id.replace(/^project:/, ""), kind: "project", label: hit.title, href });
+    } else if (hit?.kind === "page") {
+      pushRecent(userKey, { id: href, kind: "page", label: hit.title, href });
+    }
+    onClose();
+    navigate(href);
+  };
 
   const smartActions: { id: string; label: string; icon: React.ComponentType<{ className?: string }>; run: () => void }[] = [];
   if (q.length > 2) {
@@ -367,7 +501,7 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
             ref={inputRef}
             value={query}
             onChange={(e) => { setQuery(e.target.value); setSmartResult(null); }}
-            placeholder="Go somewhere, or describe an idea or message..."
+            placeholder="Find projects, tasks, decisions, Cursor requests…"
             className="w-full border-none bg-transparent py-3.5 text-sm focus:outline-none"
           />
           <kbd className="shrink-0 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">Esc</kbd>
@@ -391,16 +525,37 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
               </ul>
             </div>
           )}
-          <p className="px-2 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Go to</p>
-          {navMatches.length === 0 && <p className="px-2.5 py-2 text-xs text-slate-400">Nothing matches that search.</p>}
-          {navMatches.map((n) => (
-            <button key={n.href} onClick={() => go(n.href)} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
-              <n.icon className="h-4 w-4 text-slate-400" /> {n.label}
-            </button>
-          ))}
+          {grouped.length === 0 ? (
+            <p className="px-2.5 py-2 text-xs text-slate-400">Nothing matches — try a project name, task, or client code (FRR, EC, ALD).</p>
+          ) : (
+            grouped.map((g) => (
+              <div key={g.kind} className="mb-1">
+                <p className="px-2 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  {SEARCH_KIND_LABEL[g.kind]}
+                </p>
+                {g.items.map((h) => {
+                  const Icon = HIT_ICONS[h.kind];
+                  return (
+                    <button
+                      key={h.id}
+                      type="button"
+                      onClick={() => go(h.href, h)}
+                      className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                    >
+                      <Icon className="h-4 w-4 shrink-0 text-slate-400" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium">{h.title}</span>
+                        <span className="block truncate text-[10px] text-slate-400">{h.subtitle}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ))
+          )}
         </div>
         <p className="border-t border-slate-100 bg-slate-50 px-4 py-2 text-[10px] text-slate-400">
-          Smart actions are quick drafts — everything still goes through the Review Queue for your sign-off.
+          Jump to the right page with context. Smart actions stay drafts until you stamp them in Review Queue.
         </p>
       </div>
     </div>
@@ -418,7 +573,7 @@ function TopBar({ onMenu, onOpenPalette }: { onMenu: () => void; onOpenPalette: 
         <button type="button" onClick={onOpenPalette} className="relative hidden min-w-0 max-w-md flex-1 sm:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <span className="block w-full truncate whitespace-nowrap rounded-full bg-slate-100 py-2 pl-9 pr-12 text-left text-sm text-slate-400 transition hover:bg-slate-200/70">
-            Search pages, or type an idea to act on...
+            Search projects, tasks, decisions, Cursor requests…
           </span>
           <kbd className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400 lg:block">⌘K</kbd>
         </button>

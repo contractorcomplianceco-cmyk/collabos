@@ -1,13 +1,16 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "wouter";
 import {
   Target, Users, Lightbulb, Search, FileBarChart, Activity, ClipboardCheck,
   Brain, ArrowRight, Download, TrendingUp, TrendingDown, FolderKanban, Sparkles,
-  Heart, FileText, Check, X,
+  Heart, FileText, Check, X, Pin, Route as RouteIcon, ListChecks, Bot,
 } from "lucide-react";
 import { useAppState } from "@/hooks/use-app-state";
+import { useAuth } from "@/hooks/use-auth";
 import { useActivityNotifications } from "@/hooks/use-activity-notifications";
 import { canApprove, canViewSensitive } from "@/lib/helpers";
+import { bucketProjectTaskOwner } from "@/lib/project-task-owners";
+import { getPinnedProjectIds, getRecent, type RecentEntry } from "@/lib/nav-prefs";
 import {
   KpiWidget, SectionCard, StatusChip, ClassificationBadge, EmptyState,
 } from "@/components/shared";
@@ -102,8 +105,18 @@ export default function Dashboard() {
     decisions,
     agentWorkItems,
     integrations,
+    blockers,
   } = useAppState();
+  const { user } = useAuth();
   const { sinceLastVisit, lastVisitLabel } = useActivityNotifications();
+  const userKey = user?.email ?? String(user?.id ?? currentRole);
+  const [recent, setRecent] = useState<RecentEntry[]>(() => getRecent(userKey));
+  const [pinnedIds, setPinnedIds] = useState<string[]>(() => getPinnedProjectIds(userKey));
+
+  useEffect(() => {
+    setRecent(getRecent(userKey));
+    setPinnedIds(getPinnedProjectIds(userKey));
+  }, [userKey]);
 
   const greeting =
     currentRole === "Carmen" ? "Carmen" : currentRole === "Rose" ? "Rose" : currentRole;
@@ -396,13 +409,156 @@ export default function Dashboard() {
 
   const urgentCount = awaitingMe.length + openDecisionsForMe.length + agentAwaitingMe.length;
 
+  const awaitingRoseProjects = projects.filter((p) =>
+    (p.tags ?? []).some((t) => t.toLowerCase() === "awaiting-rose") ||
+    pendingRecs.some(
+      (r) =>
+        r.projectId === p.id ||
+        r.recommendation.toLowerCase().includes(p.name.toLowerCase()),
+    ),
+  );
+  const carmenOpenTasks = projectTasks.filter(
+    (t) => t.status !== "done" && bucketProjectTaskOwner(t.owner, t.title) === "carmen",
+  );
+  const openBlockers = blockers.length;
+  const roseAttachmentItems = agentWorkItems.filter(
+    (w) => (w.attachmentCount ?? 0) > 0 && w.status !== "done" && w.status !== "rejected",
+  );
+  const pinnedProjects = pinnedIds
+    .map((id) => projects.find((p) => String(p.id) === id))
+    .filter(Boolean);
+
+  // Role-specific start-the-day cards
+  const startDayLinks: { href: string; label: string; detail: string; tone: string }[] = [];
+  if (isRose) {
+    startDayLinks.push(
+      { href: "/review-queue", label: `${awaitingMe.length} to stamp`, detail: "Review Queue — decisions waiting on you", tone: "bg-rose-50 text-rose-700 border-rose-100" },
+      { href: "/projects", label: `${awaitingRoseProjects.length} awaiting Rose`, detail: "Projects tagged or queued for your call", tone: "bg-amber-50 text-amber-800 border-amber-100" },
+      { href: "/agent-queue", label: `${agentAwaitingMe.length} Cursor approvals`, detail: "Requests that need your OK before build", tone: "bg-violet-50 text-violet-700 border-violet-100" },
+    );
+  } else if (isCarmen) {
+    startDayLinks.push(
+      { href: "/carmen-path", label: "Carmen’s path", detail: `${carmenOpenTasks.length} open task${carmenOpenTasks.length === 1 ? "" : "s"} in today’s work order`, tone: "bg-violet-50 text-violet-700 border-violet-100" },
+      { href: "/project-tasks", label: `${carmenOpenTasks.length} open for you`, detail: "Your follow-ups across projects", tone: "bg-sky-50 text-sky-700 border-sky-100" },
+      { href: "/agent-queue", label: `${roseAttachmentItems.length} Rose attachment${roseAttachmentItems.length === 1 ? "" : "s"}`, detail: "Files Rose added on open Cursor requests", tone: "bg-rose-50 text-rose-700 border-rose-100" },
+    );
+  } else {
+    startDayLinks.push(
+      { href: "/review-queue", label: "Review Queue", detail: "Stamp decisions when it’s your turn", tone: "bg-rose-50 text-rose-700 border-rose-100" },
+      { href: "/project-tasks", label: "Project Tasks", detail: "Open follow-ups by owner", tone: "bg-sky-50 text-sky-700 border-sky-100" },
+    );
+  }
+
   return (
     <div className="space-y-7 p-6">
-      {/* Welcome */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Welcome back, {greeting}</h1>
-        <p className="mt-1 text-sm text-slate-500">Your shared team workspace — starts empty and grows with real work.</p>
+        <p className="mt-1 text-sm text-slate-500">
+          {isCarmen
+            ? "One place to start — your path, blockers, and what Rose attached."
+            : isRose
+              ? "One place to start — stamp decisions, clear awaiting-Rose items, then skim the queues."
+              : "Your shared team workspace — starts empty and grows with real work."}
+        </p>
       </div>
+
+      {/* Start the day — role-aware */}
+      <SectionCard
+        title="Waiting on me"
+        icon={Sparkles}
+        accent="rose"
+        action={<AttentionPulse count={attentionItems.length} urgent={urgentCount} />}
+      >
+        <p className="mb-3 text-xs text-slate-500">
+          {isCarmen
+            ? "Carmen’s path, open work, and Rose attachments — jump in from here."
+            : isRose
+              ? "Decisions to stamp, awaiting-Rose projects, and review counts for today."
+              : "Needs your decision or approval — not just a status update."}
+        </p>
+        <div className="mb-3 grid gap-2 sm:grid-cols-3">
+          {startDayLinks.map((l) => (
+            <Link key={l.href + l.label} href={l.href} className={`rounded-xl border p-3 transition hover:shadow-sm ${l.tone}`}>
+              <p className="text-sm font-semibold">{l.label}</p>
+              <p className="mt-1 text-[11px] opacity-80">{l.detail}</p>
+            </Link>
+          ))}
+        </div>
+        {isCarmen && openBlockers > 0 ? (
+          <p className="mb-2 text-xs text-amber-700">
+            {openBlockers} open blocker{openBlockers === 1 ? "" : "s"} — see them on{" "}
+            <Link href="/carmen-path" className="font-semibold underline">Carmen’s Path</Link>.
+          </p>
+        ) : null}
+        {attentionItems.length === 0 ? (
+          <p className="rounded-xl bg-emerald-50 p-3 text-xs text-emerald-700">You're all caught up — nothing else is waiting on you right now.</p>
+        ) : (
+          <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+            {attentionItems.map((a) => (
+              <Link key={a.id} href={a.href} className={`rounded-xl border p-3 transition hover:shadow-sm ${ATT_TONE[a.tone]}`}>
+                <p className="text-xs font-semibold">{a.label}</p>
+                <p className="mt-1 line-clamp-2 text-[11px] opacity-80">{a.detail}</p>
+              </Link>
+            ))}
+          </div>
+        )}
+        <div className="mt-3 flex flex-wrap gap-2 text-xs">
+          <Link href="/review-queue" className="inline-flex items-center gap-1 rounded-lg bg-rose-500 px-2.5 py-1.5 font-semibold text-white hover:bg-rose-600">
+            <ClipboardCheck className="h-3.5 w-3.5" /> Review Queue
+          </Link>
+          {isCarmen || isRose ? (
+            <Link href="/carmen-path" className="inline-flex items-center gap-1 rounded-lg bg-violet-500 px-2.5 py-1.5 font-semibold text-white hover:bg-violet-600">
+              <RouteIcon className="h-3.5 w-3.5" /> Carmen’s Path
+            </Link>
+          ) : null}
+          <Link href="/project-tasks" className="inline-flex items-center gap-1 rounded-lg bg-white px-2.5 py-1.5 font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50">
+            <ListChecks className="h-3.5 w-3.5" /> Project Tasks
+          </Link>
+          <Link href="/agent-queue" className="inline-flex items-center gap-1 rounded-lg bg-white px-2.5 py-1.5 font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50">
+            <Bot className="h-3.5 w-3.5" /> Cursor requests
+          </Link>
+        </div>
+      </SectionCard>
+
+      {(pinnedProjects.length > 0 || recent.length > 0) && (
+        <SectionCard title="Pinned & recent" icon={Pin} accent="sky">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Pinned projects</p>
+              {pinnedProjects.length === 0 ? (
+                <p className="text-xs text-slate-400">Pin key projects from the Projects page (ComplianceCore, ALD, …).</p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {pinnedProjects.map((p) => (
+                    <li key={p!.id}>
+                      <Link href={`/projects?expand=${encodeURIComponent(p!.id)}`} className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-700 hover:bg-sky-50">
+                        <FolderKanban className="h-3.5 w-3.5 text-amber-500" />
+                        {p!.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div>
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Recently visited</p>
+              {recent.length === 0 ? (
+                <p className="text-xs text-slate-400">Projects and pages you open will show up here.</p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {recent.map((r) => (
+                    <li key={`${r.kind}:${r.id}`}>
+                      <Link href={r.href} className="block truncate rounded-lg px-2 py-1.5 text-sm text-slate-700 hover:bg-sky-50">
+                        {r.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </SectionCard>
+      )}
 
       {workspaceEmpty ? (
         <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-violet-50 p-5">
@@ -449,31 +605,6 @@ export default function Dashboard() {
         )}
         <p className="mt-2.5 text-[11px] text-slate-400">
           In-app activity only — no push or email. Opening a page marks it as seen for you.
-        </p>
-      </SectionCard>
-
-      {/* Waiting on you */}
-      <SectionCard
-        title="Waiting on you"
-        icon={Sparkles}
-        accent="rose"
-        action={<AttentionPulse count={attentionItems.length} urgent={urgentCount} />}
-      >
-        <p className="mb-3 text-xs text-slate-500">Needs your decision or approval — not just a status update.</p>
-        {attentionItems.length === 0 ? (
-          <p className="rounded-xl bg-emerald-50 p-3 text-xs text-emerald-700">You're all caught up — nothing is waiting on you right now.</p>
-        ) : (
-          <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-            {attentionItems.map((a) => (
-              <Link key={a.id} href={a.href} className={`rounded-xl border p-3 transition hover:shadow-sm ${ATT_TONE[a.tone]}`}>
-                <p className="text-xs font-semibold">{a.label}</p>
-                <p className="mt-1 line-clamp-2 text-[11px] opacity-80">{a.detail}</p>
-              </Link>
-            ))}
-          </div>
-        )}
-        <p className="mt-2.5 text-[11px] text-slate-400">
-          Personalized for your role — Review Queue, decisions, Cursor requests, intake, and Mind Meld.
         </p>
       </SectionCard>
 
