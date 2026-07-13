@@ -16,4 +16,6 @@ export const ModuleSeenInputModule = {
   'agent-queue': 'agent-queue',
   'external-intake': 'external-intake',
   'project-tasks': 'project-tasks',
+  'carmen-path': 'carmen-path',
+  projects: 'projects',
 } as const;

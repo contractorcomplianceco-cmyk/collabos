@@ -259,6 +259,12 @@ function WorkItemCard({
             <StatusChip label={item.requestType} tone="sky" />
             <RiskBadge value={item.risk} />
             <ApprovalRouteBadge value={item.approvalRoute} />
+            {(item.attachmentCount ?? 0) > 0 ? (
+              <StatusChip
+                label={`Rose attached files (${item.attachmentCount})`}
+                tone="rose"
+              />
+            ) : null}
           </div>
           <h3 className="mt-3 text-base font-bold text-slate-900">{item.title}</h3>
           <p className="mt-1 text-sm text-slate-600">{item.description}</p>
@@ -581,7 +587,26 @@ export default function AgentQueue() {
 
       <div className="space-y-3">
         {agentWorkLoading && <p className="py-10 text-center text-sm text-slate-400">Loading your Cursor request list…</p>}
-        {!agentWorkLoading && filtered.length === 0 && <EmptyState message="Nothing here in this view." hint="Log a new request or approve one that's waiting on you." />}
+        {!agentWorkLoading && filtered.length === 0 && (
+          <EmptyState
+            message={
+              statusFilter === "all" || agentWorkItems.length === 0
+                ? "Nothing in Cursor Direct Requests yet."
+                : `Nothing here — ${agentWorkItems.length} request${agentWorkItems.length === 1 ? "" : "s"} waiting in All.`
+            }
+            hint="Log a new request or approve one that's waiting on you."
+            action={
+              statusFilter !== "all" && agentWorkItems.length > 0 ? (
+                <button
+                  onClick={() => setStatusFilter("all")}
+                  className="rounded-lg bg-violet-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-600"
+                >
+                  Show All ({agentWorkItems.length})
+                </button>
+              ) : undefined
+            }
+          />
+        )}
         {!agentWorkLoading && filtered.map((item) => (
           <WorkItemCard key={item.id} item={item} canManage={canManage} canUpload={canUpload} onUpdate={update} onEvent={addEvent} />
         ))}

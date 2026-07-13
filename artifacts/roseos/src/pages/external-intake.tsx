@@ -609,7 +609,36 @@ export default function ExternalIntake() {
 
           <div className="grid gap-4 xl:grid-cols-[1fr_420px]">
             <div className="space-y-3">
-              {filtered.length === 0 && <EmptyState message="No messages match these filters." />}
+              {filtered.length === 0 && (
+                <EmptyState
+                  message={
+                    intakeItems.length === 0
+                      ? "No incoming messages yet."
+                      : `Nothing here — ${intakeItems.length} message${intakeItems.length === 1 ? "" : "s"} waiting in All.`
+                  }
+                  hint="Clear filters to see everything, or add a sample message to test the queue."
+                  action={
+                    intakeItems.length > 0 ? (
+                      <button
+                        onClick={() => {
+                          setFSource("all");
+                          setFType("all");
+                          setFDest("all");
+                          setFSens("all");
+                          setFOwner("all");
+                          setFStatus("all");
+                          setFDup("all");
+                          setFReadiness("all");
+                          setFFriction("all");
+                        }}
+                        className="rounded-lg bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-600"
+                      >
+                        Clear filters ({intakeItems.length})
+                      </button>
+                    ) : undefined
+                  }
+                />
+              )}
               {filtered.map((it) => {
                 const isSensitive = it.sensitivity !== "normal";
                 const itemReadiness = readinessById.get(it.id);

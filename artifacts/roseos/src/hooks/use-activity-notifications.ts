@@ -18,6 +18,7 @@ export function useActivityNotifications() {
     meldTimeline,
     agentWorkItems,
     projectTasks,
+    blockers,
   } = useAppState();
 
   const moduleLastSeen = user?.moduleLastSeen ?? {};
@@ -38,6 +39,7 @@ export function useActivityNotifications() {
         updatedAt: r.updatedAt,
         createdAt: r.createdAt,
         approvals: r.approvals,
+        history: r.history,
       })),
       intakeItems: intakeItems.map((it) => ({
         id: it.id,
@@ -57,7 +59,8 @@ export function useActivityNotifications() {
         title: w.title,
         status: w.status,
         updatedAt: w.updatedAt,
-        events: w.events.map((ev) => ({ timestamp: ev.timestamp })),
+        attachmentCount: w.attachmentCount,
+        events: w.events.map((ev) => ({ timestamp: ev.timestamp, action: ev.action })),
       })),
       projectTasks: projectTasks.map((t) => ({
         id: t.id,
@@ -65,6 +68,12 @@ export function useActivityNotifications() {
         owner: t.owner,
         status: t.status,
         createdAt: t.createdAt,
+        completedAt: t.completedAt,
+      })),
+      blockers: blockers.map((b) => ({
+        id: b.id,
+        title: b.title,
+        age: b.age,
       })),
     });
   }, [
@@ -77,6 +86,7 @@ export function useActivityNotifications() {
     meldTimeline,
     agentWorkItems,
     projectTasks,
+    blockers,
   ]);
 
   const lastVisitLabel = useMemo(

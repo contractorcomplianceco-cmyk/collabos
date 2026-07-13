@@ -8,6 +8,8 @@ export const ACTIVITY_MODULES = [
   "agent-queue",
   "external-intake",
   "project-tasks",
+  "carmen-path",
+  "projects",
 ] as const;
 
 export type ActivityModule = (typeof ACTIVITY_MODULES)[number];
@@ -35,6 +37,7 @@ export interface ActivityInput {
     updatedAt?: string;
     createdAt?: string;
     approvals?: { rose: boolean; carmen: boolean };
+    history?: Array<{ actor: string; action: string; timestamp: string }>;
   }>;
   intakeItems: Array<{
     id: string;
@@ -54,7 +57,8 @@ export interface ActivityInput {
     title: string;
     status: string;
     updatedAt: string;
-    events: Array<{ timestamp: string }>;
+    attachmentCount?: number;
+    events: Array<{ timestamp: string; action?: string }>;
   }>;
   projectTasks: Array<{
     id: string;
@@ -62,6 +66,12 @@ export interface ActivityInput {
     owner: string | null;
     status: string;
     createdAt?: string;
+    completedAt?: string | null;
+  }>;
+  blockers?: Array<{
+    id: string;
+    title: string;
+    age: number;
   }>;
 }
 
@@ -89,6 +99,8 @@ export function pathToActivityModule(path: string): ActivityModule | null {
     "agent-queue": "agent-queue",
     "external-intake": "external-intake",
     "project-tasks": "project-tasks",
+    "carmen-path": "carmen-path",
+    projects: "projects",
   };
   return map[key] ?? null;
 }
@@ -120,6 +132,27 @@ export function computeActivitySinceLastVisit(input: ActivityInput): ActivityIte
       href: "/review-queue",
       count: newRecs.length,
       tone: "rose",
+    });
+  }
+
+  // Rose signed off (or Carmen) since last visit — useful for the other person
+  const signoffs = input.recommendations.filter((r) => {
+    const ts = r.updatedAt ?? r.createdAt;
+    if (!isNewer(ts, recSince)) return false;
+    if (isCarmen && r.approvals?.rose) return true;
+    if (isRose && r.approvals?.carmen) return true;
+    return false;
+  });
+  if (signoffs.length > 0) {
+    const who = isCarmen ? "Rose" : "Carmen";
+    items.push({
+      id: "since-signoff",
+      module: "review-queue",
+      label: `${who} signed off on ${signoffs.length} item${signoffs.length === 1 ? "" : "s"}`,
+      detail: signoffs[0].recommendation,
+      href: isCarmen ? "/carmen-path" : "/review-queue",
+      count: signoffs.length,
+      tone: "emerald",
     });
   }
 
@@ -181,6 +214,25 @@ export function computeActivitySinceLastVisit(input: ActivityInput): ActivityIte
     });
   }
 
+  const withAttachments = input.agentWorkItems.filter(
+    (w) =>
+      (w.attachmentCount ?? 0) > 0 &&
+      w.status !== "done" &&
+      w.status !== "rejected" &&
+      isNewer(w.updatedAt, agentSince),
+  );
+  if (withAttachments.length > 0) {
+    items.push({
+      id: "since-attachments",
+      module: "agent-queue",
+      label: `Rose attached files on ${withAttachments.length} request${withAttachments.length === 1 ? "" : "s"}`,
+      detail: withAttachments[0].title,
+      href: "/carmen-path",
+      count: withAttachments.length,
+      tone: "rose",
+    });
+  }
+
   const taskSince = sinceTs("project-tasks", moduleLastSeen, lastLoginAt);
   const firstName = userName.split(/\s+/)[0]?.toLowerCase() ?? "";
   const newTasks = input.projectTasks.filter((t) => {
@@ -195,9 +247,42 @@ export function computeActivitySinceLastVisit(input: ActivityInput): ActivityIte
       module: "project-tasks",
       label: `${newTasks.length} project task${newTasks.length === 1 ? "" : "s"}`,
       detail: newTasks[0].title,
-      href: "/project-tasks",
+      href: "/carmen-path",
       count: newTasks.length,
       tone: "emerald",
+    });
+  }
+
+  // Carmen completed a task — useful for Rose
+  if (isRose) {
+    const completed = input.projectTasks.filter((t) => {
+      if (t.status !== "done") return false;
+      if (!isNewer(t.completedAt ?? undefined, taskSince)) return false;
+      return (t.owner ?? "").toLowerCase().includes("carmen");
+    });
+    if (completed.length > 0) {
+      items.push({
+        id: "since-carmen-done",
+        module: "project-tasks",
+        label: `Carmen completed ${completed.length} task${completed.length === 1 ? "" : "s"}`,
+        detail: completed[0].title,
+        href: "/project-tasks",
+        count: completed.length,
+        tone: "violet",
+      });
+    }
+  }
+
+  const newBlockers = (input.blockers ?? []).filter((b) => b.age <= 1);
+  if (newBlockers.length > 0) {
+    items.push({
+      id: "since-blockers",
+      module: "projects",
+      label: `${newBlockers.length} new blocker${newBlockers.length === 1 ? "" : "s"}`,
+      detail: newBlockers[0].title,
+      href: "/carmen-path",
+      count: newBlockers.length,
+      tone: "amber",
     });
   }
 

@@ -153,7 +153,7 @@ export default function MindMeldRoom() {
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur"><Brain className="h-6 w-6" /></div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Mind Meld Room</h1>
-              <p className="text-sm text-white/85">Private space for Rose &amp; Carmen only</p>
+              <p className="text-sm text-white/85">Think together — private alignment for Rose &amp; Carmen. Stamp official decisions in Review Queue.</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -213,9 +213,21 @@ export default function MindMeldRoom() {
               <p className="text-sm text-slate-500">
                 {meldTimeline.length === 0
                   ? "No timeline events yet. Create a thread and add thoughts to start the alignment story."
-                  : "No timeline events match these filters."}
+                  : `Nothing here — ${meldTimeline.length} event${meldTimeline.length === 1 ? "" : "s"} waiting in All.`}
               </p>
-              {meldTimeline.length === 0 && (
+              {meldTimeline.length > 0 ? (
+                <button
+                  onClick={() => {
+                    setTlNeeds("all");
+                    setTlReadyTo("all");
+                    setTlSensitiveOnly(false);
+                    setTlFinalizedOnly(false);
+                  }}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700"
+                >
+                  Show all timeline events ({meldTimeline.length})
+                </button>
+              ) : (
                 <button
                   onClick={() => { setShowCreateForm(true); setView("room"); }}
                   className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700"

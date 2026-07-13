@@ -22,6 +22,8 @@ const VALID_MODULES = new Set([
   "agent-queue",
   "external-intake",
   "project-tasks",
+  "carmen-path",
+  "projects",
 ]);
 
 const router: IRouter = Router();

@@ -209,7 +209,16 @@ export default function ProjectTasksPage() {
                 {carmenOpen.map((t) => renderTask(t))}
                 {carmenOpen.length === 0 ? (
                   <li>
-                    <EmptyState message="No open work for Carmen." hint="Tasks owned by Carmen appear here." />
+                    <EmptyState
+                      message="No open work for Carmen."
+                      hint="Sign-offs from Review Queue land here. Or add a task manually."
+                      action={
+                        <div className="flex flex-wrap justify-center gap-2">
+                          <Link href="/carmen-path" className="text-xs font-semibold text-violet-600 hover:underline">Carmen’s path today</Link>
+                          <Link href="/review-queue" className="text-xs font-semibold text-rose-600 hover:underline">Review Queue</Link>
+                        </div>
+                      }
+                    />
                   </li>
                 ) : null}
               </ul>
