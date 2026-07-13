@@ -1866,7 +1866,8 @@ export const ListProjectTasksResponseItem = zod.object({
   "status": zod.enum(['todo', 'in-progress', 'review', 'done']),
   "due": zod.string().nullable(),
   "source": zod.enum(['manual', 'sync']),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "completedAt": zod.string().nullable()
 })
 export const ListProjectTasksResponse = zod.array(ListProjectTasksResponseItem)
 

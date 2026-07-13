@@ -204,6 +204,13 @@ router.patch("/project-tasks/:id", requireAuth, requireDashboard, async (req, re
   if (parsed.data.owner !== undefined) patch.owner = parsed.data.owner;
   if (parsed.data.status !== undefined) patch.status = parsed.data.status;
   if (parsed.data.due !== undefined) patch.dueDate = parsed.data.due;
+  if (parsed.data.status !== undefined && parsed.data.status !== existing.status) {
+    if (parsed.data.status === "done") {
+      patch.completedAt = new Date();
+    } else if (existing.status === "done") {
+      patch.completedAt = null;
+    }
+  }
   const [updated] = await db.update(projectTasksTable).set(patch).where(eq(projectTasksTable.id, id)).returning();
   await logAudit({
     actorId: actor.id,

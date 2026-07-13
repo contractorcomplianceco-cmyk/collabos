@@ -121,6 +121,7 @@ export function serializeProjectTask(row: ProjectTaskRow) {
     due: row.dueDate,
     source: row.source,
     createdAt: row.createdAt.toISOString(),
+    completedAt: row.completedAt ? row.completedAt.toISOString() : null,
   };
 }
 

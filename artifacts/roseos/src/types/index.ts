@@ -65,6 +65,7 @@ export interface Project {
   deadline: string | null;
   tags: string[];
   lastSyncedAt?: string | null;
+  sortOrder?: number;
 }
 
 export interface Task {
@@ -75,6 +76,7 @@ export interface Task {
   status: "todo" | "in-progress" | "review" | "done";
   due: string | null;
   createdAt?: string;
+  completedAt?: string | null;
 }
 
 export type IdeaStatus =

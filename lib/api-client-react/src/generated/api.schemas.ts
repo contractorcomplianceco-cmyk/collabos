@@ -1517,6 +1517,8 @@ export interface ProjectTaskRecord {
   due: string | null;
   source: ProjectTaskRecordSource;
   createdAt: string;
+  /** @nullable */
+  completedAt: string | null;
 }
 
 export type ProjectTaskInputStatus = typeof ProjectTaskInputStatus[keyof typeof ProjectTaskInputStatus];

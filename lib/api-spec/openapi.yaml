@@ -2706,7 +2706,7 @@ components:
         source: { type: string }
     ProjectTaskRecord:
       type: object
-      required: [id, title, projectId, owner, status, due, source, createdAt]
+      required: [id, title, projectId, owner, status, due, source, createdAt, completedAt]
       properties:
         id: { type: integer }
         title: { type: string }
@@ -2716,6 +2716,7 @@ components:
         due: { type: ["string", "null"] }
         source: { type: string, enum: [manual, sync] }
         createdAt: { type: string }
+        completedAt: { type: ["string", "null"] }
     ProjectTaskInput:
       type: object
       required: [title, projectId]

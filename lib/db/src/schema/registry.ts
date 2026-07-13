@@ -102,6 +102,7 @@ export const projectTasksTable = pgTable("project_tasks", {
   dueDate: text("due_date"),
   source: text("source", { enum: TASK_SOURCES }).notNull().default("manual"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
 });
 
 export type CompanyRecordRow = typeof companyRecordsTable.$inferSelect;

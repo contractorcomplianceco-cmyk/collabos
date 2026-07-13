@@ -583,6 +583,7 @@ function toProjectTask(row: ProjectTaskRecord): Task {
     status: row.status,
     due: row.due,
     createdAt: row.createdAt,
+    completedAt: row.completedAt ?? null,
   };
 }
 

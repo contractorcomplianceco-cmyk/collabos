@@ -1,9 +1,14 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { ClipboardCheck, FolderKanban, Plus, Check } from "lucide-react";
+import { ClipboardCheck, FolderKanban, Plus, Check, Users } from "lucide-react";
 import { PageHeader, SectionCard, StatusChip, EmptyState } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
 import { canSubmit } from "@/lib/helpers";
+import {
+  bucketProjectTaskOwner,
+  formatProjectTaskCompletedDate,
+  projectTaskCompletedSortKey,
+} from "@/lib/project-task-owners";
 import { useToast } from "@/hooks/use-toast";
 import { humanLabel, HUMAN_TASK_STATUS } from "@/lib/ui-labels";
 import type { Task } from "@/types";
@@ -20,7 +25,11 @@ const STATUSES: Task["status"][] = ["todo", "in-progress", "review", "done"];
 export default function ProjectTasksPage() {
   const { projectTasks, projects, projectsLoading, currentRole, createProjectTaskEntry, updateProjectTaskEntry } = useAppState();
   const { toast } = useToast();
+  const projectsByPriority = [...projects].sort(
+    (a, b) => (a.sortOrder ?? Number(a.id)) - (b.sortOrder ?? Number(b.id)) || a.name.localeCompare(b.name),
+  );
   const projectNameById = Object.fromEntries(projects.map((p) => [p.id, p.name]));
+  const projectOrderById = Object.fromEntries(projects.map((p) => [p.id, p.sortOrder ?? Number(p.id)]));
   const canEdit = canSubmit(currentRole);
 
   const [showForm, setShowForm] = useState(false);
@@ -34,8 +43,18 @@ export default function ProjectTasksPage() {
   const [editDue, setEditDue] = useState("");
   const [editStatus, setEditStatus] = useState<Task["status"]>("todo");
 
+  const byProjectPriority = (a: Task, b: Task) =>
+    (projectOrderById[a.projectId] ?? Number.MAX_SAFE_INTEGER) - (projectOrderById[b.projectId] ?? Number.MAX_SAFE_INTEGER) ||
+    a.title.localeCompare(b.title);
+
   const openTasks = projectTasks.filter((t) => t.status !== "done");
-  const doneTasks = projectTasks.filter((t) => t.status === "done");
+  const roseOpen = openTasks.filter((t) => bucketProjectTaskOwner(t.owner, t.title) === "rose").sort(byProjectPriority);
+  const carmenOpen = openTasks.filter((t) => bucketProjectTaskOwner(t.owner, t.title) === "carmen").sort(byProjectPriority);
+  const teamOpen = openTasks.filter((t) => bucketProjectTaskOwner(t.owner, t.title) === "team").sort(byProjectPriority);
+  const doneTasks = projectTasks
+    .filter((t) => t.status === "done")
+    .slice()
+    .sort((a, b) => projectTaskCompletedSortKey(b) - projectTaskCompletedSortKey(a));
 
   const submitNew = async () => {
     if (!title.trim() || !projectId) {
@@ -80,7 +99,7 @@ export default function ProjectTasksPage() {
     toast({ title: "Task completed" });
   };
 
-  const renderTask = (task: Task) => {
+  const renderTask = (task: Task, opts?: { showCompletedDate?: boolean }) => {
     if (editingId === task.id) {
       return (
         <li key={task.id} className="space-y-2 rounded-xl border border-sky-100 bg-sky-50/40 p-3">
@@ -100,6 +119,8 @@ export default function ProjectTasksPage() {
       );
     }
 
+    const completedLabel = opts?.showCompletedDate ? formatProjectTaskCompletedDate(task) : null;
+
     return (
       <li key={task.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-3 py-2.5">
         <div className="min-w-0 flex-1">
@@ -107,6 +128,7 @@ export default function ProjectTasksPage() {
           <p className="truncate text-[11px] text-slate-400">
             {projectNameById[task.projectId] ?? "Project"} · {task.owner ?? "Unassigned"}
             {task.due ? ` · due ${task.due}` : ""}
+            {completedLabel ? ` · completed ${completedLabel}` : ""}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
@@ -126,7 +148,7 @@ export default function ProjectTasksPage() {
     <div className="space-y-6 p-6">
       <PageHeader
         title="Project Tasks"
-        subtitle="Follow-up tasks tied to projects — your tasks stay here; project status updates overnight from the server."
+        subtitle="Open follow-ups in Carmen’s project priority order (set on Projects), grouped by owner."
         icon={ClipboardCheck}
         accent="sky"
         actions={
@@ -157,9 +179,9 @@ export default function ProjectTasksPage() {
             <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Task title" className="field-input sm:col-span-2" />
             <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="field-input">
               <option value="">Select project…</option>
-              {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {projectsByPriority.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
-            <input value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="Owner (optional)" className="field-input" />
+            <input value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="Owner (Rose, Carmen, or team)" className="field-input" />
             <input value={due} onChange={(e) => setDue(e.target.value)} placeholder="Due date (optional)" className="field-input sm:col-span-2" />
           </div>
           <button onClick={() => void submitNew()} className="mt-3 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600">Create task</button>
@@ -169,27 +191,48 @@ export default function ProjectTasksPage() {
       {projectsLoading ? (
         <p className="text-sm text-slate-500">Loading project tasks…</p>
       ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <SectionCard title={`Open Tasks (${openTasks.length})`} icon={ClipboardCheck} accent="sky">
-            <ul className="space-y-2">
-              {openTasks.map(renderTask)}
-              {openTasks.length === 0 ? (
-                <li>
-                  <EmptyState
-                    message="No open project tasks yet."
-                    hint={canEdit ? "Create a task above to track follow-up work on any project." : "Tasks you can view will appear here when teammates add them."}
-                  />
-                </li>
-              ) : null}
-            </ul>
-          </SectionCard>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <SectionCard title={`Rose’s open work (${roseOpen.length})`} icon={ClipboardCheck} accent="rose">
+              <ul className="space-y-2">
+                {roseOpen.map((t) => renderTask(t))}
+                {roseOpen.length === 0 ? (
+                  <li>
+                    <EmptyState message="No open work for Rose." hint="Tasks owned by Rose appear here." />
+                  </li>
+                ) : null}
+              </ul>
+            </SectionCard>
 
-          <SectionCard title={`Completed (${doneTasks.length})`} icon={ClipboardCheck} accent="emerald">
+            <SectionCard title={`Carmen’s open work (${carmenOpen.length})`} icon={ClipboardCheck} accent="violet">
+              <ul className="space-y-2">
+                {carmenOpen.map((t) => renderTask(t))}
+                {carmenOpen.length === 0 ? (
+                  <li>
+                    <EmptyState message="No open work for Carmen." hint="Tasks owned by Carmen appear here." />
+                  </li>
+                ) : null}
+              </ul>
+            </SectionCard>
+
+            <SectionCard title={`Open — Team / unassigned (${teamOpen.length})`} icon={Users} accent="sky">
+              <ul className="space-y-2">
+                {teamOpen.map((t) => renderTask(t))}
+                {teamOpen.length === 0 ? (
+                  <li>
+                    <EmptyState message="No team or unassigned tasks." hint="Tasks without a Rose/Carmen owner land here so nothing is hidden." />
+                  </li>
+                ) : null}
+              </ul>
+            </SectionCard>
+          </div>
+
+          <SectionCard title={`Completed history (${doneTasks.length})`} icon={ClipboardCheck} accent="emerald">
             <ul className="space-y-2">
-              {doneTasks.map(renderTask)}
+              {doneTasks.map((t) => renderTask(t, { showCompletedDate: true }))}
               {doneTasks.length === 0 ? (
                 <li>
-                  <EmptyState message="No completed tasks yet." hint="Finished tasks stay here so you can look back." />
+                  <EmptyState message="No completed tasks yet." hint="Finished tasks stay here newest-first so you can look back." />
                 </li>
               ) : null}
             </ul>
