@@ -36,15 +36,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     localStorage.removeItem(LEGACY_TOKEN_KEY);
-    getCurrentUser()
+    let cancelled = false;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 10_000);
+
+    getCurrentUser({ signal: controller.signal })
       .then((u) => {
+        if (cancelled) return;
         setUser(u);
         setStatus("authed");
       })
       .catch(() => {
+        if (cancelled) return;
         setUser(null);
         setStatus("anon");
+      })
+      .finally(() => {
+        window.clearTimeout(timeout);
       });
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
