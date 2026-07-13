@@ -20,8 +20,8 @@ const STANDARD_LIVE_PHASES = [
 const DEMO_PHASES = [{ id: "demo", title: "Demo — not in production", status: "active", visibleProgress: 100 }];
 
 const MERGED_CC_PHASES = [
-  { id: "cc-1", title: "Merged into Command Center", status: "complete", visibleProgress: 100 },
-  { id: "cc-2", title: "Maintenance mode", status: "active", visibleProgress: 90 },
+  { id: "cc-1", title: "Moved into Command Center", status: "complete", visibleProgress: 100 },
+  { id: "cc-2", title: "Ongoing maintenance", status: "active", visibleProgress: 90 },
 ];
 
 function isCommandCenterHosted(project) {
@@ -58,12 +58,12 @@ function derivePlan(project, blockers) {
   if (projectType === "merged-cc-host") {
     return {
       projectType,
-      summary: "Runs inside Command Center — standalone domain retired",
+      summary: "Live in Command Center — maintenance (~90%)",
       currentPhaseId: "cc-2",
       progress: project.status === "blocked" || project.status === "at-risk" ? 60 : 90,
       phases: MERGED_CC_PHASES.map((p) => ({ ...p })),
       carmenPlanNotes:
-        "Hosted in Command Center — maintenance mode. Standalone domain retired; module runs inside Command Center.",
+        "Open in Command Center. Carmen keeps this workspace healthy; the old separate link is closed.",
     };
   }
 

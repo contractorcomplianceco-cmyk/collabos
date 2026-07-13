@@ -194,7 +194,7 @@ const EXTRA_ENTITIES = [
     slug: "server-cleanup",
     name: "Server Cleanup",
     description:
-      "Ops cleanup workstream. Standalone staff cockpit domains decommissioned 2026-07-09 (tony/jestina/landon/chloe/tara and peers → Command Center). Further deleting old servers / leftover cleanup is ongoing. Do not invent a deletion list — follow the CollabOS runbook and Rose/Carmen approval before removals.",
+      "Ops cleanup: old separate staff links are closed; everyone uses Command Center now. More server cleanup is still in progress — Rose or Carmen must approve before anything is removed.",
     department: "Systems",
     source: "Server Audit",
     repoPath: join(PROJECTS_ROOT, "collabos"),
@@ -624,26 +624,48 @@ function buildRegistryTags(app) {
 }
 
 function loadCockpitEntities() {
-  const awaitingRoseNotes = {
+  /** Human copy for Rose/Carmen — avoid module/registry/standalone jargon. */
+  const cockpitDescriptions = {
+    rose: "Rose’s executive workspace in Command Center.",
+    carmen: "Carmen’s insight and ops workspace in Command Center.",
+    tony: "Tony’s day-to-day workspace in Command Center.",
+    linda: "Linda’s workspace inside Command Center.",
     soraya:
-      "Hosted at https://command.cagteam.net/soraya. Still awaiting Rose — live data wiring and final handoff deferred; Bloom Soraya source exists separately. Do not treat as finished.",
-    opie:
-      "Hosted at https://command.cagteam.net/opie. CC route is live; needs Rose confirmation that the cockpit is finished vs still read-only/seed panels.",
-    skylar:
-      "Hosted at https://command.cagteam.net/skylar. CC route is live; needs Rose confirmation that the cockpit is finished vs still read-only/seed panels.",
-    "staff-qa":
-      "Hosted at https://command.cagteam.net/staff-qa. CC route is live; needs Rose confirmation that QA coverage and cockpit finish criteria are met.",
-    "fulfillment-compliance":
-      "Hosted at https://command.cagteam.net/fulfillment-compliance. CC route is live; needs Rose confirmation that fulfillment compliance cockpit is finished.",
+      "Soraya’s Bloom workspace in Command Center. Still waiting on Rose for live data and final handoff — not finished yet.",
     alyssa:
-      "Hosted at https://command.cagteam.net/alyssa. CC route is live; needs Rose confirmation that AlyssaOS cockpit is finished vs still needs a design pass.",
+      "Alyssa’s workspace in Command Center. Open and live; Rose still needs to confirm it’s finished vs needs a design pass.",
+    jestina: "Jestina’s day-to-day workspace in Command Center.",
+    tara: "Tara’s day-to-day workspace in Command Center.",
+    chris: "Chris’s day-to-day workspace in Command Center.",
+    christin: "Christin’s workspace in Command Center.",
+    nadia: "Nadia’s workspace in Command Center.",
+    gregg: "Gregg’s client workspace in Command Center.",
+    chloe: "Chloe’s marketing training hub in Command Center.",
+    emily: "Emily’s workspace in Command Center.",
+    landon: "Landon’s day-to-day workspace in Command Center.",
+    opie:
+      "Opie’s workspace in Command Center. Open and live; Rose still needs to confirm if it’s finished.",
+    skylar:
+      "Skylar’s workspace in Command Center. Open and live; Rose still needs to confirm if it’s finished.",
+    "staff-qa":
+      "Staff QA workspace in Command Center. Open and live; Rose still needs to confirm coverage is complete.",
+    "fulfillment-compliance":
+      "Fulfillment compliance workspace in Command Center. Open and live; Rose still needs to confirm it’s finished.",
   };
+  const awaitingRose = new Set([
+    "soraya",
+    "opie",
+    "skylar",
+    "staff-qa",
+    "fulfillment-compliance",
+    "alyssa",
+  ]);
   return COCKPIT_SLUGS.map((slug) => ({
     slug: `cockpit-${slug}`,
     name: COCKPIT_NAMES[slug] || `${slug} Cockpit`,
     description:
-      awaitingRoseNotes[slug] ||
-      `Hosted in Command Center at ${CC_BASE}/${slug}. Standalone domain retired; module runs inside Command Center.`,
+      cockpitDescriptions[slug] ||
+      `${COCKPIT_NAMES[slug] || slug} — open in Command Center.`,
     department: "Staff OS",
     source: "Command Center",
     healthUrl: `${CC_BASE}/${slug}`,
@@ -653,10 +675,11 @@ function loadCockpitEntities() {
       "command-center-hosted",
       "command.cagteam.net",
       slug,
-      ...(slug === "soraya" || awaitingRoseNotes[slug] ? ["awaiting-rose"] : []),
+      ...(slug === "soraya" || awaitingRose.has(slug) ? ["awaiting-rose"] : []),
     ],
-    presetStatus: slug === "soraya" ? "at-risk" : undefined,
-    presetProgress: slug === "soraya" ? 55 : undefined,
+    // Only Soraya stays at-risk by design; merged cockpits (Linda, Tony, …) stay active.
+    presetStatus: slug === "soraya" ? "at-risk" : "active",
+    presetProgress: slug === "soraya" ? 55 : 90,
   }));
 }
 
@@ -669,27 +692,35 @@ function assessEntity(entity, pm2Map) {
     httpStatus = httpCode(entity.healthUrl);
     httpOk = httpStatus >= 200 && httpStatus < 400;
     if (!httpOk) {
-      blockers.push({ title: `[sync] HTTP ${httpStatus || "timeout"} for ${entity.healthUrl}`, risk: "high" });
+      const softCc =
+        entity.source === "Command Center"
+          ? `[sync] Command Center page not opening right now (${entity.healthUrl})`
+          : `[sync] HTTP ${httpStatus || "timeout"} for ${entity.healthUrl}`;
+      blockers.push({
+        title: softCc,
+        risk: entity.source === "Command Center" ? "medium" : "high",
+      });
     }
   }
 
   if (entity.source === "Command Center") {
-    if (entity.presetStatus) {
-      return {
-        status: entity.presetStatus,
-        progress: entity.presetProgress ?? (httpOk === false ? 60 : 90),
-        risk: entity.presetStatus === "at-risk" || entity.presetStatus === "blocked" ? "high" : httpOk === false ? "medium" : "low",
-        blockers,
-        httpStatus,
-        pm2Restarts: 0,
-        pm2Online: null,
-        httpOk,
-      };
-    }
-    const status = httpOk === false ? "at-risk" : "active";
-    const risk = httpOk === false ? "medium" : "low";
-    const progress = httpOk === false ? 60 : 90;
-    return { status, progress, risk, blockers, httpStatus, pm2Restarts: 0, pm2Online: null, httpOk };
+    // Merged cockpits stay active unless explicitly preset (e.g. Soraya at-risk).
+    // Brief HTTP blips must not flip Linda/Tony/peers to at-risk.
+    const status = entity.presetStatus || "active";
+    const progress = entity.presetProgress ?? (httpOk === false ? 75 : 90);
+    let risk = "low";
+    if (status === "at-risk" || status === "blocked") risk = "high";
+    else if (httpOk === false) risk = "medium";
+    return {
+      status,
+      progress,
+      risk,
+      blockers: status === "at-risk" || status === "blocked" ? blockers : httpOk === false ? blockers : [],
+      httpStatus,
+      pm2Restarts: 0,
+      pm2Online: null,
+      httpOk,
+    };
   }
 
   let pm2Online = null;
@@ -829,14 +860,15 @@ function deriveBuildPlan(project, blockerCount) {
   }
   if (projectType === "merged-cc-host") {
     return {
-      summary: "Runs inside Command Center — standalone domain retired",
+      summary: "Live in Command Center — maintenance (~90%)",
       currentPhaseId: "cc-2",
       progress: project.status === "blocked" || project.status === "at-risk" ? 60 : 90,
       phases: [
-        { id: "cc-1", title: "Merged into Command Center", status: "complete", visibleProgress: 100 },
-        { id: "cc-2", title: "Maintenance mode", status: "active", visibleProgress: 90 },
+        { id: "cc-1", title: "Moved into Command Center", status: "complete", visibleProgress: 100 },
+        { id: "cc-2", title: "Ongoing maintenance", status: "active", visibleProgress: 90 },
       ],
-      carmenPlanNotes: "Hosted in Command Center. Carmen maintains the module; registry sync tracks health only.",
+      carmenPlanNotes:
+        "Open in Command Center. Carmen keeps this workspace healthy; the old separate link is closed.",
     };
   }
   const phases = [
@@ -918,10 +950,18 @@ async function syncBuildPlanForProject(client, projectId, blockerCount) {
       current_phase_id = $2,
       progress = $3,
       phases = $4::jsonb,
+      carmen_plan_notes = $5,
       source = 'sync',
       updated_at = NOW()
-     WHERE project_id = $5 AND source = 'sync'`,
-    [derived.summary, derived.currentPhaseId, derived.progress, JSON.stringify(derived.phases), projectId],
+     WHERE project_id = $6 AND source = 'sync'`,
+    [
+      derived.summary,
+      derived.currentPhaseId,
+      derived.progress,
+      JSON.stringify(derived.phases),
+      derived.carmenPlanNotes,
+      projectId,
+    ],
   );
 }
 

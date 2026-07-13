@@ -17,8 +17,8 @@ export const DEMO_PHASES: BuildPlanPhaseItem[] = [
 ];
 
 export const MERGED_CC_PHASES: BuildPlanPhaseItem[] = [
-  { id: "cc-1", title: "Merged into Command Center", status: "complete", visibleProgress: 100 },
-  { id: "cc-2", title: "Maintenance mode", status: "active", visibleProgress: 90 },
+  { id: "cc-1", title: "Moved into Command Center", status: "complete", visibleProgress: 100 },
+  { id: "cc-2", title: "Ongoing maintenance", status: "active", visibleProgress: 90 },
 ];
 
 export function isCommandCenterHosted(project: Pick<ProjectRow, "source" | "tags">): boolean {
@@ -81,12 +81,12 @@ export function deriveBuildPlanFromProject(
   if (projectType === "merged-cc-host") {
     const phases = MERGED_CC_PHASES.map((p) => ({ ...p }));
     return {
-      summary: "Runs inside Command Center — standalone domain retired",
+      summary: "Live in Command Center — maintenance (~90%)",
       currentPhaseId: "cc-2",
       progress: project.status === "blocked" || project.status === "at-risk" ? 60 : 90,
       phases,
       carmenPlanNotes:
-        "Hosted in Command Center. Carmen maintains the module; registry sync tracks health only.",
+        "Open in Command Center. Carmen keeps this workspace healthy; the old separate link is closed.",
       source: "sync",
     };
   }
