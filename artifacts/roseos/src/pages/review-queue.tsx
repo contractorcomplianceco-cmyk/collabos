@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useSearch } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { ClipboardCheck, Check, X, RefreshCw, History, Filter, FolderKanban } from "lucide-react";
 import { PageHeader, ClassificationBadge, RiskBadge, ApprovalRouteBadge, StatusChip, EmptyState, ApprovalPassport } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
 import { useAuth } from "@/hooks/use-auth";
 import { canApprove, mapServerRole, needsMySignOff, waitingOnLabel } from "@/lib/helpers";
+import { linkifyRecommendation } from "@/lib/linkify";
 import { useToast } from "@/hooks/use-toast";
 import { getStickyFilter, setStickyFilter } from "@/lib/nav-prefs";
 import { humanLabel, HUMAN_REVIEW_CATEGORY, HUMAN_REVIEW_STATUS } from "@/lib/ui-labels";
@@ -23,6 +24,7 @@ export default function ReviewQueue() {
   const { recommendations, recommendationsLoading, setRecommendationStatus, currentRole, projects } = useAppState();
   const { toast } = useToast();
   const search = useSearch();
+  const [, setLocation] = useLocation();
   const userKey = user?.email ?? String(user?.id ?? currentRole);
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>(() => initialCategory(userKey));
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -178,8 +180,28 @@ export default function ReviewQueue() {
           const myTurn = needsMySignOff(role, r.requiredApprover, r.approvals, r.status);
           const busy = actingId === r.id;
           const projectName = r.projectId ? projectNameById[r.projectId] : null;
+          const projectHubHref = r.projectId ? `/projects?expand=${encodeURIComponent(r.projectId)}` : null;
+          const openProjectHub = () => {
+            if (projectHubHref) setLocation(projectHubHref);
+          };
           return (
-            <div key={r.id} className={`rounded-2xl border bg-white p-5 shadow-sm ${expanded === r.id ? "border-rose-300 ring-2 ring-rose-100" : "border-slate-200"}`}>
+            <div
+              key={r.id}
+              role={projectHubHref ? "link" : undefined}
+              tabIndex={projectHubHref ? 0 : undefined}
+              onClick={projectHubHref ? openProjectHub : undefined}
+              onKeyDown={
+                projectHubHref
+                  ? (e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openProjectHub();
+                      }
+                    }
+                  : undefined
+              }
+              className={`rounded-2xl border bg-white p-5 shadow-sm transition ${expanded === r.id ? "border-rose-300 ring-2 ring-rose-100" : "border-slate-200"} ${projectHubHref ? "cursor-pointer hover:border-sky-200 hover:shadow-md" : ""}`}
+            >
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -187,9 +209,10 @@ export default function ReviewQueue() {
                     <ClassificationBadge value={r.classification} />
                     <RiskBadge value={r.risk} />
                     <ApprovalRouteBadge value={r.requiredApprover} />
-                    {projectName ? (
+                    {projectName && projectHubHref ? (
                       <Link
-                        href="/projects"
+                        href={projectHubHref}
+                        onClick={(e) => e.stopPropagation()}
                         className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-0.5 text-[11px] font-semibold text-sky-700 ring-1 ring-sky-100 hover:bg-sky-100"
                       >
                         <FolderKanban className="h-3 w-3" />
@@ -197,8 +220,15 @@ export default function ReviewQueue() {
                       </Link>
                     ) : null}
                   </div>
-                  <p className="mt-3 text-sm font-medium text-slate-800">{r.recommendation}</p>
-                  <button onClick={() => setExpanded(expanded === r.id ? null : r.id)} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-600">
+                  <p className="mt-3 text-sm font-medium text-slate-800">{linkifyRecommendation(r.recommendation)}</p>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExpanded(expanded === r.id ? null : r.id);
+                    }}
+                    className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-600"
+                  >
                     <History className="h-3.5 w-3.5" /> {expanded === r.id ? "Hide" : "Show"} history
                   </button>
                   {expanded === r.id && (
@@ -210,7 +240,7 @@ export default function ReviewQueue() {
                   )}
                 </div>
 
-                <div className="flex shrink-0 flex-col items-end gap-2">
+                <div className="flex shrink-0 flex-col items-end gap-2" onClick={(e) => e.stopPropagation()}>
                   <ApprovalPassport requiredApprover={r.requiredApprover} approvals={r.approvals} status={r.status} />
                   {r.requiredApprover === "both" && r.status === "pending" && (r.approvals?.rose || r.approvals?.carmen) && (
                     <span className="rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
@@ -222,6 +252,7 @@ export default function ReviewQueue() {
                     myTurn ? (
                       <>
                         <button
+                          type="button"
                           disabled={busy}
                           onClick={() => void act(r.id, "approved")}
                           className="inline-flex items-center gap-1 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
@@ -229,6 +260,7 @@ export default function ReviewQueue() {
                           <Check className="h-3.5 w-3.5" /> Sign off
                         </button>
                         <button
+                          type="button"
                           disabled={busy}
                           onClick={() => void act(r.id, "needs-revision")}
                           className="inline-flex items-center gap-1 rounded-lg bg-sky-100 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-200 disabled:opacity-50"
@@ -236,6 +268,7 @@ export default function ReviewQueue() {
                           <RefreshCw className="h-3.5 w-3.5" /> Revise
                         </button>
                         <button
+                          type="button"
                           disabled={busy}
                           onClick={() => void act(r.id, "rejected")}
                           className="inline-flex items-center gap-1 rounded-lg bg-rose-100 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-200 disabled:opacity-50"
