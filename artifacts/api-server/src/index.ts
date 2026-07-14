@@ -3,6 +3,7 @@ import { logger } from "./lib/logger";
 import { backfillRecommendationProjectLinks } from "./lib/backfill-recommendation-projects";
 import { ensureStaffAccountsFromEnv } from "./lib/ensure-staff-accounts";
 import { seedIntegrationsIfEmpty } from "./lib/seed-integrations";
+import { seedPromptsIfEmpty } from "./lib/seed-prompts";
 
 const rawPort = process.env["PORT"];
 
@@ -28,6 +29,10 @@ seedIntegrationsIfEmpty().catch((err) => {
 
 backfillRecommendationProjectLinks().catch((err) => {
   logger.error({ err }, "Failed to backfill recommendation project links");
+});
+
+seedPromptsIfEmpty().catch((err) => {
+  logger.error({ err }, "Failed to seed Prompt Library");
 });
 
 app.listen(port, (err) => {

@@ -17,3 +17,4 @@ export * from "./marketPulse";
 export * from "./reportTemplates";
 export * from "./integrations";
 export * from "./agentWork";
+export * from "./prompts";

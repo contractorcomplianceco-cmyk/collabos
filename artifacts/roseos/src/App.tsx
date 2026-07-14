@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Switch, Route, Router as WouterRouter, Link, useLocation, Redirect } from "wouter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Target, Users, Search, Lightbulb, PenTool, FileBarChart,
   Activity, Brain, ClipboardCheck, Settings as SettingsIcon, Bell, Lock, Menu, X,
   Sparkles, Send, AlertTriangle, Inbox, LogOut, UserCog, ScrollText, Wand2, Bot,
-  FolderKanban, ListChecks, Route as RouteIcon,
+  FolderKanban, ListChecks, Route as RouteIcon, BookMarked,
 } from "lucide-react";
 import { canAccessMindMeld, canViewModule, mapServerRole, canSubmit, classifyIntakeMessage, detectDuplicates } from "@/lib/helpers";
 import { useActivityNotifications } from "@/hooks/use-activity-notifications";
@@ -38,6 +38,8 @@ import AuditLogs from "@/pages/audit-logs";
 import ProjectsPage from "@/pages/projects";
 import ProjectTasksPage from "@/pages/project-tasks";
 import CarmenPathPage from "@/pages/carmen-path";
+import PromptLibraryPage from "@/pages/prompt-library";
+import { listPrompts, PROMPTS_QUERY_KEY } from "@/lib/prompts-api";
 
 const queryClient = new QueryClient();
 
@@ -64,16 +66,17 @@ const NAV: NavItem[] = [
   { href: "/market-pulse", label: "Market Pulse", icon: Activity, ctx: "Market Pulse" },
   { href: "/mind-meld", label: "Mind Meld Room", icon: Brain, ctx: "Mind Meld Room", gated: true, blurb: "Think together" },
   { href: "/review-queue", label: "Review Queue", icon: ClipboardCheck, ctx: "Review Queue", blurb: "Stamp decisions" },
+  { href: "/prompt-library", label: "Prompt Library", icon: BookMarked, ctx: "Prompt Library", blurb: "Reusable AI prompts" },
   { href: "/agent-queue", label: "Cursor Direct Requests", icon: Bot, ctx: "Cursor Direct Requests", blurb: "Build & fix requests" },
   { href: "/external-intake", label: "Incoming Messages", icon: Inbox, ctx: "Incoming Messages" },
   { href: "/settings", label: "Settings", icon: SettingsIcon, ctx: "Settings" },
 ];
 
-/** Workflow groups for the sidebar — Projects & Carmen’s Path stay near the top of Build. */
-const NAV_GROUPS: { id: string; label: string; hrefs: string[] }[] = [
+/** Workflow groups for the sidebar — Decide = sign-off & thinking; Build = do the work. */
+const NAV_GROUPS: { id: string; label: string; hrefs: string[]; hint?: string }[] = [
   { id: "home", label: "Home", hrefs: ["/"] },
-  { id: "decide", label: "Decide", hrefs: ["/review-queue", "/mind-meld", "/external-intake"] },
-  { id: "build", label: "Build", hrefs: ["/projects", "/carmen-path", "/project-tasks", "/agent-queue", "/innovation-lab", "/mockup-studio"] },
+  { id: "decide", label: "Decide", hint: "Sign-off & think together", hrefs: ["/review-queue", "/mind-meld", "/external-intake"] },
+  { id: "build", label: "Build", hint: "Projects, prompts & Cursor work", hrefs: ["/projects", "/carmen-path", "/project-tasks", "/prompt-library", "/agent-queue", "/innovation-lab", "/mockup-studio"] },
   { id: "track", label: "Track", hrefs: ["/duplicate-radar", "/team-pulse", "/solution-finder", "/executive-reports", "/market-pulse"] },
   { id: "account", label: "Account", hrefs: ["/settings"] },
 ];
@@ -92,6 +95,7 @@ const ROSE_BRAIN_TIPS: Record<string, string[]> = {
   "Market Pulse": ["Add competitors and keywords in Settings to start monitoring.", "Signals appear as market data is captured.", "I can suggest a recommended response per signal."],
   "Mind Meld Room": ["Think together — private space for Rose and Carmen.", "Send to Carmen for systems; send to Rose for direction.", "Handoffs never auto-create official decisions — stamp those in Review Queue."],
   "Review Queue": ["Stamp decisions — suggestions are never auto-approved.", "Items appear here when something needs your sign-off.", "Sign-off adds the item to Carmen’s open work."],
+  "Prompt Library": ["Reusable prompts by intent — handoff, security, design, audit, Cursor briefs.", "Optionally tag a project; filter by intent or search.", "Copy a reply template for Rose’s AI, then mark shared with Rose or Carmen."],
   "Cursor Direct Requests": ["Only approved requests are ready for Cursor.", "Use this for fixes, bugs, day-to-day ops, and setup work.", "Every Cursor update should include what changed."],
   "Incoming Messages": ["Messages stay drafts until a person reviews them.", "Sensitive items stay with leadership.", "Routing suggestions still need your approval."],
   "Settings": ["Adjust duplicate sensitivity and alert thresholds.", "Connections stay off until you approve them.", "Your shared workspace is saved on the server."],
@@ -241,7 +245,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           if (all.length === 0) return null;
           return (
             <div key={group.id} className="space-y-0.5">
-              <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">{group.label}</p>
+              <div className="px-2 pb-1">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{group.label}</p>
+                {group.hint ? <p className="text-[9px] font-normal normal-case tracking-normal text-slate-400">{group.hint}</p> : null}
+              </div>
               {all.map((l) => (
                 <SidebarNavLink
                   key={l.href}
@@ -368,6 +375,7 @@ const HIT_ICONS: Record<SearchHitKind, React.ComponentType<{ className?: string 
   task: ListChecks,
   decision: ClipboardCheck,
   cursor: Bot,
+  prompt: BookMarked,
 };
 
 function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -378,6 +386,13 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
   const [query, setQuery] = useState("");
   const [smartResult, setSmartResult] = useState<{ title: string; lines: string[] } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { data: prompts = [] } = useQuery({
+    queryKey: PROMPTS_QUERY_KEY,
+    queryFn: listPrompts,
+    enabled: open,
+    staleTime: 60_000,
+  });
+
 
   useEffect(() => {
     if (!open) return;
@@ -408,12 +423,13 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
         tasks: projectTasks,
         recommendations,
         agentWork: agentWorkItems,
+        prompts,
       }),
-    [query, visibleNav, projects, projectTasks, recommendations, agentWorkItems],
+    [query, visibleNav, projects, projectTasks, recommendations, agentWorkItems, prompts],
   );
 
   const grouped = useMemo(() => {
-    const order: SearchHitKind[] = ["project", "task", "decision", "cursor", "page"];
+    const order: SearchHitKind[] = ["project", "task", "decision", "cursor", "prompt", "page"];
     const map = new Map<SearchHitKind, SearchHit[]>();
     for (const h of hits) {
       const list = map.get(h.kind) ?? [];
@@ -759,6 +775,7 @@ function Router() {
         <Route path="/mind-meld">{() => <Guarded href="/mind-meld"><MindMeldRoom /></Guarded>}</Route>
         <Route path="/review-queue">{() => <Guarded href="/review-queue"><ReviewQueue /></Guarded>}</Route>
         <Route path="/agent-queue">{() => <Guarded href="/agent-queue"><AgentQueue /></Guarded>}</Route>
+        <Route path="/prompt-library">{() => <Guarded href="/prompt-library"><PromptLibraryPage /></Guarded>}</Route>
         <Route path="/external-intake">{() => <Guarded href="/external-intake"><ExternalIntake /></Guarded>}</Route>
         <Route path="/settings">{() => <Guarded href="/settings"><SettingsPage /></Guarded>}</Route>
         <Route path="/user-management">{() => <AdminGuarded permission="user_management"><UserManagement /></AdminGuarded>}</Route>

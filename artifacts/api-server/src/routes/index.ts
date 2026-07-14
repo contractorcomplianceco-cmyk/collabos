@@ -17,6 +17,7 @@ import registryRouter from "./registry";
 import marketRouter from "./market";
 import reportTemplatesRouter from "./reportTemplates";
 import agentWorkRouter from "./agentWork";
+import promptsRouter from "./prompts";
 
 const router: IRouter = Router();
 
@@ -38,5 +39,6 @@ router.use(registryRouter);
 router.use(marketRouter);
 router.use(reportTemplatesRouter);
 router.use(agentWorkRouter);
+router.use(promptsRouter);
 
 export default router;

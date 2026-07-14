@@ -56,6 +56,10 @@ export const AUDIT_ACTIONS = [
   "project_blocker_created",
   "project_blocker_updated",
   "project_blocker_deleted",
+  "prompt_created",
+  "prompt_updated",
+  "prompt_shared",
+  "prompt_deleted",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

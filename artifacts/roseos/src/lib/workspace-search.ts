@@ -1,6 +1,7 @@
 import type { AgentWorkItem, Project, Recommendation, Task } from "@/types";
+import { PROMPT_INTENT_LABEL, type PromptRecord } from "@/lib/prompts-api";
 
-export type SearchHitKind = "page" | "project" | "task" | "decision" | "cursor";
+export type SearchHitKind = "page" | "project" | "task" | "decision" | "cursor" | "prompt";
 
 export type SearchHit = {
   id: string;
@@ -55,6 +56,7 @@ export function searchWorkspace(opts: {
   tasks: Task[];
   recommendations: Recommendation[];
   agentWork: AgentWorkItem[];
+  prompts?: PromptRecord[];
   limit?: number;
 }): SearchHit[] {
   const q = opts.query.trim();
@@ -140,6 +142,20 @@ export function searchWorkspace(opts: {
     }
   }
 
+  for (const p of opts.prompts ?? []) {
+    const pname = p.projectId != null ? projectName[String(p.projectId)] ?? projectName[p.projectId] : null;
+    const intentLabel = PROMPT_INTENT_LABEL[p.intent] ?? p.intent;
+    if (matchesQuery(`${p.title} ${p.body} ${intentLabel} ${p.tags.join(" ")} ${p.createdBy} ${pname ?? ""}`, q)) {
+      hits.push({
+        id: `prompt:${p.id}`,
+        kind: "prompt",
+        title: p.title,
+        subtitle: pname ? `Prompt · ${intentLabel} · ${pname}` : `Prompt · ${intentLabel}`,
+        href: `/prompt-library?focus=${encodeURIComponent(String(p.id))}`,
+      });
+    }
+  }
+
   return hits.slice(0, limit);
 }
 
@@ -149,4 +165,5 @@ export const SEARCH_KIND_LABEL: Record<SearchHitKind, string> = {
   task: "Tasks",
   decision: "Decisions",
   cursor: "Cursor requests",
+  prompt: "Prompts",
 };
