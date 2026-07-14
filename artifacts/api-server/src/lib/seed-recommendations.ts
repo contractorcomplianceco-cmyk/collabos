@@ -105,7 +105,8 @@ const INTEGRATION_DECISION_CARDS = [
     classification: "pending-approval" as const,
     risk: "medium" as const,
     requiredApprover: "rose" as const,
-    matchKey: "gemini",
+    /** Match only our dedicated card source, not incidental mentions elsewhere. */
+    sourceExact: "Gemini",
   },
   {
     source: "Zoho CRM / WorkDrive",
@@ -115,7 +116,7 @@ const INTEGRATION_DECISION_CARDS = [
     classification: "pending-approval" as const,
     risk: "high" as const,
     requiredApprover: "both" as const,
-    matchKey: "zoho crm",
+    sourceExact: "Zoho CRM / WorkDrive",
   },
 ];
 
@@ -136,28 +137,28 @@ export async function ensurePendingIntegrationDecisionCards(): Promise<void> {
   const crmProject =
     projects.find((p) => /crm architecture/i.test(p.name)) ??
     projects.find((p) => /qualifierconnect/i.test(p.name)) ??
-    projects.find((p) => /zoho/i.test(p.name));
+    projects.find((p) => /document collection/i.test(p.name));
   const geminiProject =
     projects.find((p) => /gemini/i.test(p.name)) ??
+    projects.find((p) => /^collabos$/i.test(p.name)) ??
     projects.find((p) => /collabos/i.test(p.name));
 
   const now = new Date().toISOString().replace("T", " ").slice(0, 16);
   let inserted = 0;
 
   for (const card of INTEGRATION_DECISION_CARDS) {
-    const existing = rows.find((r) => {
-      const blob = `${r.source} ${r.recommendation}`.toLowerCase();
-      return blob.includes(card.matchKey) && r.category === "final-decision";
-    });
+    const existing = rows.find(
+      (r) => r.source === card.sourceExact && r.category === "final-decision",
+    );
     if (existing) {
-      const linkId = card.matchKey.includes("zoho") ? crmProject?.id : geminiProject?.id;
+      const linkId = card.sourceExact.startsWith("Zoho") ? crmProject?.id : geminiProject?.id;
       if (linkId && !existing.projectId) {
         await db.update(recommendationsTable).set({ projectId: linkId }).where(eq(recommendationsTable.id, existing.id));
       }
       continue;
     }
 
-    const projectId = card.matchKey.includes("zoho") ? crmProject?.id ?? null : geminiProject?.id ?? null;
+    const projectId = card.sourceExact.startsWith("Zoho") ? crmProject?.id ?? null : geminiProject?.id ?? null;
     await db.insert(recommendationsTable).values({
       source: card.source,
       category: card.category,
@@ -170,7 +171,7 @@ export async function ensurePendingIntegrationDecisionCards(): Promise<void> {
       projectId,
       history: [
         {
-          id: `rh-int-${card.matchKey.replace(/\s+/g, "-")}`,
+          id: `rh-int-${card.sourceExact.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
           timestamp: now,
           actor: "Rose OS",
           action: "Pending final decision card created (not live-wired, not approved).",
