@@ -234,6 +234,18 @@ function WorkItemCard({
   const [verificationText, setVerificationText] = useState(item.verificationSteps.join("\n"));
   const [eventAction, setEventAction] = useState("");
   const [eventNote, setEventNote] = useState("");
+  const attachmentsSectionRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (focused) setOpen(true);
+  }, [focused]);
+
+  const openAttachments = () => {
+    setOpen(true);
+    window.setTimeout(() => {
+      attachmentsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 50);
+  };
 
   const save = () => {
     onUpdate(item.id, {
@@ -266,10 +278,15 @@ function WorkItemCard({
             <RiskBadge value={item.risk} />
             <ApprovalRouteBadge value={item.approvalRoute} />
             {(item.attachmentCount ?? 0) > 0 ? (
-              <StatusChip
-                label={`Rose attached files (${item.attachmentCount})`}
-                tone="rose"
-              />
+              <button
+                type="button"
+                onClick={openAttachments}
+                title="Open file list and download"
+                className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-medium capitalize text-rose-700 ring-1 ring-rose-200 transition hover:bg-rose-100 hover:ring-rose-300"
+              >
+                <Paperclip className="h-3 w-3" />
+                Rose attached files ({item.attachmentCount})
+              </button>
             ) : null}
           </div>
           <h3 className="mt-3 text-base font-bold text-slate-900">{item.title}</h3>
@@ -353,7 +370,9 @@ function WorkItemCard({
             )}
           </SectionCard>
 
-          <AttachFilesForCarmen itemId={Number(item.id)} canUpload={canUpload} />
+          <div ref={attachmentsSectionRef} className="lg:col-span-2">
+            <AttachFilesForCarmen itemId={Number(item.id)} canUpload={canUpload} />
+          </div>
         </div>
       )}
     </div>

@@ -76,8 +76,8 @@ export default function CarmenPathPage() {
                     {w.attachmentCount} file{w.attachmentCount === 1 ? "" : "s"} on an open Cursor request
                   </p>
                 </div>
-                <Link href="/agent-queue" className="text-xs font-semibold text-rose-600 hover:underline">
-                  Open Cursor requests
+                <Link href={`/agent-queue?focus=${encodeURIComponent(w.id)}`} className="text-xs font-semibold text-rose-600 hover:underline">
+                  Open & download files
                 </Link>
               </li>
             ))}

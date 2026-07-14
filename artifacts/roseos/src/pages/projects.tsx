@@ -492,6 +492,11 @@ function ProjectDetailPanel({
   );
 }
 
+type ProjectTagFilter =
+  | { kind: "type"; value: string; label: string }
+  | { kind: "awaiting-rose"; label: string }
+  | { kind: "client-code"; value: string; label: string };
+
 export default function ProjectsPage() {
   const { user } = useAuth();
   const { projectTasks, projectsLoading, recommendations } = useAppState();
@@ -516,7 +521,18 @@ export default function ProjectsPage() {
   const [ordered, setOrdered] = useState<ProjectRecord[] | null>(null);
   const [dragId, setDragId] = useState<number | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
+  const [tagFilter, setTagFilter] = useState<ProjectTagFilter | null>(null);
   const projectCardRefs = useRef<Record<number, HTMLLIElement | null>>({});
+
+  function toggleTagFilter(next: ProjectTagFilter) {
+    setTagFilter((prev) => {
+      if (!prev) return next;
+      if (prev.kind !== next.kind) return next;
+      if (prev.kind === "awaiting-rose" && next.kind === "awaiting-rose") return null;
+      if ("value" in prev && "value" in next && prev.value === next.value) return null;
+      return next;
+    });
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
@@ -582,6 +598,17 @@ export default function ProjectsPage() {
       (a, b) => (a.sortOrder ?? a.id) - (b.sortOrder ?? b.id) || a.name.localeCompare(b.name),
     );
   }, [projects, ordered]);
+
+  const filtered = useMemo(() => {
+    if (!tagFilter) return sorted;
+    return sorted.filter((p) => {
+      if (tagFilter.kind === "type") return p.projectType === tagFilter.value;
+      if (tagFilter.kind === "client-code") {
+        return clientCodeBadges(p.tags).includes(tagFilter.value);
+      }
+      return isAwaitingRose(p.tags, pendingProjectRecs, p.id, p.name);
+    });
+  }, [sorted, tagFilter, pendingProjectRecs]);
 
   async function persistOrder(next: ProjectRecord[]) {
     setSavingOrder(true);
@@ -677,11 +704,38 @@ export default function ProjectsPage() {
             ) : (
               <p className="mb-3 text-xs text-slate-500">Priority order (Rose sets this) — top of the list is Carmen’s next focus.</p>
             )}
+            <p className="mb-3 text-xs text-slate-400">
+              Click a Live, Demo, client code, or Awaiting Rose tag to filter this list.
+            </p>
+            {tagFilter ? (
+              <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">
+                <span>
+                  Showing projects tagged <span className="font-semibold">{tagFilter.label}</span>
+                  {" "}({filtered.length} of {sorted.length})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setTagFilter(null)}
+                  className="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold text-sky-700 ring-1 ring-sky-200 hover:bg-sky-100"
+                >
+                  Clear filter
+                </button>
+              </div>
+            ) : null}
+            {filtered.length === 0 ? (
+              <EmptyState
+                message={tagFilter ? `No projects match “${tagFilter.label}”.` : "No projects yet."}
+                hint={tagFilter ? "Clear the filter to see the full list again." : undefined}
+              />
+            ) : null}
             <ul className="space-y-3">
-              {sorted.map((p, index) => {
+              {filtered.map((p, index) => {
                 const plan = planByProject[p.id];
                 const displayProgress = plan?.visibleProgress ?? p.progress;
                 const expanded = expandedId === p.id;
+                const typeActive = tagFilter?.kind === "type" && tagFilter.value === p.projectType;
+                const awaitingActive = tagFilter?.kind === "awaiting-rose";
+                const awaitingThis = isAwaitingRose(p.tags, pendingProjectRecs, p.id, p.name);
                 return (
                   <li
                     key={p.id}
@@ -707,30 +761,61 @@ export default function ProjectsPage() {
                             <h3 className="text-sm font-semibold text-slate-800">{p.name}</h3>
                             <StatusChip label={humanLabel(HUMAN_PROJECT_STATUS, p.status)} tone={STATUS_TONE[p.status]} />
                             {p.projectType ? (
-                              <span
-                                className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ring-2 ${
+                              <button
+                                type="button"
+                                title={`Filter by ${PROJECT_TYPE_LABEL[p.projectType] ?? p.projectType}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleTagFilter({
+                                    kind: "type",
+                                    value: p.projectType!,
+                                    label: PROJECT_TYPE_LABEL[p.projectType!] ?? p.projectType!,
+                                  });
+                                }}
+                                className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ring-2 transition hover:opacity-90 ${
                                   p.projectType === "live"
                                     ? "bg-emerald-500 text-white ring-emerald-200"
                                     : p.projectType === "demo"
                                       ? "bg-amber-400 text-amber-950 ring-amber-200"
                                       : "bg-slate-700 text-white ring-slate-300"
-                                }`}
+                                } ${typeActive ? "outline outline-2 outline-offset-1 outline-sky-500" : ""}`}
                               >
                                 {PROJECT_TYPE_LABEL[p.projectType] ?? p.projectType}
-                              </span>
+                              </button>
                             ) : null}
-                            {clientCodeBadges(p.tags).map((code) => (
-                              <span
-                                key={code}
-                                className="inline-flex items-center rounded-md bg-sky-600 px-2 py-0.5 text-[11px] font-bold tracking-wide text-white"
+                            {clientCodeBadges(p.tags).map((code) => {
+                              const codeActive = tagFilter?.kind === "client-code" && tagFilter.value === code;
+                              return (
+                                <button
+                                  key={code}
+                                  type="button"
+                                  title={`Filter by client code ${code}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleTagFilter({ kind: "client-code", value: code, label: code });
+                                  }}
+                                  className={`inline-flex items-center rounded-md bg-sky-600 px-2 py-0.5 text-[11px] font-bold tracking-wide text-white transition hover:bg-sky-700 ${
+                                    codeActive ? "outline outline-2 outline-offset-1 outline-sky-500" : ""
+                                  }`}
+                                >
+                                  {code}
+                                </button>
+                              );
+                            })}
+                            {awaitingThis ? (
+                              <button
+                                type="button"
+                                title="Filter by Awaiting Rose"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleTagFilter({ kind: "awaiting-rose", label: "Awaiting Rose" });
+                                }}
+                                className={`inline-flex items-center rounded-md bg-rose-600 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white ring-2 ring-rose-200 transition hover:bg-rose-700 ${
+                                  awaitingActive ? "outline outline-2 outline-offset-1 outline-sky-500" : ""
+                                }`}
                               >
-                                {code}
-                              </span>
-                            ))}
-                            {isAwaitingRose(p.tags, pendingProjectRecs, p.id, p.name) ? (
-                              <span className="inline-flex items-center rounded-md bg-rose-600 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white ring-2 ring-rose-200">
                                 Awaiting Rose
-                              </span>
+                              </button>
                             ) : null}
                             <RiskBadge value={p.risk} />
                           </div>
