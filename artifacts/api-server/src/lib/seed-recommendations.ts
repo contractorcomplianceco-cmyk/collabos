@@ -1,4 +1,5 @@
-import { db, recommendationsTable, type Recommendation } from "@workspace/db";
+import { db, recommendationsTable, projectsTable, type Recommendation } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import { logger } from "./logger";
 
 const SEED_RECOMMENDATIONS = [
@@ -93,4 +94,94 @@ export async function seedRecommendationsIfEmpty(): Promise<void> {
     })),
   );
   logger.info({ count: SEED_RECOMMENDATIONS.length }, "Seeded review queue recommendations");
+}
+
+const INTEGRATION_DECISION_CARDS = [
+  {
+    source: "Gemini",
+    category: "final-decision" as const,
+    recommendation:
+      "Decide whether CCA should adopt Google Gemini for CollabOS / Rose AI reply assistance (prompt templates, drafts). Not live-wired — stamp only when ready to approve scope.",
+    classification: "pending-approval" as const,
+    risk: "medium" as const,
+    requiredApprover: "rose" as const,
+    matchKey: "gemini",
+  },
+  {
+    source: "Zoho CRM / WorkDrive",
+    category: "final-decision" as const,
+    recommendation:
+      "Decide the Zoho CRM and WorkDrive integration path for CCA (what syncs, who owns fields, what stays manual). Not live-wired — pending Rose final decision before any connection goes live.",
+    classification: "pending-approval" as const,
+    risk: "high" as const,
+    requiredApprover: "both" as const,
+    matchKey: "zoho crm",
+  },
+];
+
+/** Idempotent: ensure Gemini + Zoho CRM/WorkDrive pending Final-decision cards exist for Rose to stamp later. */
+export async function ensurePendingIntegrationDecisionCards(): Promise<void> {
+  const rows = await db
+    .select({
+      id: recommendationsTable.id,
+      source: recommendationsTable.source,
+      recommendation: recommendationsTable.recommendation,
+      status: recommendationsTable.status,
+      category: recommendationsTable.category,
+      projectId: recommendationsTable.projectId,
+    })
+    .from(recommendationsTable);
+
+  const projects = await db.select({ id: projectsTable.id, name: projectsTable.name }).from(projectsTable);
+  const crmProject =
+    projects.find((p) => /crm architecture/i.test(p.name)) ??
+    projects.find((p) => /qualifierconnect/i.test(p.name)) ??
+    projects.find((p) => /zoho/i.test(p.name));
+  const geminiProject =
+    projects.find((p) => /gemini/i.test(p.name)) ??
+    projects.find((p) => /collabos/i.test(p.name));
+
+  const now = new Date().toISOString().replace("T", " ").slice(0, 16);
+  let inserted = 0;
+
+  for (const card of INTEGRATION_DECISION_CARDS) {
+    const existing = rows.find((r) => {
+      const blob = `${r.source} ${r.recommendation}`.toLowerCase();
+      return blob.includes(card.matchKey) && r.category === "final-decision";
+    });
+    if (existing) {
+      const linkId = card.matchKey.includes("zoho") ? crmProject?.id : geminiProject?.id;
+      if (linkId && !existing.projectId) {
+        await db.update(recommendationsTable).set({ projectId: linkId }).where(eq(recommendationsTable.id, existing.id));
+      }
+      continue;
+    }
+
+    const projectId = card.matchKey.includes("zoho") ? crmProject?.id ?? null : geminiProject?.id ?? null;
+    await db.insert(recommendationsTable).values({
+      source: card.source,
+      category: card.category,
+      recommendation: card.recommendation,
+      classification: card.classification,
+      risk: card.risk,
+      requiredApprover: card.requiredApprover,
+      status: "pending",
+      approvals: { rose: false, carmen: false },
+      projectId,
+      history: [
+        {
+          id: `rh-int-${card.matchKey.replace(/\s+/g, "-")}`,
+          timestamp: now,
+          actor: "Rose OS",
+          action: "Pending final decision card created (not live-wired, not approved).",
+        },
+      ],
+      createdByName: "Rose OS",
+    });
+    inserted += 1;
+  }
+
+  if (inserted > 0) {
+    logger.info({ inserted }, "Ensured pending Gemini / Zoho Final-decision cards");
+  }
 }

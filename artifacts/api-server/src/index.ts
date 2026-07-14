@@ -4,6 +4,8 @@ import { backfillRecommendationProjectLinks } from "./lib/backfill-recommendatio
 import { ensureStaffAccountsFromEnv } from "./lib/ensure-staff-accounts";
 import { seedIntegrationsIfEmpty } from "./lib/seed-integrations";
 import { seedPromptsIfEmpty } from "./lib/seed-prompts";
+import { cleanupSeedMindFeedNoise } from "./lib/seed-mind-meld";
+import { ensurePendingIntegrationDecisionCards } from "./lib/seed-recommendations";
 
 const rawPort = process.env["PORT"];
 
@@ -34,6 +36,16 @@ backfillRecommendationProjectLinks().catch((err) => {
 seedPromptsIfEmpty().catch((err) => {
   logger.error({ err }, "Failed to seed Prompt Library");
 });
+
+cleanupSeedMindFeedNoise().catch((err) => {
+  logger.error({ err }, "Failed to clean Mind Feed seed noise");
+});
+
+ensurePendingIntegrationDecisionCards()
+  .then(() => backfillRecommendationProjectLinks())
+  .catch((err) => {
+    logger.error({ err }, "Failed to ensure Gemini / Zoho Final-decision cards");
+  });
 
 app.listen(port, (err) => {
   if (err) {
