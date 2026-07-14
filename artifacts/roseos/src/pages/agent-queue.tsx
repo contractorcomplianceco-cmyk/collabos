@@ -213,6 +213,7 @@ function WorkItemCard({
   onUpdate,
   onEvent,
   focused,
+  wrapRef,
 }: {
   item: AgentWorkItem;
   canManage: boolean;
@@ -220,6 +221,7 @@ function WorkItemCard({
   onUpdate: (id: string, patch: Parameters<ReturnType<typeof useAppState>["updateAgentWork"]>[1]) => void;
   onEvent: (id: string, action: string, note?: string) => void;
   focused?: boolean;
+  wrapRef?: React.RefObject<HTMLDivElement | null>;
 }) {
   const [open, setOpen] = useState(focused ?? false);
   const [status, setStatus] = useState<AgentWorkStatus>(item.status);
@@ -254,7 +256,7 @@ function WorkItemCard({
   };
 
   return (
-    <div className={`rounded-2xl border bg-white p-5 shadow-sm ${focused ? "border-violet-300 ring-2 ring-violet-100" : "border-slate-200"}`}>
+    <div ref={wrapRef} className={`rounded-2xl border bg-white p-5 shadow-sm ${focused ? "border-violet-300 ring-2 ring-violet-100" : "border-slate-200"}`}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -378,6 +380,7 @@ export default function AgentQueue() {
   });
   const [focusId, setFocusId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
+  const focusRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
@@ -405,6 +408,11 @@ export default function AgentQueue() {
     () => statusFilter === "all" ? agentWorkItems : agentWorkItems.filter((item) => item.status === statusFilter),
     [agentWorkItems, statusFilter],
   );
+
+  useEffect(() => {
+    if (!focusId) return;
+    window.setTimeout(() => focusRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
+  }, [focusId, filtered]);
   const approved = agentWorkItems.filter((item) => item.status === "approved-for-agent").length;
   const active = agentWorkItems.filter((item) => item.status === "in-progress" || item.status === "blocked").length;
 
@@ -631,7 +639,16 @@ export default function AgentQueue() {
           />
         )}
         {!agentWorkLoading && filtered.map((item) => (
-          <WorkItemCard key={item.id} item={item} canManage={canManage} canUpload={canUpload} onUpdate={update} onEvent={addEvent} focused={focusId === item.id} />
+          <WorkItemCard
+            key={item.id}
+            item={item}
+            canManage={canManage}
+            canUpload={canUpload}
+            onUpdate={update}
+            onEvent={addEvent}
+            focused={focusId === item.id}
+            wrapRef={focusId === item.id ? focusRef : undefined}
+          />
         ))}
       </div>
     </div>

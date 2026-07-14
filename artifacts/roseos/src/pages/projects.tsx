@@ -38,6 +38,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useAppState } from "@/hooks/use-app-state";
 import { humanLabel, HUMAN_PROJECT_STATUS, HUMAN_TASK_STATUS, HUMAN_AGENT_STATUS, HUMAN_REVIEW_STATUS } from "@/lib/ui-labels";
 import { getPinnedProjectIds, pushRecent, togglePinnedProject } from "@/lib/nav-prefs";
+import { linkifyRecommendation } from "@/lib/linkify";
 import { useToast } from "@/hooks/use-toast";
 import type { ProjectStatus } from "@/types";
 
@@ -515,6 +516,7 @@ export default function ProjectsPage() {
   const [ordered, setOrdered] = useState<ProjectRecord[] | null>(null);
   const [dragId, setDragId] = useState<number | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
+  const projectCardRefs = useRef<Record<number, HTMLLIElement | null>>({});
 
   useEffect(() => {
     const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
@@ -523,6 +525,14 @@ export default function ProjectsPage() {
       setExpandedId(Number(expand));
     }
   }, [search]);
+
+  useEffect(() => {
+    if (expandedId == null) return;
+    const el = projectCardRefs.current[expandedId];
+    if (el) {
+      window.setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+    }
+  }, [expandedId, projects]);
 
   useEffect(() => {
     setPinnedIds(getPinnedProjectIds(userKey));
@@ -675,11 +685,12 @@ export default function ProjectsPage() {
                 return (
                   <li
                     key={p.id}
+                    ref={(el) => { projectCardRefs.current[p.id] = el; }}
                     draggable={canReorder}
                     onDragStart={() => onDragStart(p.id)}
                     onDragOver={(e) => onDragOver(e, p.id)}
                     onDragEnd={onDragEnd}
-                    className={`rounded-xl border border-slate-100 bg-slate-50/40 p-4 ${canReorder ? "cursor-grab active:cursor-grabbing" : ""} ${dragId === p.id ? "opacity-60 ring-2 ring-sky-300" : ""}`}
+                    className={`rounded-xl border border-slate-100 bg-slate-50/40 p-4 ${canReorder ? "cursor-grab active:cursor-grabbing" : ""} ${dragId === p.id ? "opacity-60 ring-2 ring-sky-300" : ""} ${expanded ? "ring-2 ring-sky-200" : ""}`}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="flex min-w-0 flex-1 gap-2">
@@ -723,7 +734,23 @@ export default function ProjectsPage() {
                             ) : null}
                             <RiskBadge value={p.risk} />
                           </div>
-                          <p className="mt-1 text-sm text-slate-600">{p.description}</p>
+                          <p className="mt-1 text-sm text-slate-600">{linkifyRecommendation(p.description)}</p>
+                          {(() => {
+                            const live = p.description.match(/(?:https?:\/\/)?((?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?)/i);
+                            if (!live) return null;
+                            const href = /^https?:\/\//i.test(live[0]) ? live[0] : `https://${live[1] ?? live[0]}`;
+                            return (
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-sky-600 hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Open live site <ArrowRight className="h-3 w-3" />
+                              </a>
+                            );
+                          })()}
                           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-400">
                             <span>{p.department}</span>
                             <span>{p.owner ?? "Unassigned"}</span>

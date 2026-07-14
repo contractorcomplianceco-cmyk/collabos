@@ -30,6 +30,8 @@ export default function ReviewQueue() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [actingId, setActingId] = useState<string | null>(null);
   const [filtersRemembered, setFiltersRemembered] = useState(false);
+  const [didAutoFallback, setDidAutoFallback] = useState(false);
+  const cardRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
 
   // Prefer live auth role so Rose always gets Sign off when her account is rose_admin.
   const role: Role = user ? mapServerRole(user.role) : currentRole;
@@ -39,6 +41,14 @@ export default function ReviewQueue() {
     const focus = params.get("focus");
     if (focus) setExpanded(focus);
   }, [search]);
+
+  useEffect(() => {
+    if (!expanded) return;
+    const el = cardRefs.current[expanded];
+    if (el) {
+      window.setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
+    }
+  }, [expanded, recommendationsLoading]);
 
   const chooseCategory = (c: (typeof CATEGORIES)[number]) => {
     setCategory(c);
@@ -59,6 +69,26 @@ export default function ReviewQueue() {
     }
     return counts;
   }, [pending]);
+
+  // If the remembered filter has nothing pending, fall back to Final decisions or All.
+  useEffect(() => {
+    if (recommendationsLoading || didAutoFallback) return;
+    if (category === "all") {
+      setDidAutoFallback(true);
+      return;
+    }
+    const pendingInCat = countsByCategory[category] ?? 0;
+    if (pendingInCat === 0 && pending.length >= 0) {
+      const next =
+        (countsByCategory["final-decision"] ?? 0) > 0 ? "final-decision" : "all";
+      if (next !== category) {
+        setCategory(next);
+        setStickyFilter(userKey, "review-queue", next);
+        setFiltersRemembered(true);
+      }
+    }
+    setDidAutoFallback(true);
+  }, [recommendationsLoading, didAutoFallback, category, countsByCategory, pending.length, userKey]);
 
   const filtered = recommendations.filter((r) => category === "all" || r.category === category);
 
@@ -187,6 +217,7 @@ export default function ReviewQueue() {
           return (
             <div
               key={r.id}
+              ref={(el) => { cardRefs.current[r.id] = el; }}
               role={projectHubHref ? "link" : undefined}
               tabIndex={projectHubHref ? 0 : undefined}
               onClick={projectHubHref ? openProjectHub : undefined}

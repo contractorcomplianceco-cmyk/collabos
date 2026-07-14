@@ -66,6 +66,14 @@ export default function ProjectTasksPage() {
     }
   }, [search, userKey]);
 
+  useEffect(() => {
+    if (!focusTaskId) return;
+    const el = document.getElementById(`task-${focusTaskId}`);
+    if (el) {
+      window.setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
+    }
+  }, [focusTaskId, projectTasks, projectFilter, ownerFilter]);
+
   const chooseProjectFilter = (id: string) => {
     setProjectFilter(id);
     setStickyFilter(userKey, "project-tasks-project", id);

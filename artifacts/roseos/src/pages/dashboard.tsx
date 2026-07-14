@@ -146,7 +146,13 @@ export default function Dashboard() {
     return true;
   });
   if (awaitingMe.length > 0) {
-    attentionItems.push({ id: "att-recs", label: `${awaitingMe.length} approval${awaitingMe.length === 1 ? "" : "s"} waiting on you`, detail: awaitingMe[0].recommendation, href: "/review-queue", tone: "rose" });
+    attentionItems.push({
+      id: "att-recs",
+      label: `${awaitingMe.length} approval${awaitingMe.length === 1 ? "" : "s"} waiting on you`,
+      detail: awaitingMe[0].recommendation,
+      href: `/review-queue?focus=${encodeURIComponent(awaitingMe[0].id)}`,
+      tone: "rose",
+    });
   }
 
   const openDecisionsForMe = decisions.filter((d) => {
@@ -178,7 +184,7 @@ export default function Dashboard() {
       id: "att-agent",
       label: `${agentAwaitingMe.length} Cursor request${agentAwaitingMe.length === 1 ? "" : "s"} awaiting your approval`,
       detail: agentAwaitingMe[0].title,
-      href: "/agent-queue",
+      href: `/agent-queue?focus=${encodeURIComponent(agentAwaitingMe[0].id)}`,
       tone: "violet",
     });
   }
@@ -432,15 +438,50 @@ export default function Dashboard() {
   const startDayLinks: { href: string; label: string; detail: string; tone: string }[] = [];
   if (isRose) {
     startDayLinks.push(
-      { href: "/review-queue", label: `${awaitingMe.length} to stamp`, detail: "Review Queue — decisions waiting on you", tone: "bg-rose-50 text-rose-700 border-rose-100" },
-      { href: "/projects", label: `${awaitingRoseProjects.length} awaiting Rose`, detail: "Projects tagged or queued for your call", tone: "bg-amber-50 text-amber-800 border-amber-100" },
-      { href: "/agent-queue", label: `${agentAwaitingMe.length} Cursor approvals`, detail: "Requests that need your OK before build", tone: "bg-violet-50 text-violet-700 border-violet-100" },
+      {
+        href: awaitingMe[0]
+          ? `/review-queue?focus=${encodeURIComponent(awaitingMe[0].id)}`
+          : "/review-queue",
+        label: `${awaitingMe.length} to stamp`,
+        detail: "Review Queue — decisions waiting on you",
+        tone: "bg-rose-50 text-rose-700 border-rose-100",
+      },
+      {
+        href: awaitingRoseProjects[0]
+          ? `/projects?expand=${encodeURIComponent(awaitingRoseProjects[0].id)}`
+          : "/projects",
+        label: `${awaitingRoseProjects.length} awaiting Rose`,
+        detail: "Projects tagged or queued for your call",
+        tone: "bg-amber-50 text-amber-800 border-amber-100",
+      },
+      {
+        href: agentAwaitingMe[0]
+          ? `/agent-queue?focus=${encodeURIComponent(agentAwaitingMe[0].id)}`
+          : "/agent-queue",
+        label: `${agentAwaitingMe.length} Cursor approvals`,
+        detail: "Requests that need your OK before build",
+        tone: "bg-violet-50 text-violet-700 border-violet-100",
+      },
     );
   } else if (isCarmen) {
     startDayLinks.push(
       { href: "/carmen-path", label: "Carmen’s path", detail: `${carmenOpenTasks.length} open task${carmenOpenTasks.length === 1 ? "" : "s"} in today’s work order`, tone: "bg-violet-50 text-violet-700 border-violet-100" },
-      { href: "/project-tasks", label: `${carmenOpenTasks.length} open for you`, detail: "Your follow-ups across projects", tone: "bg-sky-50 text-sky-700 border-sky-100" },
-      { href: "/agent-queue", label: `${roseAttachmentItems.length} Rose attachment${roseAttachmentItems.length === 1 ? "" : "s"}`, detail: "Files Rose added on open Cursor requests", tone: "bg-rose-50 text-rose-700 border-rose-100" },
+      {
+        href: carmenOpenTasks[0]
+          ? `/project-tasks?task=${encodeURIComponent(carmenOpenTasks[0].id)}&project=${encodeURIComponent(carmenOpenTasks[0].projectId)}`
+          : "/project-tasks",
+        label: `${carmenOpenTasks.length} open for you`,
+        detail: "Your follow-ups across projects",
+        tone: "bg-sky-50 text-sky-700 border-sky-100",
+      },
+      {
+        href: roseAttachmentItems[0]
+          ? `/agent-queue?focus=${encodeURIComponent(roseAttachmentItems[0].id)}`
+          : "/agent-queue",
+        label: `${roseAttachmentItems.length} Rose attachment${roseAttachmentItems.length === 1 ? "" : "s"}`,
+        detail: "Files Rose added on open Cursor requests",
+        tone: "bg-rose-50 text-rose-700 border-rose-100",
+      },
     );
   } else {
     startDayLinks.push(

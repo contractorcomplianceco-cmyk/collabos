@@ -129,7 +129,7 @@ export function computeActivitySinceLastVisit(input: ActivityInput): ActivityIte
       module: "review-queue",
       label: `${newRecs.length} item${newRecs.length === 1 ? "" : "s"} waiting on you`,
       detail: newRecs[0].recommendation,
-      href: "/review-queue",
+      href: `/review-queue?focus=${encodeURIComponent(newRecs[0].id)}`,
       count: newRecs.length,
       tone: "rose",
     });
@@ -208,7 +208,7 @@ export function computeActivitySinceLastVisit(input: ActivityInput): ActivityIte
       module: "agent-queue",
       label: `${newAgent.length} Cursor request update${newAgent.length === 1 ? "" : "s"}`,
       detail: newAgent[0].title,
-      href: "/agent-queue",
+      href: `/agent-queue?focus=${encodeURIComponent(newAgent[0].id)}`,
       count: newAgent.length,
       tone: "amber",
     });
