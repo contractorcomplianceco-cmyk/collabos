@@ -1,0 +1,41 @@
+---
+description: Enforce low-credit agent behavior unless user requests a go-live audit
+alwaysApply: true
+---
+
+# Cost control (default)
+
+Unless the user explicitly requests a **go-live audit** (see exception below), follow these rules on every task.
+
+## Model and agents
+
+- Use the cheapest model that can safely complete the task.
+- Do not use Opus unless the user says "Use Opus."
+- Do not use high-thinking mode unless explicitly requested.
+- Do not spawn cloud agents unless explicitly approved.
+- Do not run multiple agents in parallel unless explicitly approved.
+- Do not invoke Bugbot or security-review unless the user explicitly asks.
+
+## Scope and exploration
+
+- One focused task per turn. If the user lists multiple items, ask which to do first unless they numbered priorities.
+- Before editing, list the exact files you plan to touch.
+- Read and search only files needed for the current task. Do not scan the whole repo.
+- Prefer `@` file/folder references from the user over broad exploration.
+- Make the smallest safe change. Do not refactor or redesign outside the request.
+- After editing, run only necessary checks (lint/typecheck on changed files, targeted tests).
+
+## When blocked or scope is unclear
+
+- Ask one short clarifying question instead of exploring widely.
+- Stop and ask before work that may touch many files, many steps, or high token usage.
+
+## Go-live audit exception
+
+When the user explicitly asks for a **go-live audit**, **launch review**, **whole-app review**, **pre-launch audit**, or similar full-app pass before shipping, the cost limits above are relaxed. In that mode:
+
+- Broader repo exploration and cross-cutting checks are allowed.
+- Bugbot and/or security-review may be used if the user wants a formal review.
+- Opus or higher-thinking models are allowed only if the user requests them.
+
+For all other work, stay in default cost-control mode even if the task feels large — split it into smaller scoped steps and confirm with the user.
