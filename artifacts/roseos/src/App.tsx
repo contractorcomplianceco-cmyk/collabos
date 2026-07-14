@@ -59,7 +59,7 @@ const NAV: NavItem[] = [
   { href: "/project-tasks", label: "Project Tasks", icon: ListChecks, ctx: "Project Tasks", blurb: "Open follow-ups" },
   { href: "/duplicate-radar", label: "Duplicate Radar", icon: Target, ctx: "Duplicate Radar" },
   { href: "/team-pulse", label: "Team Pulse", icon: Users, ctx: "Team Pulse" },
-  { href: "/solution-finder", label: "Company Brain", icon: Search, ctx: "Solution Finder", blurb: "Not ready yet" },
+  { href: "/solution-finder", label: "Company Brain", icon: Search, ctx: "Solution Finder", blurb: "Approved records in Command Center" },
   { href: "/innovation-lab", label: "Innovation Lab", icon: Lightbulb, ctx: "Innovation Lab", blurb: "Not ready yet" },
   { href: "/mockup-studio", label: "Mockup Studio", icon: PenTool, ctx: "Mockup Studio", blurb: "Not ready yet" },
   { href: "/executive-reports", label: "Executive Reports", icon: FileBarChart, ctx: "Executive Reports" },
@@ -75,9 +75,9 @@ const NAV: NavItem[] = [
 /** Workflow groups for the sidebar — Decide = sign-off & thinking; Build = do the work. */
 const NAV_GROUPS: { id: string; label: string; hrefs: string[]; hint?: string }[] = [
   { id: "home", label: "Home", hrefs: ["/"] },
-  { id: "decide", label: "Decide", hint: "Sign-off & think together", hrefs: ["/review-queue", "/mind-meld", "/external-intake"] },
+  { id: "decide", label: "Decide", hint: "Sign-off & think together", hrefs: ["/review-queue", "/mind-meld", "/external-intake", "/solution-finder"] },
   { id: "build", label: "Build", hint: "Projects, prompts & Cursor work", hrefs: ["/projects", "/carmen-path", "/project-tasks", "/prompt-library", "/agent-queue"] },
-  { id: "later", label: "Later", hint: "Not ready yet — routes stay open", hrefs: ["/innovation-lab", "/mockup-studio", "/solution-finder"] },
+  { id: "later", label: "Later", hint: "Not ready yet — routes stay open", hrefs: ["/innovation-lab", "/mockup-studio"] },
   { id: "track", label: "Track", hrefs: ["/duplicate-radar", "/team-pulse", "/executive-reports", "/market-pulse"] },
   { id: "account", label: "Account", hrefs: ["/settings"] },
 ];
@@ -89,7 +89,7 @@ const ROSE_BRAIN_TIPS: Record<string, string[]> = {
   "Project Tasks": ["Open tasks are grouped from your shared project list.", "Filter by project from the Projects page.", "Completed tasks stay visible for reference."],
   "Duplicate Radar": ["I can flag overlaps as your project list grows.", "I can draft a merge recommendation for review.", "Add how-we-work records to improve duplicate detection."],
   "Team Pulse": ["Submit feedback to surface where teams need support.", "I can suggest a supportive follow-up plan.", "Team mood signals appear as feedback is collected."],
-  "Solution Finder": ["Ask me how documented processes work.", "I only answer from Company Brain records you add.", "If nothing is documented yet, I'll point you to the right owner."],
+  "Solution Finder": ["Approved Company Brain lives in Command Center — open it from here.", "CollabOS proposes knowledge gaps to Review Queue; it does not hold the official library.", "For reusable AI templates, use Prompt Library instead."],
   "Innovation Lab": ["Submit ideas to get your innovation list started.", "I can check a new idea for overlap before you submit.", "Similar ideas group together as the list grows."],
   "Mockup Studio": ["Describe an idea and I'll structure a build brief.", "I can generate a ready-to-use build prompt.", "Send any concept to the Review Queue."],
   "Executive Reports": ["I can generate report types from live workspace data.", "Reports fill in as projects and team data grow.", "Export creates a leadership-ready summary."],

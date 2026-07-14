@@ -16,8 +16,6 @@ import {
 } from "@/components/shared";
 import { humanLabel, HUMAN_TASK_STATUS } from "@/lib/ui-labels";
 
-const POPULAR_SEARCHES = ["client onboarding", "qualifier scoring", "how we automate"];
-
 function ideaTag(momentum: number) {
   if (momentum >= 85) return { label: "Hot", tone: "rose" as const };
   if (momentum >= 70) return { label: "Rising", tone: "amber" as const };
@@ -606,7 +604,7 @@ export default function Dashboard() {
           <p className="text-sm font-semibold text-slate-800">Getting started</p>
           <p className="mt-1 text-sm text-slate-600">Nothing here yet. Add your first records and tasks, or check back after overnight updates from the server.</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Link href="/solution-finder" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-violet-600 ring-1 ring-violet-100 hover:bg-violet-50">Document how we work</Link>
+            <Link href="/solution-finder" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-violet-600 ring-1 ring-violet-100 hover:bg-violet-50">Company Brain (Command Center)</Link>
             <Link href="/project-tasks" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-sky-600 ring-1 ring-sky-100 hover:bg-sky-50">Add a task</Link>
             <Link href="/innovation-lab" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-amber-600 ring-1 ring-amber-100 hover:bg-amber-50">Share an idea</Link>
             <Link href="/agent-queue" className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 ring-1 ring-rose-100 hover:bg-rose-50">Log a Cursor request</Link>
@@ -751,7 +749,9 @@ export default function Dashboard() {
           <KpiWidget label="Active Projects" value={projects.length} sub="across all departments" icon={FolderKanban} tone="blue" />
         </Link>
         <KpiWidget label="Open Tasks" value={projectTasks.filter((t) => t.status !== "done").length} sub="follow-ups across projects" icon={ClipboardCheck} tone="sky" />
-        <KpiWidget label="Solutions Found" value={companyRecords.length} sub="in Company Brain" icon={Search} tone="emerald" />
+        <Link href="/solution-finder" className="block transition hover:opacity-90">
+          <KpiWidget label="Company Brain" value="CC" sub="approved records in Command Center" icon={Search} tone="emerald" />
+        </Link>
         <KpiWidget label="Ideas Shared" value={ideas.length} sub="in Innovation Lab" icon={Lightbulb} tone="violet" />
         <KpiWidget label="Dupes Avoided" value={duplicateRisks.length} sub="overlaps flagged early" icon={Target} tone="rose" />
       </div>
@@ -847,20 +847,11 @@ export default function Dashboard() {
         </SectionCard>
 
         {/* Solution Finder */}
-        <SectionCard title="Solution Finder" icon={Search} accent="violet">
-          <p className="text-sm text-slate-600">Find what&apos;s already been solved before starting new work.</p>
-          <div className="mt-3 flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input readOnly placeholder="Describe what you need..." className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:outline-none" />
-            </div>
-            <Link href="/solution-finder" className="rounded-xl bg-violet-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-violet-600">Search</Link>
-          </div>
-          <p className="mt-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Popular searches</p>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {POPULAR_SEARCHES.map((q) => (
-              <Link key={q} href="/solution-finder" className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-600 transition hover:bg-violet-100">{q}</Link>
-            ))}
+        <SectionCard title="Company Brain" icon={Search} accent="violet">
+          <p className="text-sm text-slate-600">Approved how-we-work records live in Command Center. CollabOS proposes gaps — it does not hold the official library.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link href="/solution-finder" className="rounded-xl bg-violet-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-violet-600">Open Company Brain</Link>
+            <Link href="/review-queue" className="rounded-xl bg-white px-3 py-2 text-sm font-semibold text-rose-600 ring-1 ring-rose-100 transition hover:bg-rose-50">Propose a gap</Link>
           </div>
         </SectionCard>
 
@@ -1021,7 +1012,7 @@ export default function Dashboard() {
         {/* Workspace status */}
         <SectionCard title="Workspace Status" icon={Sparkles} accent="emerald">
           <ul className="space-y-2 text-sm text-slate-600">
-            <li>· Company Brain: {companyRecords.length} how-we-work record{companyRecords.length === 1 ? "" : "s"}</li>
+            <li>· Company Brain: official records in Command Center (CollabOS proposes only)</li>
             <li>· Projects: {projects.length} tracked{projects.some((p) => p.lastSyncedAt) ? " (overnight updates on)" : ""}</li>
             <li>· Open tasks: {projectTasks.filter((t) => t.status !== "done").length} follow-ups</li>
             <li>· Cliq & WhatsApp: not connected yet — needs your approval first</li>
