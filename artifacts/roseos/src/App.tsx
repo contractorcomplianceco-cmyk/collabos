@@ -59,9 +59,9 @@ const NAV: NavItem[] = [
   { href: "/project-tasks", label: "Project Tasks", icon: ListChecks, ctx: "Project Tasks", blurb: "Open follow-ups" },
   { href: "/duplicate-radar", label: "Duplicate Radar", icon: Target, ctx: "Duplicate Radar" },
   { href: "/team-pulse", label: "Team Pulse", icon: Users, ctx: "Team Pulse" },
-  { href: "/solution-finder", label: "Solution Finder", icon: Search, ctx: "Solution Finder" },
-  { href: "/innovation-lab", label: "Innovation Lab", icon: Lightbulb, ctx: "Innovation Lab" },
-  { href: "/mockup-studio", label: "Mockup Studio", icon: PenTool, ctx: "Mockup Studio" },
+  { href: "/solution-finder", label: "Company Brain", icon: Search, ctx: "Solution Finder", blurb: "Not ready yet" },
+  { href: "/innovation-lab", label: "Innovation Lab", icon: Lightbulb, ctx: "Innovation Lab", blurb: "Not ready yet" },
+  { href: "/mockup-studio", label: "Mockup Studio", icon: PenTool, ctx: "Mockup Studio", blurb: "Not ready yet" },
   { href: "/executive-reports", label: "Executive Reports", icon: FileBarChart, ctx: "Executive Reports" },
   { href: "/market-pulse", label: "Market Pulse", icon: Activity, ctx: "Market Pulse" },
   { href: "/mind-meld", label: "Mind Meld Room", icon: Brain, ctx: "Mind Meld Room", gated: true, blurb: "Think together" },
@@ -76,8 +76,9 @@ const NAV: NavItem[] = [
 const NAV_GROUPS: { id: string; label: string; hrefs: string[]; hint?: string }[] = [
   { id: "home", label: "Home", hrefs: ["/"] },
   { id: "decide", label: "Decide", hint: "Sign-off & think together", hrefs: ["/review-queue", "/mind-meld", "/external-intake"] },
-  { id: "build", label: "Build", hint: "Projects, prompts & Cursor work", hrefs: ["/projects", "/carmen-path", "/project-tasks", "/prompt-library", "/agent-queue", "/innovation-lab", "/mockup-studio"] },
-  { id: "track", label: "Track", hrefs: ["/duplicate-radar", "/team-pulse", "/solution-finder", "/executive-reports", "/market-pulse"] },
+  { id: "build", label: "Build", hint: "Projects, prompts & Cursor work", hrefs: ["/projects", "/carmen-path", "/project-tasks", "/prompt-library", "/agent-queue"] },
+  { id: "later", label: "Later", hint: "Not ready yet — routes stay open", hrefs: ["/innovation-lab", "/mockup-studio", "/solution-finder"] },
+  { id: "track", label: "Track", hrefs: ["/duplicate-radar", "/team-pulse", "/executive-reports", "/market-pulse"] },
   { id: "account", label: "Account", hrefs: ["/settings"] },
 ];
 
@@ -93,11 +94,11 @@ const ROSE_BRAIN_TIPS: Record<string, string[]> = {
   "Mockup Studio": ["Describe an idea and I'll structure a build brief.", "I can generate a ready-to-use build prompt.", "Send any concept to the Review Queue."],
   "Executive Reports": ["I can generate report types from live workspace data.", "Reports fill in as projects and team data grow.", "Export creates a leadership-ready summary."],
   "Market Pulse": ["Add competitors and keywords in Settings to start monitoring.", "Signals appear as market data is captured.", "I can suggest a recommended response per signal."],
-  "Mind Meld Room": ["Think together — private space for Rose and Carmen.", "Send to Carmen for systems; send to Rose for direction.", "Handoffs never auto-create official decisions — stamp those in Review Queue."],
+  "Mind Meld Room": ["Think together on live threads — not a prompt stash.", "Reusable templates live in Prompt Library; decisions get stamped in Review Queue.", "Handoffs never auto-create official decisions."],
   "Review Queue": ["Stamp decisions — suggestions are never auto-approved.", "Items appear here when something needs your sign-off.", "Sign-off adds the item to Carmen’s open work."],
   "Prompt Library": ["Reusable prompts by intent — handoff, security, design, audit, Cursor briefs.", "Optionally tag a project; filter by intent or search.", "Copy a reply template for Rose’s AI, then mark shared with Rose or Carmen."],
   "Cursor Direct Requests": ["Only approved requests are ready for Cursor.", "Use this for fixes, bugs, day-to-day ops, and setup work.", "Every Cursor update should include what changed."],
-  "Incoming Messages": ["Messages stay drafts until a person reviews them.", "Sensitive items stay with leadership.", "Routing suggestions still need your approval."],
+  "Incoming Messages": ["Leave Rose ↔ Carmen notes here — no WhatsApp or Cliq required.", "Sensitive items stay with leadership.", "External connections stay off until you approve them."],
   "Settings": ["Adjust duplicate sensitivity and alert thresholds.", "Connections stay off until you approve them.", "Your shared workspace is saved on the server."],
 };
 
@@ -578,20 +579,37 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
   );
 }
 
-function TopBar({ onMenu, onOpenPalette }: { onMenu: () => void; onOpenPalette: () => void }) {
+function TopBar({ onMenu, onOpenPalette, menuOpen }: { onMenu: () => void; onOpenPalette: () => void; menuOpen: boolean }) {
   const { currentRole, setRoseBrainOpen, recommendations } = useAppState();
   const { user, logout } = useAuth();
   const pending = recommendations.filter((r) => r.status === "pending").length;
   return (
     <header className="flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 sm:px-6">
-      <div className="flex flex-1 items-center gap-3">
-        <button onClick={onMenu} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 md:hidden"><Menu className="h-5 w-5" /></button>
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <button
+          type="button"
+          onClick={onMenu}
+          aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-nav"
+          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 md:hidden"
+        >
+          <Menu className="h-5 w-5" aria-hidden />
+        </button>
         <button type="button" onClick={onOpenPalette} className="relative hidden min-w-0 max-w-md flex-1 sm:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <span className="block w-full truncate whitespace-nowrap rounded-full bg-slate-100 py-2 pl-9 pr-12 text-left text-sm text-slate-400 transition hover:bg-slate-200/70">
             Search projects, tasks, decisions, Cursor requests…
           </span>
           <kbd className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400 lg:block">⌘K</kbd>
+        </button>
+        <button
+          type="button"
+          onClick={onOpenPalette}
+          aria-label="Search workspace"
+          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 sm:hidden"
+        >
+          <Search className="h-5 w-5" aria-hidden />
         </button>
       </div>
       <div className="flex items-center gap-2 sm:gap-3">
@@ -701,16 +719,32 @@ function Layout({ children }: { children: React.ReactNode }) {
 
       {mobileOpen && (
         <>
-          <div className="fixed inset-0 z-40 bg-slate-900/30 md:hidden" onClick={() => setMobileOpen(false)} />
-          <aside className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200 bg-white md:hidden">
-            <div className="flex justify-end p-2"><button onClick={() => setMobileOpen(false)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"><X className="h-4 w-4" /></button></div>
+          <div className="fixed inset-0 z-40 bg-slate-900/30 md:hidden" onClick={() => setMobileOpen(false)} aria-hidden />
+          <aside
+            id="mobile-nav"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Main navigation"
+            className="fixed inset-y-0 left-0 z-50 flex w-[min(18rem,85vw)] flex-col overflow-y-auto border-r border-slate-200 bg-white shadow-xl md:hidden"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Menu</span>
+              <button
+                type="button"
+                onClick={() => setMobileOpen(false)}
+                aria-label="Close navigation menu"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
             <SidebarContent onNavigate={() => setMobileOpen(false)} />
           </aside>
         </>
       )}
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar onMenu={() => setMobileOpen(true)} onOpenPalette={() => setPaletteOpen(true)} />
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <TopBar menuOpen={mobileOpen} onMenu={() => setMobileOpen(true)} onOpenPalette={() => setPaletteOpen(true)} />
         {user?.mustChangePassword && (
           <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-800">
             Temporary password active —{" "}

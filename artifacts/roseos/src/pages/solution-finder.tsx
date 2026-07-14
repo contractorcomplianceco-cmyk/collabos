@@ -138,12 +138,17 @@ export default function SolutionFinder() {
   return (
     <div className="space-y-6 p-6">
       <PageHeader
-        title="Solution Finder"
-        subtitle="Ask a question — Rose searches Company Brain for answers your team has documented."
+        title="Company Brain"
+        subtitle="Documented how-we-work records — browse and search. Module polish is not ready yet; answers only come from records you add."
         icon={Search}
         accent="violet"
       />
-
+      <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+        <p className="font-semibold">Not ready yet as a full knowledge product</p>
+        <p className="mt-1 text-xs text-violet-800">
+          You can still add and search records. For reusable AI reply templates, use Prompt Library instead.
+        </p>
+      </div>
       <SectionCard title="Ask Rose" icon={Sparkles} accent="violet">
         <div className="flex flex-col gap-3 sm:flex-row">
           <input

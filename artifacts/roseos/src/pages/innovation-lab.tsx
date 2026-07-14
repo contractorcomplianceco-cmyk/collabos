@@ -59,11 +59,16 @@ export default function InnovationLab() {
     <div className="space-y-6 p-6">
       <PageHeader
         title="Innovation Lab"
-        subtitle="Capture ideas, cluster them, and grow them into bigger opportunities."
+        subtitle="Idea capture for later — this module is not ready yet. You can still jot drafts; full clustering and build paths come later."
         icon={Lightbulb}
         accent="amber"
       />
-
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="font-semibold">Not ready yet</p>
+        <p className="mt-1 text-xs text-amber-800">
+          This is an honest stub — not a finished product lab. For reusable prompts use Prompt Library; for decisions use Review Queue.
+        </p>
+      </div>
       {ideasLoading ? (
         <p className="text-sm text-slate-500">Loading shared ideas…</p>
       ) : (

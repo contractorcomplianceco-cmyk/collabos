@@ -9,6 +9,7 @@ import {
   type MindMeldTimelineRow,
   type MindFeedRow,
 } from "@workspace/db";
+import { inArray } from "drizzle-orm";
 import { logger } from "./logger";
 
 const SEED_ITEMS = [
@@ -98,11 +99,7 @@ const SEED_TIMELINE = [
   { itemTitle: "Automation registry ownership", type: "approved-direction" as const, actor: "Carmen" as const, text: "Registry ownership stays with Systems; Sam Rivera maintains entries. Finalized after joint review.", eventTimestamp: "2026-06-26 16:30", sensitive: false, needs: null, readyTo: null, finalized: true },
 ];
 
-const SEED_MIND_FEED = [
-  { actor: "Rose" as const, action: "shared a thought", layer: "Vision" as const, eventTimestamp: "2m ago" },
-  { actor: "Carmen" as const, action: "added a perspective", layer: "Strategy" as const, eventTimestamp: "1m ago" },
-  { actor: "Rose OS" as const, action: "updated the alignment meter", layer: "Impact" as const, eventTimestamp: "just now" },
-];
+const SEED_MIND_FEED: Array<{ actor: "Rose" | "Carmen" | "Rose OS"; action: string; layer: "Vision" | "Strategy" | "Execution" | "Experience" | "Impact"; eventTimestamp: string }> = [];
 
 export function serializeMindMeldItem(row: MindMeldItemRow) {
   return {
@@ -207,6 +204,19 @@ export async function seedMindFeedIfEmpty(): Promise<void> {
   const existing = await db.select({ id: mindFeedTable.id }).from(mindFeedTable).limit(1);
   if (existing.length > 0) return;
 
+  if (SEED_MIND_FEED.length === 0) return;
   await db.insert(mindFeedTable).values(SEED_MIND_FEED);
   logger.info({ count: SEED_MIND_FEED.length }, "Seeded mind feed entries");
+}
+
+/** Remove placeholder “2m ago” seed rows that looked like live activity. */
+export async function cleanupSeedMindFeedNoise(): Promise<void> {
+  const noise = ["2m ago", "1m ago", "just now"];
+  const deleted = await db
+    .delete(mindFeedTable)
+    .where(inArray(mindFeedTable.eventTimestamp, noise))
+    .returning({ id: mindFeedTable.id });
+  if (deleted.length > 0) {
+    logger.info({ count: deleted.length }, "Cleaned seed Mind Feed noise");
+  }
 }

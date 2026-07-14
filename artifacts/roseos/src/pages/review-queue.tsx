@@ -150,16 +150,18 @@ export default function ReviewQueue() {
         accent="rose"
       />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Filter className="h-4 w-4 text-slate-400" />
+      <div className="-mx-6 flex items-center gap-2 overflow-x-auto px-6 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 [&::-webkit-scrollbar]:hidden">
+        <Filter className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
         {CATEGORIES.map((c) => {
           const count = countsByCategory[c] ?? 0;
           const selected = category === c;
           return (
             <button
               key={c}
+              type="button"
               onClick={() => chooseCategory(c)}
-              className={`rounded-full px-3 py-1 text-xs font-medium capitalize transition ${selected ? "bg-rose-500 text-white shadow-sm" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"}`}
+              aria-pressed={selected}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium capitalize transition ${selected ? "bg-rose-500 text-white shadow-sm" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"}`}
             >
               {humanLabel(HUMAN_REVIEW_CATEGORY, c)}
               {count > 0 && (
@@ -171,7 +173,7 @@ export default function ReviewQueue() {
           );
         })}
         {filtersRemembered || getStickyFilter(userKey, "review-queue") ? (
-          <span className="text-[10px] text-slate-400">Filters remembered for you</span>
+          <span className="shrink-0 text-[10px] text-slate-400">Filters remembered for you</span>
         ) : null}
       </div>
 

@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+import { Link } from "wouter";
 import {
   Brain, Lock, ShieldCheck, Languages, Grid3x3, MessageCircleQuestion,
   Combine, BadgeCheck, Timer, Activity, ArrowRightLeft, Send, History,
@@ -26,18 +27,14 @@ const LAYER_TONE: Record<ThoughtLayer, string> = {
   Impact: "bg-emerald-100 text-emerald-700",
 };
 
+/** Core helpers only — reusable AI reply templates live in Prompt Library. */
 const FUNCTIONS = [
-  { key: "translation", name: "Translation Lens", icon: Languages, desc: "Translate vision into systems language (and back)." },
-  { key: "heatmap", name: "Decision Heatmap", icon: Grid3x3, desc: "See where alignment is hot or cold." },
-  { key: "question", name: "Question Composer", icon: MessageCircleQuestion, desc: "Generate the sharpest open questions." },
-  { key: "merge", name: "Merge Magic", icon: Combine, desc: "Synthesize both views into one direction." },
-  { key: "passport", name: "Readiness Passport", icon: BadgeCheck, desc: "Check if an item is ready to advance." },
-  { key: "timesaver", name: "Time-Saver Brief", icon: Timer, desc: "One-paragraph catch-up brief." },
-  { key: "forecast", name: "Alignment Forecast", icon: TrendingUp, desc: "Project the path from here to full alignment." },
-  { key: "tension", name: "Tension Finder", icon: Target, desc: "Pinpoint the core tension to resolve." },
-  { key: "risk", name: "Risk Radar", icon: AlertTriangle, desc: "Surface what could go wrong if we advance now." },
-  { key: "draft", name: "Decision Draft", icon: FileText, desc: "Draft a private decision note for sign-off." },
+  { key: "translation", name: "Translation Lens", icon: Languages, desc: "Vision language ↔ systems language." },
+  { key: "question", name: "Open questions", icon: MessageCircleQuestion, desc: "Sharpest unanswered questions on this thread." },
+  { key: "merge", name: "Shared synthesis", icon: Combine, desc: "Both views in one direction note." },
+  { key: "timesaver", name: "Catch-up brief", icon: Timer, desc: "One paragraph where this stands." },
 ];
+const SEED_FEED_TIMESTAMPS = new Set(["2m ago", "1m ago", "just now"]);
 
 export default function MindMeldRoom() {
   const { currentRole, mindMeldItems, handoffs, carmenfy, rosify, addMindMeldThought, createMindMeldThread, ideas, recommendations, meldTimeline, mindMeldLoading, duplicateRisks, sentimentSignals, competitors, reports, mindFeed } = useAppState();
@@ -153,7 +150,10 @@ export default function MindMeldRoom() {
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur"><Brain className="h-6 w-6" /></div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Mind Meld Room</h1>
-              <p className="text-sm text-white/85">Think together — private alignment for Rose &amp; Carmen. Stamp official decisions in Review Queue.</p>
+              <p className="text-sm text-white/85">
+                Think together on live threads — not a prompt library. Stamp decisions in Review Queue; save reusable templates in{" "}
+                <Link href="/prompt-library" className="font-semibold underline decoration-white/60 underline-offset-2 hover:decoration-white">Prompt Library</Link>.
+              </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -315,8 +315,11 @@ export default function MindMeldRoom() {
         mindMeldItems.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-violet-200 bg-violet-50/30 p-10 text-center">
             <Brain className="mx-auto h-10 w-10 text-violet-400" />
-            <p className="mt-3 text-sm font-medium text-slate-700">No threads on the Shared Mind Board yet</p>
-            <p className="mt-1 text-xs text-slate-500">Create your first alignment thread to see it here.</p>
+            <p className="mt-3 text-sm font-medium text-slate-700">No threads yet — start one when you need to think together</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Mind Meld is for live Rose ↔ Carmen alignment. For reusable reply templates, use{" "}
+              <Link href="/prompt-library" className="font-semibold text-violet-600 hover:underline">Prompt Library</Link>.
+            </p>
             <button
               onClick={() => { setShowCreateForm(true); setView("room"); }}
               className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-700"
@@ -464,8 +467,12 @@ export default function MindMeldRoom() {
                     </div>
 
                     <div>
-                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-violet-400">Mind Meld Functions</p>
-                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-violet-400">Thread helpers</p>
+                      <p className="mb-2 text-[10px] text-slate-400">
+                        Glance aids for this thread. For reusable prompts / AI reply templates, use{" "}
+                        <Link href="/prompt-library" className="font-semibold text-violet-600 hover:underline">Prompt Library</Link>.
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
                         {FUNCTIONS.map((f) => {
                           const Icon = f.icon;
                           return (
@@ -486,16 +493,20 @@ export default function MindMeldRoom() {
                     </div>
 
                     <div>
-                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-violet-400">Live Mind Feed</p>
-                      <ul className="space-y-2">
-                        {mindFeed.map((e) => (
-                          <li key={e.id} className="flex items-center gap-2 text-xs">
-                            <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
-                            <span className="text-slate-700"><span className="font-semibold">{e.actor}</span> {e.action}</span>
-                            <span className="ml-auto text-slate-300">{e.timestamp}</span>
-                          </li>
-                        ))}
-                      </ul>
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-violet-400">Recent activity</p>
+                      {mindFeed.filter((e) => !SEED_FEED_TIMESTAMPS.has(e.timestamp)).length === 0 ? (
+                        <p className="text-xs text-slate-400">No new activity yet — open a thread and add a thought.</p>
+                      ) : (
+                        <ul className="space-y-2">
+                          {mindFeed.filter((e) => !SEED_FEED_TIMESTAMPS.has(e.timestamp)).map((e) => (
+                            <li key={e.id} className="flex items-center gap-2 text-xs">
+                              <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
+                              <span className="text-slate-700"><span className="font-semibold">{e.actor}</span> {e.action}</span>
+                              <span className="ml-auto text-slate-300">{e.timestamp}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   </div>
 
@@ -761,9 +772,12 @@ export default function MindMeldRoom() {
                   <p className="mt-2 text-xs text-slate-400">Handoffs create a private item for the other person. They never auto-create official company decisions.</p>
                 </SectionCard>
 
-                {/* Innovative functions */}
-                <SectionCard title="Innovative Functions" icon={Brain} accent="violet">
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <SectionCard title="Thread helpers" icon={Brain} accent="violet">
+                  <p className="mb-3 text-xs text-slate-500">
+                    Aids for this conversation only. Reusable prompts and AI reply templates live in{" "}
+                    <Link href="/prompt-library" className="font-semibold text-violet-600 hover:underline">Prompt Library</Link>.
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
                     {FUNCTIONS.map((f) => {
                       const Icon = f.icon;
                       return (

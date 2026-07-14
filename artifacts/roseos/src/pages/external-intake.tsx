@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { Link } from "wouter";
 import {
   Inbox, Filter, ShieldAlert, Lock, Archive, Brain, ClipboardCheck, ListTodo,
   Lightbulb, Hammer, BookOpen, Link2, Plus, Send, Plug, MessageSquare, History,
@@ -7,6 +8,7 @@ import {
 } from "lucide-react";
 import { PageHeader, SectionCard, StatusChip, EmptyState } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
+import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import {
   computeIntakeReadiness, detectIntakeFriction, generateBuildPrompt, detectIntakeDuplicates,
@@ -19,9 +21,9 @@ import type {
 } from "@/types";
 
 const SOURCE_LABEL: Record<IntakeSource, string> = {
-  zoho_cliq: "Zoho Cliq",
-  whatsapp: "WhatsApp",
-  manual: "Manual",
+  zoho_cliq: "Zoho Cliq (not live)",
+  whatsapp: "WhatsApp (not live)",
+  manual: "CollabOS note",
 };
 const SOURCE_TONE: Record<IntakeSource, "sky" | "emerald" | "slate"> = {
   zoho_cliq: "sky",
@@ -255,11 +257,12 @@ export default function ExternalIntake() {
     intakeItems, intakeLoading, addIntakeItem, updateIntakeItem, routeIntakeItem, addMemoryCandidate,
     currentRole, settings, updateSettings, projects,
   } = useAppState();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const [tab, setTab] = useState<"queue" | "constellation" | "integrations">("queue");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(true);
   const [noteDraft, setNoteDraft] = useState("");
   const [buildPrompt, setBuildPrompt] = useState<string | null>(null);
   const [memoryDest, setMemoryDest] = useState<MemoryDestination>("company-brain-suggestion");
@@ -275,16 +278,22 @@ export default function ExternalIntake() {
   const [fReadiness, setFReadiness] = useState("all");
   const [fFriction, setFFriction] = useState("all");
 
-  const [formSource, setFormSource] = useState<IntakeSource>("manual");
-  const [formSender, setFormSender] = useState("");
-  const [formHandle, setFormHandle] = useState("");
-  const [formChannel, setFormChannel] = useState("");
   const [formMessage, setFormMessage] = useState("");
+  const [formFor, setFormFor] = useState<"Carmen" | "Rose" | "Rose and Carmen">("Rose and Carmen");
 
-  const actor = currentRole === "Rose" ? "Rose Almeida" : currentRole === "Carmen" ? "Carmen Vega" : String(currentRole);
+  const actor = currentRole === "Rose" ? "Rose Almeida" : currentRole === "Carmen" ? "Carmen Vega" : (user?.name ?? String(currentRole));
   const canSeeSensitive = canViewSensitive(currentRole);
   const canAct = canSubmit(currentRole);
   const isRestricted = (it: IntakeItem) => it.sensitivity !== "normal" && !canSeeSensitive;
+  const internalNotes = useMemo(
+    () =>
+      intakeItems.filter(
+        (it) =>
+          it.source === "manual" ||
+          (it.sourceChannel.toLowerCase().includes("rose") && it.sourceChannel.toLowerCase().includes("carmen")),
+      ),
+    [intakeItems],
+  );
 
   const readinessById = useMemo(() => {
     const map = new Map<string, ReturnType<typeof computeIntakeReadiness>>();
@@ -333,28 +342,31 @@ export default function ExternalIntake() {
     return [...clusters.entries()].sort((a, b) => b[1].length - a[1].length);
   }, [intakeItems]);
 
-  const submitManual = () => {
+  const submitInternalNote = () => {
     if (!canAct) {
-      toast({ title: "View-only access", description: "Your role can't add messages here." });
+      toast({ title: "View-only access", description: "Your role can't add notes here." });
       return;
     }
-    if (!formMessage.trim() || !formSender.trim()) {
-      toast({ title: "Missing fields", description: "Sender name and message are required." });
+    if (!formMessage.trim()) {
+      toast({ title: "Write a note first", description: "Tell Rose or Carmen what they need to know." });
       return;
     }
+    const handle =
+      currentRole === "Rose" ? "@rose" : currentRole === "Carmen" ? "@carmen" : (user?.email ?? "@collabos");
     addIntakeItem({
-      source: formSource,
-      sourceChannel: formChannel.trim() || (formSource === "manual" ? "Manual test entry" : "Test channel"),
-      senderName: formSender.trim(),
-      senderHandle: formHandle.trim() || "test-sender",
+      source: "manual",
+      sourceChannel: "Rose ↔ Carmen note",
+      senderName: actor,
+      senderHandle: handle,
+      senderRole: currentRole === "Rose" || currentRole === "Carmen" ? currentRole : "Admin",
       rawMessage: formMessage.trim(),
+      reviewOwner: formFor,
     });
     setFormMessage("");
-    setFormSender("");
-    setFormHandle("");
-    setFormChannel("");
-    setShowForm(false);
-    toast({ title: "Sample message added", description: "Sorted and added to the message queue (test mode)." });
+    toast({
+      title: "Note shared",
+      description: `Visible to ${formFor}. WhatsApp and Cliq stay off until you approve them.`,
+    });
   };
 
   const route = (dest: IntakeDestination, ownerOverride?: IntakeReviewOwner) => {
@@ -434,7 +446,7 @@ export default function ExternalIntake() {
     <div className="space-y-6 p-6">
       <PageHeader
         title="Incoming Messages"
-        subtitle="Messages from Zoho Cliq, WhatsApp, and manual entry — sorted for you, then waiting on a person to decide."
+        subtitle="Rose ↔ Carmen notes and handoffs inside CollabOS. WhatsApp and Zoho Cliq stay off until you approve them."
         icon={Inbox}
         accent="sky"
       />
@@ -451,18 +463,19 @@ export default function ExternalIntake() {
               onClick={() => setTab(t)}
               className={`rounded-full px-4 py-1.5 text-xs font-semibold capitalize transition ${tab === t ? "bg-rose-500 text-white shadow-sm" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"}`}
             >
-              {t === "queue" ? "Message queue" : t === "constellation" ? "How things connect" : "Connections"}
+              {t === "queue" ? "Shared inbox" : t === "constellation" ? "How things connect" : "External connections"}
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          <StatusChip label="Test mode — no live connections yet" tone="amber" />
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusChip label={`${internalNotes.length} CollabOS note${internalNotes.length === 1 ? "" : "s"}`} tone="sky" />
+          <StatusChip label="WhatsApp / Cliq not live" tone="amber" />
           {canAct && (
             <button
               onClick={() => setShowForm((v) => !v)}
               className="inline-flex items-center gap-1.5 rounded-xl bg-rose-500 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-rose-600"
             >
-              <Plus className="h-3.5 w-3.5" /> Add sample message
+              <Plus className="h-3.5 w-3.5" /> {showForm ? "Hide compose" : "Leave a note"}
             </button>
           )}
         </div>
@@ -479,37 +492,39 @@ export default function ExternalIntake() {
       </SectionCard>
 
       {showForm && canAct && (
-        <SectionCard title="Add a test message" icon={Plus} accent="sky">
+        <SectionCard title="Leave a note for Rose or Carmen" icon={Send} accent="sky">
+          <p className="mb-3 text-xs text-slate-500">
+            Shared inbox for handoffs — no WhatsApp, Cliq, or email required. For reusable reply templates, use{" "}
+            <Link href="/prompt-library" className="font-semibold text-sky-600 hover:underline">Prompt Library</Link>.
+          </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs text-slate-500">
-              Source
-              <select value={formSource} onChange={(e) => setFormSource(e.target.value as IntakeSource)} className="field-input mt-1">
-                <option value="manual">Manual test entry</option>
-                <option value="zoho_cliq">Zoho Cliq (simulated)</option>
-                <option value="whatsapp">WhatsApp (simulated)</option>
+              From
+              <input value={actor} readOnly className="field-input mt-1 bg-slate-50" />
+            </label>
+            <label className="text-xs text-slate-500">
+              For
+              <select value={formFor} onChange={(e) => setFormFor(e.target.value as typeof formFor)} className="field-input mt-1">
+                <option value="Rose and Carmen">Both Rose and Carmen</option>
+                <option value="Carmen">Carmen</option>
+                <option value="Rose">Rose</option>
               </select>
             </label>
-            <label className="text-xs text-slate-500">
-              Channel
-              <input value={formChannel} onChange={(e) => setFormChannel(e.target.value)} placeholder="#channel or chat name" className="field-input mt-1" />
-            </label>
-            <label className="text-xs text-slate-500">
-              Sender name
-              <input value={formSender} onChange={(e) => setFormSender(e.target.value)} placeholder="Who sent it" className="field-input mt-1" />
-            </label>
-            <label className="text-xs text-slate-500">
-              Sender handle
-              <input value={formHandle} onChange={(e) => setFormHandle(e.target.value)} placeholder="@handle or phone" className="field-input mt-1" />
-            </label>
             <label className="text-xs text-slate-500 sm:col-span-2">
-              Message
-              <textarea value={formMessage} onChange={(e) => setFormMessage(e.target.value)} rows={3} placeholder="Paste or type the message text — it will be classified automatically." className="field-input mt-1" />
+              Note
+              <textarea
+                value={formMessage}
+                onChange={(e) => setFormMessage(e.target.value)}
+                rows={4}
+                placeholder="What they need to know, decide, or pick up next…"
+                className="field-input mt-1"
+              />
             </label>
           </div>
           <div className="mt-3 flex justify-end gap-2">
             <button onClick={() => setShowForm(false)} className="rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200">Cancel</button>
-            <button onClick={submitManual} className="inline-flex items-center gap-1.5 rounded-xl bg-rose-500 px-3.5 py-2 text-xs font-semibold text-white hover:bg-rose-600">
-              <Send className="h-3.5 w-3.5" /> Capture & classify
+            <button onClick={submitInternalNote} className="inline-flex items-center gap-1.5 rounded-xl bg-rose-500 px-3.5 py-2 text-xs font-semibold text-white hover:bg-rose-600">
+              <Send className="h-3.5 w-3.5" /> Share note
             </button>
           </div>
         </SectionCard>
@@ -540,7 +555,7 @@ export default function ExternalIntake() {
             canMutate={canAct}
           />
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800 lg:col-span-2">
-            Zoho Cliq and WhatsApp aren't live yet. Add a test message below until you approve turning them on.
+            Zoho Cliq and WhatsApp are not live. Use CollabOS notes on the Shared inbox tab for Rose ↔ Carmen handoffs. Leave external connections off until you approve turning them on.
           </div>
         </div>
       ) : tab === "constellation" ? (
@@ -613,12 +628,20 @@ export default function ExternalIntake() {
                 <EmptyState
                   message={
                     intakeItems.length === 0
-                      ? "No incoming messages yet."
+                      ? "No notes yet — leave one above for Rose or Carmen."
                       : `Nothing here — ${intakeItems.length} message${intakeItems.length === 1 ? "" : "s"} waiting in All.`
                   }
-                  hint="Clear filters to see everything, or add a sample message to test the queue."
+                  hint={
+                    intakeItems.length === 0
+                      ? "Need a reusable reply or handoff template? Open Prompt Library. WhatsApp and Cliq are not connected yet."
+                      : "Clear filters to see everything, or leave a new CollabOS note."
+                  }
                   action={
-                    intakeItems.length > 0 ? (
+                    intakeItems.length === 0 ? (
+                      <Link href="/prompt-library" className="rounded-lg bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-600">
+                        Open Prompt Library
+                      </Link>
+                    ) : (
                       <button
                         onClick={() => {
                           setFSource("all");
@@ -635,7 +658,7 @@ export default function ExternalIntake() {
                       >
                         Clear filters ({intakeItems.length})
                       </button>
-                    ) : undefined
+                    )
                   }
                 />
               )}

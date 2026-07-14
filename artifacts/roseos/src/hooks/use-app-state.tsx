@@ -243,6 +243,7 @@ interface AppState extends PersistedState {
     senderHandle: string;
     senderRole?: string | null;
     rawMessage: string;
+    reviewOwner?: IntakeReviewOwner;
   }) => void;
   updateIntakeItem: (id: string, patch: Partial<IntakeItem>, actor: string, action: string) => void;
   routeIntakeItem: (
@@ -1129,14 +1130,21 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       senderHandle: string;
       senderRole?: string | null;
       rawMessage: string;
+      reviewOwner?: IntakeReviewOwner;
     }) => {
       const classification = classifyIntakeMessage(input.rawMessage);
       const dup = detectIntakeDuplicates(
         input.rawMessage,
         projects.map((p) => ({ name: p.name, keywords: p.tags })),
       );
-      const sourceLabel =
-        input.source === "zoho_cliq" ? "Zoho Cliq" : input.source === "whatsapp" ? "WhatsApp" : "manual test entry";
+      const isInternalNote = input.source === "manual" && /rose/i.test(input.sourceChannel) && /carmen/i.test(input.sourceChannel);
+      const sourceLabel = isInternalNote
+        ? "CollabOS note"
+        : input.source === "zoho_cliq"
+          ? "Zoho Cliq"
+          : input.source === "whatsapp"
+            ? "WhatsApp"
+            : "CollabOS note";
       void createIntakeItem({
         source: input.source,
         sourceChannel: input.sourceChannel,
@@ -1146,30 +1154,38 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         receivedAt: now(),
         rawMessage: input.rawMessage,
         cleanedSummary: summarizeIntakeMessage(input.rawMessage),
-        detectedType: classification.detectedType,
-        suggestedDestination: classification.suggestedDestination,
-        sensitivity: classification.sensitivity,
-        reviewOwner: classification.reviewOwner,
-        classificationReason: classification.reason,
+        detectedType: isInternalNote ? "question" : classification.detectedType,
+        suggestedDestination: isInternalNote ? "no-action" : classification.suggestedDestination,
+        sensitivity: isInternalNote ? "private_leadership" : classification.sensitivity,
+        reviewOwner: input.reviewOwner ?? (isInternalNote ? "Rose and Carmen" : classification.reviewOwner),
+        classificationReason: isInternalNote
+          ? "Internal Rose ↔ Carmen note in CollabOS — not from WhatsApp or Cliq."
+          : classification.reason,
         status: "new",
         duplicateRisk: dup.risk,
         relatedProjectNames: dup.relatedNames,
         reviewerNotes: "",
-        nextStep: classification.nextStep,
+        nextStep: isInternalNote
+          ? "Read and reply here, or copy a reusable prompt from Prompt Library."
+          : classification.nextStep,
         auditLog: [
           {
             id: uid("al"),
             timestamp: now(),
             actor: "System",
-            action: `Captured from ${sourceLabel} (test mode) and classified as ${classification.detectedType.replace(/_/g, " ")}.`,
+            action: isInternalNote
+              ? `Internal note from ${input.senderName} for ${input.reviewOwner ?? "Rose and Carmen"}.`
+              : `Captured from ${sourceLabel} (test mode) and classified as ${classification.detectedType.replace(/_/g, " ")}.`,
           },
         ],
       })
         .then(() => invalidateIntake())
         .catch(() => undefined);
-      void updateAppSettings({ lastTestMessageAt: now() })
-        .then(() => invalidateSettings())
-        .catch(() => undefined);
+      if (!isInternalNote) {
+        void updateAppSettings({ lastTestMessageAt: now() })
+          .then(() => invalidateSettings())
+          .catch(() => undefined);
+      }
     },
     [invalidateIntake, invalidateSettings, projects],
   );

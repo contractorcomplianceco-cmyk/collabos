@@ -98,7 +98,7 @@ export default function MockupStudio() {
     <div className="space-y-6 p-6">
       <PageHeader
         title="Mockup Studio"
-        subtitle="Turn ideas into structured mockups — briefs, screens, visual direction, versions, and an approval flow."
+        subtitle="Structured mockup briefs — not ready as a full studio yet. Routes stay open so links don’t 404."
         icon={PenTool}
         accent="violet"
         actions={selected ? (
@@ -107,7 +107,12 @@ export default function MockupStudio() {
           </button>
         ) : undefined}
       />
-      {isLoading && <p className="py-10 text-center text-sm text-slate-400">Loading mockups...</p>}
+      <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+        <p className="font-semibold">Not ready yet</p>
+        <p className="mt-1 text-xs text-violet-800">
+          You can still open existing drafts. We’re not inventing a full design product here — shipping briefs go through Projects and Cursor Direct Requests.
+        </p>
+      </div>      {isLoading && <p className="py-10 text-center text-sm text-slate-400">Loading mockups...</p>}
       {error != null && <p className="py-10 text-center text-sm text-rose-500">{errMessage(error)}</p>}
       {!isLoading && !error && (selected
         ? <MockupEditor key={selected.id} mockup={selected} />
