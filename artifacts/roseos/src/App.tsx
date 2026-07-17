@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Switch, Route, Router as WouterRouter, Link, useLocation, Redirect } from "wouter";
-import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, MutationCache, useQuery } from "@tanstack/react-query";
+import { ApiError } from "@workspace/api-client-react";
+import { toast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
@@ -41,7 +43,33 @@ import CarmenPathPage from "@/pages/carmen-path";
 import PromptLibraryPage from "@/pages/prompt-library";
 import { listPrompts, PROMPTS_QUERY_KEY } from "@/lib/prompts-api";
 
-const queryClient = new QueryClient();
+/**
+ * Turn a failed mutation into a human-readable message.
+ * Previously, mutation failures were swallowed silently — the UI simply did
+ * nothing, which made the whole app feel "broken" (clicks with no effect).
+ */
+function describeMutationError(error: unknown): string {
+  if (error instanceof ApiError) {
+    const data = error.data as { message?: string } | undefined;
+    if (error.response?.status === 401) return "Your session expired. Please sign in again.";
+    if (error.response?.status === 403) return "You don't have permission to do that.";
+    return data?.message ?? "That action could not be saved. Please try again.";
+  }
+  if (error instanceof Error && error.message) return error.message;
+  return "Something went wrong. Please try again.";
+}
+
+const queryClient = new QueryClient({
+  mutationCache: new MutationCache({
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Couldn't save changes",
+        description: describeMutationError(error),
+      });
+    },
+  }),
+});
 
 interface NavItem {
   href: string;
@@ -103,7 +131,7 @@ const ROSE_BRAIN_TIPS: Record<string, string[]> = {
 };
 
 const ROLE_IDENTITY: Record<string, { name: string; title: string; initials: string }> = {
-  Rose: { name: "Rose Almeida", title: "Founder & CEO", initials: "RA" },
+  Rose: { name: "Rose Taylor", title: "Founder & CEO", initials: "RT" },
   Carmen: { name: "Carmen Vega", title: "Systems Lead", initials: "CV" },
   Admin: { name: "Admin", title: "Full access", initials: "AD" },
   "Department Lead": { name: "Department Lead", title: "Team oversight", initials: "DL" },

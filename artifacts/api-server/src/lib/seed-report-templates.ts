@@ -13,7 +13,7 @@ const SEED_REPORTS = [
     risks: ["Two high-risk projects near deadline", "Unowned compliance work"],
     recommendations: ["Assign Document Collection owner", "Resolve pricing decision this week"],
     decisionsNeeded: ["Pricing model for Services Hub"],
-    owners: ["Rose Almeida", "Carmen Vega"],
+    owners: ["Rose Taylor", "Carmen Vega"],
     nextSteps: ["Leadership review Friday", "Re-baseline timelines"],
   },
   {
@@ -26,7 +26,7 @@ const SEED_REPORTS = [
     risks: ["Content idea duplication"],
     recommendations: ["Merge content ideas", "Sequence platform ideas"],
     decisionsNeeded: ["Prioritize Collab OS vNext"],
-    owners: ["Rose Almeida"],
+    owners: ["Rose Taylor"],
     nextSteps: ["Research personalization engine"],
   },
   {
@@ -39,7 +39,7 @@ const SEED_REPORTS = [
     risks: ["Pricing pressure"],
     recommendations: ["Evaluate AI intake response"],
     decisionsNeeded: ["Pricing response"],
-    owners: ["Rose Almeida"],
+    owners: ["Rose Taylor"],
     nextSteps: ["Brief leadership on positioning"],
   },
 ];

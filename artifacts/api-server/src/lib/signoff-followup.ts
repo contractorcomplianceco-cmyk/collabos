@@ -26,7 +26,7 @@ function humanTaskTitle(recommendation: string): string {
 }
 
 function taskOwnerForActor(actorRole: string): string {
-  if (actorRole === "carmen_admin") return "Rose Almeida";
+  if (actorRole === "carmen_admin") return "Rose Taylor";
   return "Carmen Vega";
 }
 

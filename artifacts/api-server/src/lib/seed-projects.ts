@@ -14,7 +14,7 @@ const SEED_PROJECTS = [
 
 const SEED_BLOCKERS = [
   { projectIndex: 3, title: "Document Collection has no owner", owner: null, risk: "high" as const, ageDays: 7 },
-  { projectIndex: 1, title: "Pricing decision blocking Services Hub", owner: "Rose Almeida", risk: "high" as const, ageDays: 5 },
+  { projectIndex: 1, title: "Pricing decision blocking Services Hub", owner: "Rose Taylor", risk: "high" as const, ageDays: 5 },
   { projectIndex: 4, title: "CRM module conflict unresolved", owner: "Priya Nair", risk: "medium" as const, ageDays: 3 },
 ];
 

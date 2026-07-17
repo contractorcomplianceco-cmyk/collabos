@@ -4,7 +4,7 @@ import { hashPassword } from "./auth";
 import { logger } from "./logger";
 
 const STAFF_ACCOUNTS = [
-  { name: "Rose Almeida", email: "rose@ccacontact.com", role: "rose_admin" as const },
+  { name: "Rose Taylor", email: "rose@ccacontact.com", role: "rose_admin" as const },
   { name: "Carmen Vega", email: "carmen@ccacontact.com", role: "carmen_admin" as const },
   { name: "Sam Rivera", email: "admin@ccacontact.com", role: "super_admin" as const },
 ];
