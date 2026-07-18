@@ -16,7 +16,7 @@ export function inferOwnerFromTitle(title: string | null | undefined): ProjectTa
 
 /**
  * Bucket a project task by owner (and title prefix when owner is missing).
- * Recognizes Rose / Rose Almeida / Carmen / Carmen Vega and similar.
+ * Recognizes Rose / Rose Taylor / Carmen / Carmen Vega and similar.
  */
 export function bucketProjectTaskOwner(
   owner: string | null | undefined,
@@ -30,6 +30,7 @@ export function bucketProjectTaskOwner(
   const hasRose =
     key === "rose" ||
     key.startsWith("rose ") ||
+    key.includes("rose taylor") ||
     key.includes("rose almeida") ||
     /(^|[^a-z])rose([^a-z]|$)/.test(key);
   const hasCarmen =

@@ -31,7 +31,7 @@ import type {
 } from "@/types";
 
 export const people: Person[] = [
-  { id: "p-rose", name: "Rose Almeida", role: "Rose", title: "Founder & CEO", department: "Leadership", initials: "RA", color: "rose" },
+  { id: "p-rose", name: "Rose Taylor", role: "Rose", title: "Founder & CEO", department: "Leadership", initials: "RT", color: "rose" },
   { id: "p-carmen", name: "Carmen Vega", role: "Carmen", title: "Head of Systems", department: "Systems", initials: "CV", color: "sky" },
   { id: "p-alex", name: "Alex Morgan", role: "Department Lead", title: "Chief Strategy Officer", department: "Strategy", initials: "AM", color: "violet" },
   { id: "p-jordan", name: "Jordan Lee", role: "Department Lead", title: "Marketing Lead", department: "Marketing", initials: "JL", color: "amber" },
@@ -42,7 +42,7 @@ export const people: Person[] = [
 ];
 
 export const departments: Department[] = [
-  { id: "d-lead", name: "Leadership", lead: "Rose Almeida", headcount: 2, color: "rose" },
+  { id: "d-lead", name: "Leadership", lead: "Rose Taylor", headcount: 2, color: "rose" },
   { id: "d-sys", name: "Systems", lead: "Carmen Vega", headcount: 6, color: "sky" },
   { id: "d-mkt", name: "Marketing", lead: "Jordan Lee", headcount: 4, color: "amber" },
   { id: "d-sales", name: "Sales", lead: "Tomas Beck", headcount: 5, color: "violet" },
@@ -70,7 +70,7 @@ export const tasks: Task[] = [
 ];
 
 export const ideas: Idea[] = [
-  { id: "i-1", title: "Collab OS vNext", description: "Merge Command Center insights with Rose Brain memory for proactive nudges.", submittedBy: "Rose Almeida", status: "needs-rose-review", momentum: 92, cluster: "Platform", benefits: ["Proactive leadership signals", "Less manual review"], risks: ["Scope creep"], dependencies: ["Command Center Build"], approvalRoute: "both", createdAt: "2026-06-12" },
+  { id: "i-1", title: "Collab OS vNext", description: "Merge Command Center insights with Rose Brain memory for proactive nudges.", submittedBy: "Rose Taylor", status: "needs-rose-review", momentum: 92, cluster: "Platform", benefits: ["Proactive leadership signals", "Less manual review"], risks: ["Scope creep"], dependencies: ["Command Center Build"], approvalRoute: "both", createdAt: "2026-06-12" },
   { id: "i-2", title: "Personalization Engine", description: "Per-client personalization layer across services hub.", submittedBy: "Jordan Lee", status: "needs-research", momentum: 78, cluster: "Growth", benefits: ["Higher conversion"], risks: ["Data privacy"], dependencies: ["Business Services Hub"], approvalRoute: "carmen", createdAt: "2026-06-10" },
   { id: "i-3", title: "Content Magic", description: "AI-assisted content drafting tied to Company Brain records.", submittedBy: "Jordan Lee", status: "draft-idea", momentum: 61, cluster: "Growth", benefits: ["Faster content"], risks: ["Brand drift"], dependencies: [], approvalRoute: "rose", createdAt: "2026-06-11" },
   { id: "i-4", title: "AI Co-Pilot for Proposals", description: "Draft proposals from CRM + asset library.", submittedBy: "Tomas Beck", status: "related-to-existing", momentum: 70, cluster: "Sales", benefits: ["Faster proposals"], risks: ["Pricing accuracy"], dependencies: ["Sales Asset Library", "QualifierConnect"], approvalRoute: "rose", createdAt: "2026-06-08" },
@@ -93,9 +93,9 @@ export const requirements: Requirement[] = [
 ];
 
 export const decisions: Decision[] = [
-  { id: "dec-1", title: "Public launch domain for CollabOS Command Center", context: "Choose primary domain ahead of internal launch.", status: "open", owner: "Rose Almeida", approvalRoute: "rose", risk: "high" },
+  { id: "dec-1", title: "Public launch domain for CollabOS Command Center", context: "Choose primary domain ahead of internal launch.", status: "open", owner: "Rose Taylor", approvalRoute: "rose", risk: "high" },
   { id: "dec-2", title: "CRM consolidation approach", context: "Merge or keep parallel Zoho modules.", status: "open", owner: "Carmen Vega", approvalRoute: "carmen", risk: "medium" },
-  { id: "dec-3", title: "Pricing model for Business Services Hub", context: "Tiered vs usage-based pricing.", status: "open", owner: "Rose Almeida", approvalRoute: "both", risk: "high" },
+  { id: "dec-3", title: "Pricing model for Business Services Hub", context: "Tiered vs usage-based pricing.", status: "open", owner: "Rose Taylor", approvalRoute: "both", risk: "high" },
   { id: "dec-4", title: "Automation registry ownership", context: "Who owns the registry long-term.", status: "deferred", owner: "Sam Rivera", approvalRoute: "carmen", risk: "low" },
 ];
 
@@ -132,7 +132,7 @@ export const feedbackItems: FeedbackItem[] = [
 
 export const blockers: Blocker[] = [
   { id: "bl-1", title: "Document Collection has no owner", projectId: "pr-4", owner: null, risk: "high", age: 7 },
-  { id: "bl-2", title: "Pricing decision blocking Services Hub", projectId: "pr-2", owner: "Rose Almeida", risk: "high", age: 5 },
+  { id: "bl-2", title: "Pricing decision blocking Services Hub", projectId: "pr-2", owner: "Rose Taylor", risk: "high", age: 5 },
   { id: "bl-3", title: "CRM module conflict unresolved", projectId: "pr-5", owner: "Priya Nair", risk: "medium", age: 3 },
 ];
 
@@ -174,7 +174,7 @@ export const reports: Report[] = [
     risks: ["Two high-risk projects near deadline", "Unowned compliance work"],
     recommendations: ["Assign Document Collection owner", "Resolve pricing decision this week"],
     decisionsNeeded: ["Pricing model for Services Hub"],
-    owners: ["Rose Almeida", "Carmen Vega"],
+    owners: ["Rose Taylor", "Carmen Vega"],
     nextSteps: ["Leadership review Friday", "Re-baseline timelines"],
   },
   {
@@ -188,7 +188,7 @@ export const reports: Report[] = [
     risks: ["Content idea duplication"],
     recommendations: ["Merge content ideas", "Sequence platform ideas"],
     decisionsNeeded: ["Prioritize Collab OS vNext"],
-    owners: ["Rose Almeida"],
+    owners: ["Rose Taylor"],
     nextSteps: ["Research personalization engine"],
   },
   {
@@ -202,7 +202,7 @@ export const reports: Report[] = [
     risks: ["Pricing pressure"],
     recommendations: ["Evaluate AI intake response"],
     decisionsNeeded: ["Pricing response"],
-    owners: ["Rose Almeida"],
+    owners: ["Rose Taylor"],
     nextSteps: ["Brief leadership on positioning"],
   },
 ];
@@ -378,7 +378,7 @@ export const seedIntakeItems: IntakeItem[] = [
     id: "in-2",
     source: "whatsapp",
     sourceChannel: "Founders chat",
-    senderName: "Rose Almeida",
+    senderName: "Rose Taylor",
     senderHandle: "+1 (555) 010-2211",
     senderRole: "Founder & CEO",
     receivedAt: "2026-07-02 08:41",
@@ -498,7 +498,7 @@ export const seedIntakeItems: IntakeItem[] = [
     classificationReason: "Very short message with no actionable keywords - likely chatter or noise.",
     auditLog: [
       { id: "al-6a", timestamp: "2026-06-30 10:08", actor: "System", action: "Captured from Zoho Cliq (test mode) and classified as noise." },
-      { id: "al-6b", timestamp: "2026-06-30 10:31", actor: "Rose Almeida", action: "Archived - no action required." },
+      { id: "al-6b", timestamp: "2026-06-30 10:31", actor: "Rose Taylor", action: "Archived - no action required." },
     ],
   },
 ];
@@ -521,7 +521,7 @@ export const seedMemoryCandidates: MemoryCandidate[] = [
     destination: "private-rose-carmen-memory",
     status: "proposed",
     sensitive: true,
-    createdBy: "Rose Almeida",
+    createdBy: "Rose Taylor",
     createdAt: "2026-07-01 09:02",
   },
 ];

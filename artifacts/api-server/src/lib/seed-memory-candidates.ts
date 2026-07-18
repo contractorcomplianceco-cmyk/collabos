@@ -43,7 +43,7 @@ export async function seedMemoryCandidatesIfEmpty(): Promise<void> {
       destination: "private-rose-carmen-memory",
       status: "proposed",
       sensitive: true,
-      createdBy: "Rose Almeida",
+      createdBy: "Rose Taylor",
       createdAt: "2026-07-01 09:02",
     },
   ]);

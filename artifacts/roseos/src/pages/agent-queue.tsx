@@ -564,7 +564,12 @@ export default function AgentQueue() {
               <option value="high">High risk</option>
               <option value="critical">Critical risk</option>
             </select>
-            <input value={owner} onChange={(e) => setOwner(e.target.value)} className="field-input" placeholder="Owner, optional" />
+            <input list="agent-queue-owners" value={owner} onChange={(e) => setOwner(e.target.value)} className="field-input" placeholder="Assign to (Rose, Carmen, Team…), optional" />
+            <datalist id="agent-queue-owners">
+              <option value="Rose" />
+              <option value="Carmen" />
+              <option value="Team" />
+            </datalist>
             <textarea value={verificationSteps} onChange={(e) => setVerificationSteps(e.target.value)} rows={2} className="field-input" placeholder="Verification steps, one per line" />
           </div>
 

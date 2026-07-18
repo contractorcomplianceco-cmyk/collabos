@@ -281,7 +281,7 @@ export default function ExternalIntake() {
   const [formMessage, setFormMessage] = useState("");
   const [formFor, setFormFor] = useState<"Carmen" | "Rose" | "Rose and Carmen">("Rose and Carmen");
 
-  const actor = currentRole === "Rose" ? "Rose Almeida" : currentRole === "Carmen" ? "Carmen Vega" : (user?.name ?? String(currentRole));
+  const actor = currentRole === "Rose" ? "Rose Taylor" : currentRole === "Carmen" ? "Carmen Vega" : (user?.name ?? String(currentRole));
   const canSeeSensitive = canViewSensitive(currentRole);
   const canAct = canSubmit(currentRole);
   const isRestricted = (it: IntakeItem) => it.sensitivity !== "normal" && !canSeeSensitive;

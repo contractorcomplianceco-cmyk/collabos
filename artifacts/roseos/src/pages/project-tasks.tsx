@@ -24,6 +24,9 @@ const TASK_TONE: Record<Task["status"], "slate" | "sky" | "amber" | "emerald"> =
 
 const STATUSES: Task["status"][] = ["todo", "in-progress", "review", "done"];
 const OWNER_FILTERS = ["all", "rose", "carmen", "team"] as const;
+// Suggested owners for the assignee picker. Free text is still allowed so any
+// teammate name works, but these give a one-click choice for the common cases.
+const OWNER_SUGGESTIONS = ["Rose", "Carmen", "Team"] as const;
 
 export default function ProjectTasksPage() {
   const { projectTasks, projects, projectsLoading, currentRole, createProjectTaskEntry, updateProjectTaskEntry } = useAppState();
@@ -107,12 +110,26 @@ export default function ProjectTasksPage() {
       toast({ title: "Missing fields", description: "Task title and project are required." });
       return;
     }
-    await createProjectTaskEntry({
-      title: title.trim(),
-      projectId,
-      owner: owner.trim() || null,
-      due: due.trim() || null,
-    });
+    try {
+      await createProjectTaskEntry({
+        title: title.trim(),
+        projectId,
+        owner: owner.trim() || null,
+        due: due.trim() || null,
+      });
+    } catch {
+      // The error toast is already shown by the state layer; keep the form open.
+      return;
+    }
+    // Make sure the new task is actually visible: if a project/owner filter is
+    // active that would hide it, switch the filter to the task's project so it
+    // doesn't look like the task "disappeared".
+    if (projectFilter !== "all" && projectFilter !== projectId) {
+      chooseProjectFilter(projectId);
+    }
+    if (ownerFilter !== "all" && bucketProjectTaskOwner(owner.trim() || null, title.trim()) !== ownerFilter) {
+      chooseOwnerFilter("all");
+    }
     setTitle("");
     setOwner("");
     setDue("");
@@ -130,18 +147,26 @@ export default function ProjectTasksPage() {
 
   const saveEdit = async () => {
     if (!editingId || !editTitle.trim()) return;
-    await updateProjectTaskEntry(editingId, {
-      title: editTitle.trim(),
-      owner: editOwner.trim() || null,
-      due: editDue.trim() || null,
-      status: editStatus,
-    });
+    try {
+      await updateProjectTaskEntry(editingId, {
+        title: editTitle.trim(),
+        owner: editOwner.trim() || null,
+        due: editDue.trim() || null,
+        status: editStatus,
+      });
+    } catch {
+      return; // error toast already shown; keep the editor open to retry
+    }
     setEditingId(null);
     toast({ title: "Task updated" });
   };
 
   const markDone = async (task: Task) => {
-    await updateProjectTaskEntry(task.id, { status: "done" });
+    try {
+      await updateProjectTaskEntry(task.id, { status: "done" });
+    } catch {
+      return; // error toast already shown
+    }
     toast({ title: "Task completed" });
   };
 
@@ -151,8 +176,8 @@ export default function ProjectTasksPage() {
         <li key={task.id} className="space-y-2 rounded-xl border border-sky-100 bg-sky-50/40 p-3">
           <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="field-input w-full text-sm" />
           <div className="grid gap-2 sm:grid-cols-3">
-            <input value={editOwner} onChange={(e) => setEditOwner(e.target.value)} placeholder="Owner" className="field-input text-sm" />
-            <input value={editDue} onChange={(e) => setEditDue(e.target.value)} placeholder="Due date" className="field-input text-sm" />
+            <input list="project-task-owners" value={editOwner} onChange={(e) => setEditOwner(e.target.value)} placeholder="Assign to (Rose, Carmen, Team…)" className="field-input text-sm" />
+            <input type="date" value={editDue} onChange={(e) => setEditDue(e.target.value)} aria-label="Due date" className="field-input text-sm" />
             <select value={editStatus} onChange={(e) => setEditStatus(e.target.value as Task["status"])} className="field-input text-sm">
               {STATUSES.map((s) => <option key={s} value={s}>{humanLabel(HUMAN_TASK_STATUS, s)}</option>)}
             </select>
@@ -244,9 +269,21 @@ export default function ProjectTasksPage() {
           </button>
         ))}
         {(projectFilter !== "all" || ownerFilter !== "all") ? (
-          <span className="text-[10px] text-slate-400">Filters remembered for you</span>
+          <button
+            type="button"
+            onClick={() => { chooseProjectFilter("all"); chooseOwnerFilter("all"); }}
+            className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200 hover:bg-amber-200"
+            title="Some tasks may be hidden by these filters"
+          >
+            Filters active · Clear
+          </button>
         ) : null}
       </div>
+
+      {/* Shared owner suggestions for the assignee inputs (free text still allowed). */}
+      <datalist id="project-task-owners">
+        {OWNER_SUGGESTIONS.map((o) => <option key={o} value={o} />)}
+      </datalist>
 
       {projects.length === 0 && !projectsLoading ? (
         <EmptyState
@@ -264,8 +301,8 @@ export default function ProjectTasksPage() {
               <option value="">Select project…</option>
               {projectsByPriority.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
-            <input value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="Owner (Rose, Carmen, or team)" className="field-input" />
-            <input value={due} onChange={(e) => setDue(e.target.value)} placeholder="Due date (optional)" className="field-input sm:col-span-2" />
+            <input list="project-task-owners" value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="Assign to (Rose, Carmen, Team…)" className="field-input" />
+            <input type="date" value={due} onChange={(e) => setDue(e.target.value)} aria-label="Due date (optional)" className="field-input sm:col-span-2" />
           </div>
           <button onClick={() => void submitNew()} className="mt-3 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-600">Create task</button>
         </SectionCard>

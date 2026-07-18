@@ -29,9 +29,9 @@ const SEED_COMPANY_RECORDS = [
 ];
 
 const SEED_DECISIONS = [
-  { title: "Public launch domain for CollabOS Command Center", context: "Choose primary domain ahead of internal launch.", status: "open" as const, owner: "Rose Almeida", approvalRoute: "rose" as const, risk: "high" as const },
+  { title: "Public launch domain for CollabOS Command Center", context: "Choose primary domain ahead of internal launch.", status: "open" as const, owner: "Rose Taylor", approvalRoute: "rose" as const, risk: "high" as const },
   { title: "CRM consolidation approach", context: "Merge or keep parallel Zoho modules.", status: "open" as const, owner: "Carmen Vega", approvalRoute: "carmen" as const, risk: "medium" as const },
-  { title: "Pricing model for Business Services Hub", context: "Tiered vs usage-based pricing.", status: "open" as const, owner: "Rose Almeida", approvalRoute: "both" as const, risk: "high" as const },
+  { title: "Pricing model for Business Services Hub", context: "Tiered vs usage-based pricing.", status: "open" as const, owner: "Rose Taylor", approvalRoute: "both" as const, risk: "high" as const },
   { title: "Automation registry ownership", context: "Who owns the registry long-term.", status: "deferred" as const, owner: "Sam Rivera", approvalRoute: "carmen" as const, risk: "low" as const },
 ];
 
