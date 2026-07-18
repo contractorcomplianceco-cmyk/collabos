@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FileBarChart, Download, Sparkles, AlertTriangle, ClipboardList, ArrowRight } from "lucide-react";
+import { FileBarChart, Download, Save, Sparkles, AlertTriangle, ClipboardList, ArrowRight } from "lucide-react";
 import { PageHeader, SectionCard, EmptyState } from "@/components/shared";
 import { generateReport, reportFromTemplate, type GeneratedReport } from "@/lib/helpers";
 import { useAppState } from "@/hooks/use-app-state";
@@ -13,8 +13,30 @@ const REPORT_TYPES = [
 
 export default function ExecutiveReports() {
   const { toast } = useToast();
-  const { projects, blockers, decisions, reports, recommendations, projectTasks } = useAppState();
+  const { projects, blockers, decisions, reports, recommendations, projectTasks, saveReport } = useAppState();
   const [active, setActive] = useState<{ type: string; data: GeneratedReport } | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    if (!active) return;
+    setSaving(true);
+    const ok = await saveReport({
+      type: active.type,
+      title: `${active.type} Report`,
+      summary: active.data.summary,
+      findings: active.data.findings,
+      risks: active.data.risks,
+      recommendations: active.data.recommendations,
+      decisionsNeeded: active.data.decisionsNeeded,
+      nextSteps: active.data.nextSteps,
+    });
+    setSaving(false);
+    if (ok) {
+      toast({ title: "Report saved", description: "Find it under Saved Reports on the left." });
+    } else {
+      toast({ title: "Couldn't save report", description: "Please try again.", variant: "destructive" });
+    }
+  };
 
   const generate = (type: string) => {
     setActive({
@@ -79,12 +101,21 @@ export default function ExecutiveReports() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-violet-500">{active.type}</p>
                   <h2 className="mt-1 text-xl font-bold text-slate-900">Executive Summary</h2>
                 </div>
-                <button
-                  onClick={() => toast({ title: "Export started", description: "Mock export — PDF would download here." })}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-violet-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-600"
-                >
-                  <Download className="h-4 w-4" /> Export
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => void save()}
+                    disabled={saving}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-violet-700 ring-1 ring-violet-200 transition hover:bg-violet-50 disabled:opacity-50"
+                  >
+                    <Save className="h-4 w-4" /> Save report
+                  </button>
+                  <button
+                    onClick={() => toast({ title: "Export started", description: "Mock export — PDF would download here." })}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-violet-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-600"
+                  >
+                    <Download className="h-4 w-4" /> Export
+                  </button>
+                </div>
               </div>
 
               <div className="mt-4 rounded-xl bg-violet-50/60 p-4 text-sm text-slate-700">{active.data.summary}</div>

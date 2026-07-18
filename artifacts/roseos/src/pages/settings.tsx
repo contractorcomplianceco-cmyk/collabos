@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Settings as SettingsIcon, Database, ShieldCheck, Bell, Plug, Lock, RotateCcw, KeyRound } from "lucide-react";
+import { Settings as SettingsIcon, Database, ShieldCheck, Bell, Plug, Lock, RotateCcw, KeyRound, X, Plus } from "lucide-react";
 import { PageHeader, SectionCard, StatusChip } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
 import { useAuth } from "@/hooks/use-auth";
@@ -146,18 +146,96 @@ export default function SettingsPage() {
         </SectionCard>
 
         <SectionCard title="Competitors Watched" icon={Database} accent="emerald">
-          <div className="flex flex-wrap gap-2">
-            {settings.competitors.map((c) => <StatusChip key={c} label={c} tone="slate" />)}
-          </div>
+          <p className="mb-2 text-xs text-slate-400">These feed Market Pulse. Add the competitors you want to track.</p>
+          <TagEditor
+            tags={settings.competitors}
+            placeholder="Add a competitor…"
+            tone="slate"
+            onChange={(competitors) => updateSettings({ competitors })}
+          />
         </SectionCard>
 
         <SectionCard title="Market Keywords" icon={Database} accent="violet">
-          <div className="flex flex-wrap gap-2">
-            {settings.marketKeywords.map((k) => <StatusChip key={k} label={k} tone="violet" />)}
-          </div>
+          <p className="mb-2 text-xs text-slate-400">Keywords Market Pulse watches for. Add the terms that matter to you.</p>
+          <TagEditor
+            tags={settings.marketKeywords}
+            placeholder="Add a keyword…"
+            tone="violet"
+            onChange={(marketKeywords) => updateSettings({ marketKeywords })}
+          />
         </SectionCard>
       </div>
       )}
+    </div>
+  );
+}
+
+function TagEditor({
+  tags,
+  placeholder,
+  tone,
+  onChange,
+}: {
+  tags: string[];
+  placeholder: string;
+  tone: "slate" | "violet";
+  onChange: (tags: string[]) => void;
+}) {
+  const [draft, setDraft] = useState("");
+  const chipTone = tone === "violet" ? "bg-violet-50 text-violet-700 ring-violet-100" : "bg-slate-100 text-slate-600 ring-slate-200";
+
+  const addTag = () => {
+    const value = draft.trim();
+    if (!value) return;
+    // Case-insensitive dedupe so "Acme" and "acme" don't both get added.
+    if (tags.some((t) => t.toLowerCase() === value.toLowerCase())) {
+      setDraft("");
+      return;
+    }
+    onChange([...tags, value]);
+    setDraft("");
+  };
+
+  const removeTag = (tag: string) => onChange(tags.filter((t) => t !== tag));
+
+  return (
+    <div>
+      <div className="mb-2 flex flex-wrap gap-2">
+        {tags.length === 0 ? (
+          <span className="text-xs text-slate-300">None yet.</span>
+        ) : (
+          tags.map((t) => (
+            <span key={t} className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${chipTone}`}>
+              {t}
+              <button
+                type="button"
+                aria-label={`Remove ${t}`}
+                onClick={() => removeTag(t)}
+                className="ml-0.5 rounded-full text-slate-400 hover:text-rose-600"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))
+        )}
+      </div>
+      <div className="flex gap-2">
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
+          placeholder={placeholder}
+          className="field-input flex-1 text-sm"
+        />
+        <button
+          type="button"
+          onClick={addTag}
+          disabled={!draft.trim()}
+          className="inline-flex items-center gap-1 rounded-lg bg-rose-500 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-600 disabled:opacity-50"
+        >
+          <Plus className="h-3.5 w-3.5" /> Add
+        </button>
+      </div>
     </div>
   );
 }

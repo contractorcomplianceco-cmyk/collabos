@@ -641,6 +641,7 @@ export const ListRecommendationsResponseItem = zod.object({
   "actor": zod.string(),
   "action": zod.string()
 })),
+  "projectId": zod.number().nullish(),
   "createdById": zod.number().nullish(),
   "createdByName": zod.string().nullish(),
   "createdAt": zod.string(),
@@ -1950,7 +1951,8 @@ export const UpdateProjectTaskResponse = zod.object({
   "status": zod.enum(['todo', 'in-progress', 'review', 'done']),
   "due": zod.string().nullable(),
   "source": zod.enum(['manual', 'sync']),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "completedAt": zod.string().nullable()
 })
 
 
@@ -2007,6 +2009,41 @@ export const ListReportTemplatesResponse = zod.array(ListReportTemplatesResponse
 
 
 /**
+ * @summary Save a generated report as a template
+ */
+
+
+
+
+
+export const CreateReportTemplateBody = zod.object({
+  "type": zod.string().min(1),
+  "title": zod.string().min(1),
+  "summary": zod.string().min(1),
+  "findings": zod.array(zod.string()).optional(),
+  "risks": zod.array(zod.string()).optional(),
+  "recommendations": zod.array(zod.string()).optional(),
+  "decisionsNeeded": zod.array(zod.string()).optional(),
+  "nextSteps": zod.array(zod.string()).optional()
+})
+
+export const CreateReportTemplateResponse = zod.object({
+  "id": zod.number(),
+  "type": zod.string(),
+  "title": zod.string(),
+  "date": zod.string(),
+  "summary": zod.string(),
+  "findings": zod.array(zod.string()),
+  "sourceData": zod.array(zod.string()),
+  "risks": zod.array(zod.string()),
+  "recommendations": zod.array(zod.string()),
+  "decisionsNeeded": zod.array(zod.string()),
+  "owners": zod.array(zod.string()),
+  "nextSteps": zod.array(zod.string())
+})
+
+
+/**
  * @summary List agent work queue items
  */
 export const ListAgentWorkItemsResponseItem = zod.object({
@@ -2041,7 +2078,7 @@ export const ListAgentWorkItemsResponseItem = zod.object({
   "createdByName": zod.string().nullable(),
   "createdAt": zod.string(),
   "updatedAt": zod.string(),
-  "attachmentCount": zod.number().default(0)
+  "attachmentCount": zod.number()
 })
 export const ListAgentWorkItemsResponse = zod.array(ListAgentWorkItemsResponseItem)
 
@@ -2125,7 +2162,8 @@ export const UpdateAgentWorkItemResponse = zod.object({
 })),
   "createdByName": zod.string().nullable(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "attachmentCount": zod.number()
 })
 
 
@@ -2176,7 +2214,8 @@ export const AddAgentWorkEventResponse = zod.object({
 })),
   "createdByName": zod.string().nullable(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "attachmentCount": zod.number()
 })
 
 
