@@ -57,6 +57,8 @@ import {
   useListMarketSignals,
   useListMarketCompetitors,
   useListReportTemplates,
+  createReportTemplate,
+  getListReportTemplatesQueryKey,
   useListIntegrationStatus,
   useListAgentWorkItems,
   createAgentWorkItem,
@@ -189,6 +191,16 @@ interface AppState extends PersistedState {
   marketPulseLoading: boolean;
   reports: Report[];
   reportsLoading: boolean;
+  saveReport: (input: {
+    type: string;
+    title: string;
+    summary: string;
+    findings?: string[];
+    risks?: string[];
+    recommendations?: string[];
+    decisionsNeeded?: string[];
+    nextSteps?: string[];
+  }) => Promise<boolean>;
   integrations: IntegrationStatus[];
   integrationsLoading: boolean;
   agentWorkItems: AgentWorkItem[];
@@ -834,6 +846,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const invalidateRecommendations = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: getListRecommendationsQueryKey() });
   }, [queryClient]);
+  const invalidateReports = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: getListReportTemplatesQueryKey() });
+  }, [queryClient]);
   const invalidateIdeas = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: getListIdeasQueryKey() });
   }, [queryClient]);
@@ -922,6 +937,29 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         .catch(() => undefined);
     },
     [state.currentRole, invalidateIdeas],
+  );
+
+  const saveReport = useCallback(
+    async (input: {
+      type: string;
+      title: string;
+      summary: string;
+      findings?: string[];
+      risks?: string[];
+      recommendations?: string[];
+      decisionsNeeded?: string[];
+      nextSteps?: string[];
+    }): Promise<boolean> => {
+      if (!canSubmit(state.currentRole)) return false;
+      try {
+        await createReportTemplate(input);
+        await invalidateReports();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [state.currentRole, invalidateReports],
   );
 
   const setRecommendationStatus = useCallback(
@@ -1553,6 +1591,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         marketPulseLoading,
         reports,
         reportsLoading,
+        saveReport,
         integrations,
         integrationsLoading,
         agentWorkItems,

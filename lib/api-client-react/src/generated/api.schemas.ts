@@ -1646,6 +1646,20 @@ export interface MarketCompetitorRecord {
   series: number[];
 }
 
+export interface CreateReportTemplateInput {
+  /** @minLength 1 */
+  type: string;
+  /** @minLength 1 */
+  title: string;
+  /** @minLength 1 */
+  summary: string;
+  findings?: string[];
+  risks?: string[];
+  recommendations?: string[];
+  decisionsNeeded?: string[];
+  nextSteps?: string[];
+}
+
 export interface ReportTemplateRecord {
   id: number;
   type: string;

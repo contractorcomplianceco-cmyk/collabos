@@ -48,6 +48,7 @@ export * from './changePasswordInput';
 export * from './companyRecord';
 export * from './companyRecordInput';
 export * from './companyRecordUpdate';
+export * from './createReportTemplateInput';
 export * from './decisionRecord';
 export * from './decisionRecordApprovalRoute';
 export * from './decisionRecordRisk';

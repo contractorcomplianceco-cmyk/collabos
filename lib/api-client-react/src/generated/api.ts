@@ -42,6 +42,7 @@ import type {
   CompanyRecord,
   CompanyRecordInput,
   CompanyRecordUpdate,
+  CreateReportTemplateInput,
   DecisionRecord,
   DuplicateRiskRecord,
   FeedbackItemInput,
@@ -5739,6 +5740,77 @@ export function useListReportTemplates<TData = Awaited<ReturnType<typeof listRep
 
 
 
+
+export const getCreateReportTemplateUrl = () => {
+
+
+
+
+  return `/api/report-templates`
+}
+
+/**
+ * @summary Save a generated report as a template
+ */
+export const createReportTemplate = async (createReportTemplateInput: CreateReportTemplateInput, options?: RequestInit): Promise<ReportTemplateRecord> => {
+
+  return customFetch<ReportTemplateRecord>(getCreateReportTemplateUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createReportTemplateInput,)
+  }
+);}
+
+
+
+
+export const getCreateReportTemplateMutationOptions = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReportTemplate>>, TError,{data: BodyType<CreateReportTemplateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createReportTemplate>>, TError,{data: BodyType<CreateReportTemplateInput>}, TContext> => {
+
+const mutationKey = ['createReportTemplate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createReportTemplate>>, {data: BodyType<CreateReportTemplateInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createReportTemplate(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateReportTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof createReportTemplate>>>
+    export type CreateReportTemplateMutationBody = BodyType<CreateReportTemplateInput>
+    export type CreateReportTemplateMutationError = ErrorType<ApiMessage>
+
+    /**
+ * @summary Save a generated report as a template
+ */
+export const useCreateReportTemplate = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReportTemplate>>, TError,{data: BodyType<CreateReportTemplateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createReportTemplate>>,
+        TError,
+        {data: BodyType<CreateReportTemplateInput>},
+        TContext
+      > => {
+      return useMutation(getCreateReportTemplateMutationOptions(options));
+    }
 
 export const getListAgentWorkItemsUrl = () => {
 

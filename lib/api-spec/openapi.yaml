@@ -1520,6 +1520,35 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ReportTemplateRecord"
+    post:
+      operationId: createReportTemplate
+      tags: [reports]
+      summary: Save a generated report as a template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReportTemplateInput"
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportTemplateRecord"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
   /agent-work/items:
     get:
       operationId: listAgentWorkItems
@@ -2793,6 +2822,18 @@ components:
         newsCount: { type: integer }
         movement: { type: integer }
         series: { type: array, items: { type: number } }
+    CreateReportTemplateInput:
+      type: object
+      required: [type, title, summary]
+      properties:
+        type: { type: string, minLength: 1 }
+        title: { type: string, minLength: 1 }
+        summary: { type: string, minLength: 1 }
+        findings: { type: array, items: { type: string } }
+        risks: { type: array, items: { type: string } }
+        recommendations: { type: array, items: { type: string } }
+        decisionsNeeded: { type: array, items: { type: string } }
+        nextSteps: { type: array, items: { type: string } }
     ReportTemplateRecord:
       type: object
       required: [id, type, title, date, summary, findings, sourceData, risks, recommendations, decisionsNeeded, owners, nextSteps]
