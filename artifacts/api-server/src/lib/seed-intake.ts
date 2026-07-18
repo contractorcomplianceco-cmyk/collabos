@@ -27,7 +27,7 @@ const SEED_INTAKE = [
   {
     source: "whatsapp" as const,
     sourceChannel: "Founders chat",
-    senderName: "Rose Almeida",
+    senderName: "Rose Taylor",
     senderHandle: "+1 (555) 010-2211",
     senderRole: "Founder & CEO",
     receivedAt: "2026-07-02 08:41",
@@ -137,7 +137,7 @@ const SEED_INTAKE = [
     classificationReason: "Very short message with no actionable keywords - likely chatter or noise.",
     auditLog: [
       { id: "al-6a", timestamp: "2026-06-30 10:08", actor: "System", action: "Captured from Zoho Cliq (test mode) and classified as noise." },
-      { id: "al-6b", timestamp: "2026-06-30 10:31", actor: "Rose Almeida", action: "Archived - no action required." },
+      { id: "al-6b", timestamp: "2026-06-30 10:31", actor: "Rose Taylor", action: "Archived - no action required." },
     ],
   },
 ];

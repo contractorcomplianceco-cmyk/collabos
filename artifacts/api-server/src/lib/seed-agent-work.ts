@@ -26,7 +26,7 @@ const SEED_AGENT_WORK = [
     affectedModule: "Agent Queue",
     desiredOutcome: "Rose can submit a work item that becomes executable only after approval.",
     status: "new" as const,
-    owner: "Rose Almeida",
+    owner: "Rose Taylor",
     approvalRoute: "rose" as const,
     risk: "medium" as const,
     source: "CollabOS",

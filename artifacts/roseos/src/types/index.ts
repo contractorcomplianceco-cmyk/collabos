@@ -342,6 +342,11 @@ export interface AuditEntry {
   timestamp: string;
   actor: string;
   action: string;
+  // Review Queue timeline extensions: "comment" (a reply), "handoff"
+  // (reassignment), or "status" (approve/revise/reject). Older entries omit it.
+  kind?: "status" | "comment" | "handoff";
+  note?: string;
+  assignedTo?: string;
 }
 
 export interface MindMeldItem {
@@ -409,6 +414,8 @@ export interface Recommendation {
   status: ApprovalStatus;
   approvals?: { rose: boolean; carmen: boolean };
   history: AuditEntry[];
+  assignedTo?: string | null;
+  assignedToId?: number | null;
   projectId?: string | null;
   createdAt?: string;
   updatedAt?: string;

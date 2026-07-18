@@ -71,6 +71,8 @@ function serializeRecommendation(row: Recommendation) {
     status: row.status,
     approvals: row.approvals,
     history: row.history,
+    assignedTo: row.assignedTo ?? null,
+    assignedToId: row.assignedToId ?? null,
     projectId: row.projectId ?? null,
     createdById: row.createdById,
     createdByName: row.createdByName,

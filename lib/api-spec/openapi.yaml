@@ -491,6 +491,103 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiMessage"
+  /directory:
+    get:
+      operationId: listDirectory
+      tags: [recommendations]
+      summary: Lightweight team directory (id, name, role) for assignment pickers
+      responses:
+        "200":
+          description: Team members
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/DirectoryMember" }
+  /recommendations/{id}/comments:
+    post:
+      operationId: addRecommendationComment
+      tags: [recommendations]
+      summary: Add a reply/comment to a recommendation's thread
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecommendationCommentInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecommendationRecord"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /recommendations/{id}/handoff:
+    post:
+      operationId: handoffRecommendation
+      tags: [recommendations]
+      summary: Reassign (hand off) a recommendation to a person
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecommendationHandoffInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecommendationRecord"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
   /recommendations/{id}/status:
     post:
       operationId: changeRecommendationStatus
@@ -1993,6 +2090,11 @@ components:
         timestamp: { type: string }
         actor: { type: string }
         action: { type: string }
+        kind:
+          type: string
+          enum: [status, comment, handoff]
+        note: { type: string }
+        assignedTo: { type: string }
     RecommendationApprovals:
       type: object
       required: [rose, carmen]
@@ -2027,6 +2129,8 @@ components:
         history:
           type: array
           items: { $ref: "#/components/schemas/RecommendationHistoryEntry" }
+        assignedTo: { type: ["string", "null"] }
+        assignedToId: { type: ["integer", "null"] }
         projectId: { type: ["integer", "null"] }
         createdById: { type: ["integer", "null"] }
         createdByName: { type: ["string", "null"] }
@@ -2048,6 +2152,26 @@ components:
       required: [status]
       properties:
         status: { $ref: "#/components/schemas/RecommendationStatus" }
+        note: { type: string }
+    DirectoryMember:
+      type: object
+      required: [id, name, role]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        role: { type: string }
+    RecommendationCommentInput:
+      type: object
+      required: [note]
+      properties:
+        note: { type: string, minLength: 1 }
+    RecommendationHandoffInput:
+      type: object
+      required: [assignedTo]
+      properties:
+        assignedTo: { type: string, minLength: 1 }
+        assignedToId: { type: ["integer", "null"] }
+        note: { type: string }
     IdeaStatus:
       type: string
       enum:

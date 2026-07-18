@@ -9,8 +9,9 @@ import {
 describe("bucketProjectTaskOwner", () => {
   it("buckets Rose name variants", () => {
     expect(bucketProjectTaskOwner("Rose")).toBe("rose");
+    expect(bucketProjectTaskOwner("Rose Taylor")).toBe("rose");
+    expect(bucketProjectTaskOwner(" rose taylor ")).toBe("rose");
     expect(bucketProjectTaskOwner("Rose Almeida")).toBe("rose");
-    expect(bucketProjectTaskOwner(" rose almeida ")).toBe("rose");
   });
 
   it("buckets Carmen name variants", () => {

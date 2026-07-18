@@ -357,11 +357,23 @@ export const RecommendationStatus = {
   'needs-revision': 'needs-revision',
 } as const;
 
+export type RecommendationHistoryEntryKind = typeof RecommendationHistoryEntryKind[keyof typeof RecommendationHistoryEntryKind];
+
+
+export const RecommendationHistoryEntryKind = {
+  status: 'status',
+  comment: 'comment',
+  handoff: 'handoff',
+} as const;
+
 export interface RecommendationHistoryEntry {
   id: string;
   timestamp: string;
   actor: string;
   action: string;
+  kind?: RecommendationHistoryEntryKind;
+  note?: string;
+  assignedTo?: string;
 }
 
 export interface RecommendationApprovals {
@@ -380,6 +392,10 @@ export interface RecommendationRecord {
   status: RecommendationStatus;
   approvals: RecommendationApprovals;
   history: RecommendationHistoryEntry[];
+  /** @nullable */
+  assignedTo?: string | null;
+  /** @nullable */
+  assignedToId?: number | null;
   /** @nullable */
   projectId?: number | null;
   /** @nullable */
@@ -405,6 +421,26 @@ export interface RecommendationInput {
 
 export interface RecommendationStatusChange {
   status: RecommendationStatus;
+  note?: string;
+}
+
+export interface DirectoryMember {
+  id: number;
+  name: string;
+  role: string;
+}
+
+export interface RecommendationCommentInput {
+  /** @minLength 1 */
+  note: string;
+}
+
+export interface RecommendationHandoffInput {
+  /** @minLength 1 */
+  assignedTo: string;
+  /** @nullable */
+  assignedToId?: number | null;
+  note?: string;
 }
 
 export type IdeaStatus = typeof IdeaStatus[keyof typeof IdeaStatus];

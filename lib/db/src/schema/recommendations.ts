@@ -39,11 +39,23 @@ export type RecommendationApprovalRoute = (typeof RECOMMENDATION_APPROVAL_ROUTES
 export const RECOMMENDATION_STATUSES = ["pending", "approved", "rejected", "needs-revision"] as const;
 export type RecommendationStatus = (typeof RECOMMENDATION_STATUSES)[number];
 
+// Kinds of timeline entries. "status" = approve/revise/reject; "comment" = a
+// reply in the discussion thread; "handoff" = reassignment to a person.
+export const RECOMMENDATION_HISTORY_KINDS = ["status", "comment", "handoff"] as const;
+export type RecommendationHistoryKind = (typeof RECOMMENDATION_HISTORY_KINDS)[number];
+
 export const recommendationHistoryEntrySchema = z.object({
   id: z.string(),
   timestamp: z.string(),
   actor: z.string(),
   action: z.string(),
+  // Optional so existing history rows (which only have the four fields above)
+  // stay valid. Defaults to "status" when absent.
+  kind: z.enum(RECOMMENDATION_HISTORY_KINDS).optional(),
+  // Free-text note attached to a comment, handoff, or status change.
+  note: z.string().optional(),
+  // For handoffs: who the item was routed to.
+  assignedTo: z.string().optional(),
 });
 export type RecommendationHistoryEntry = z.infer<typeof recommendationHistoryEntrySchema>;
 
@@ -64,6 +76,9 @@ export const recommendationsTable = pgTable("recommendations", {
   status: text("status", { enum: RECOMMENDATION_STATUSES }).notNull().default("pending"),
   approvals: jsonb("approvals").$type<RecommendationApprovals>().notNull().default({ rose: false, carmen: false }),
   history: jsonb("history").$type<RecommendationHistoryEntry[]>().notNull().default([]),
+  // Current owner of the item after a handoff/reassignment (display name).
+  assignedTo: text("assigned_to"),
+  assignedToId: integer("assigned_to_id").references(() => usersTable.id, { onDelete: "set null" }),
   projectId: integer("project_id").references(() => projectsTable.id, { onDelete: "set null" }),
   createdById: integer("created_by_id").references(() => usersTable.id, { onDelete: "set null" }),
   createdByName: text("created_by_name"),

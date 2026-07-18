@@ -43,6 +43,7 @@ import type {
   CompanyRecordInput,
   CompanyRecordUpdate,
   DecisionRecord,
+  DirectoryMember,
   DuplicateRiskRecord,
   FeedbackItemInput,
   FeedbackItemRecord,
@@ -84,6 +85,8 @@ import type {
   ProjectTaskRecord,
   ProjectTaskUpdate,
   ProjectUpdate,
+  RecommendationCommentInput,
+  RecommendationHandoffInput,
   RecommendationInput,
   RecommendationRecord,
   RecommendationStatusChange,
@@ -1719,6 +1722,227 @@ export const useCreateRecommendation = <TError = ErrorType<ApiMessage>,
         TContext
       > => {
       return useMutation(getCreateRecommendationMutationOptions(options));
+    }
+
+export const getListDirectoryUrl = () => {
+
+
+
+
+  return `/api/directory`
+}
+
+/**
+ * @summary Lightweight team directory (id, name, role) for assignment pickers
+ */
+export const listDirectory = async ( options?: RequestInit): Promise<DirectoryMember[]> => {
+
+  return customFetch<DirectoryMember[]>(getListDirectoryUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListDirectoryQueryKey = () => {
+    return [
+    `/api/directory`
+    ] as const;
+    }
+
+
+export const getListDirectoryQueryOptions = <TData = Awaited<ReturnType<typeof listDirectory>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDirectory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListDirectoryQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDirectory>>> = ({ signal }) => listDirectory({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDirectory>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListDirectoryQueryResult = NonNullable<Awaited<ReturnType<typeof listDirectory>>>
+export type ListDirectoryQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Lightweight team directory (id, name, role) for assignment pickers
+ */
+
+export function useListDirectory<TData = Awaited<ReturnType<typeof listDirectory>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listDirectory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListDirectoryQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getAddRecommendationCommentUrl = (id: number,) => {
+
+
+
+
+  return `/api/recommendations/${id}/comments`
+}
+
+/**
+ * @summary Add a reply/comment to a recommendation's thread
+ */
+export const addRecommendationComment = async (id: number,
+    recommendationCommentInput: RecommendationCommentInput, options?: RequestInit): Promise<RecommendationRecord> => {
+
+  return customFetch<RecommendationRecord>(getAddRecommendationCommentUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      recommendationCommentInput,)
+  }
+);}
+
+
+
+
+export const getAddRecommendationCommentMutationOptions = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addRecommendationComment>>, TError,{id: number;data: BodyType<RecommendationCommentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addRecommendationComment>>, TError,{id: number;data: BodyType<RecommendationCommentInput>}, TContext> => {
+
+const mutationKey = ['addRecommendationComment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addRecommendationComment>>, {id: number;data: BodyType<RecommendationCommentInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  addRecommendationComment(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddRecommendationCommentMutationResult = NonNullable<Awaited<ReturnType<typeof addRecommendationComment>>>
+    export type AddRecommendationCommentMutationBody = BodyType<RecommendationCommentInput>
+    export type AddRecommendationCommentMutationError = ErrorType<ApiMessage>
+
+    /**
+ * @summary Add a reply/comment to a recommendation's thread
+ */
+export const useAddRecommendationComment = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addRecommendationComment>>, TError,{id: number;data: BodyType<RecommendationCommentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof addRecommendationComment>>,
+        TError,
+        {id: number;data: BodyType<RecommendationCommentInput>},
+        TContext
+      > => {
+      return useMutation(getAddRecommendationCommentMutationOptions(options));
+    }
+
+export const getHandoffRecommendationUrl = (id: number,) => {
+
+
+
+
+  return `/api/recommendations/${id}/handoff`
+}
+
+/**
+ * @summary Reassign (hand off) a recommendation to a person
+ */
+export const handoffRecommendation = async (id: number,
+    recommendationHandoffInput: RecommendationHandoffInput, options?: RequestInit): Promise<RecommendationRecord> => {
+
+  return customFetch<RecommendationRecord>(getHandoffRecommendationUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      recommendationHandoffInput,)
+  }
+);}
+
+
+
+
+export const getHandoffRecommendationMutationOptions = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof handoffRecommendation>>, TError,{id: number;data: BodyType<RecommendationHandoffInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof handoffRecommendation>>, TError,{id: number;data: BodyType<RecommendationHandoffInput>}, TContext> => {
+
+const mutationKey = ['handoffRecommendation'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof handoffRecommendation>>, {id: number;data: BodyType<RecommendationHandoffInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  handoffRecommendation(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type HandoffRecommendationMutationResult = NonNullable<Awaited<ReturnType<typeof handoffRecommendation>>>
+    export type HandoffRecommendationMutationBody = BodyType<RecommendationHandoffInput>
+    export type HandoffRecommendationMutationError = ErrorType<ApiMessage>
+
+    /**
+ * @summary Reassign (hand off) a recommendation to a person
+ */
+export const useHandoffRecommendation = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof handoffRecommendation>>, TError,{id: number;data: BodyType<RecommendationHandoffInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof handoffRecommendation>>,
+        TError,
+        {id: number;data: BodyType<RecommendationHandoffInput>},
+        TContext
+      > => {
+      return useMutation(getHandoffRecommendationMutationOptions(options));
     }
 
 export const getChangeRecommendationStatusUrl = (id: number,) => {

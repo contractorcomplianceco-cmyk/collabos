@@ -12,6 +12,8 @@ import {
   useListRecommendations,
   createRecommendation,
   changeRecommendationStatus,
+  addRecommendationComment,
+  handoffRecommendation,
   getListRecommendationsQueryKey,
   useListIdeas,
   createIdea,
@@ -155,8 +157,43 @@ import {
   summarizeIntakeMessage,
   detectIntakeDuplicates,
 } from "@/lib/helpers";
+import { toast } from "@/hooks/use-toast";
 
 export type { Role };
+
+/**
+ * Returns true when the given role may submit changes. When it can't, it shows
+ * a clear toast instead of silently doing nothing (the old behavior made the
+ * app feel broken — clicks with no visible effect).
+ */
+function ensureCanSubmit(role: Role): boolean {
+  if (canSubmit(role)) return true;
+  toast({
+    variant: "destructive",
+    title: "View-only access",
+    description: "Your role can view this workspace but can't make changes. Ask an admin if you need edit access.",
+  });
+  return false;
+}
+
+/**
+ * Runs a write (create/update/delete) and surfaces a toast if it fails, so the
+ * user always gets feedback instead of a silently-dropped action.
+ */
+async function runWrite<T>(action: () => Promise<T>): Promise<T> {
+  try {
+    return await action();
+  } catch (error) {
+    const message =
+      error && typeof error === "object" && "data" in error &&
+      (error as { data?: { message?: string } }).data?.message
+        ? (error as { data: { message?: string } }).data.message
+        : "That action could not be saved. Please try again.";
+    toast({ variant: "destructive", title: "Couldn't save changes", description: message });
+    // Re-throw so callers don't show a false "saved" confirmation.
+    throw error;
+  }
+}
 
 const STORAGE_KEY = "roseos_state_v1";
 
@@ -213,7 +250,9 @@ interface AppState extends PersistedState {
   setRoseBrainContext: (ctx: string) => void;
   submitIdea: (idea: Omit<Idea, "id" | "createdAt">) => void;
   updateIdeaStatus: (id: string, status: IdeaStatus) => void;
-  setRecommendationStatus: (id: string, status: ApprovalStatus, actor: string) => Promise<boolean>;
+  setRecommendationStatus: (id: string, status: ApprovalStatus, actor: string, note?: string) => Promise<boolean>;
+  commentOnRecommendation: (id: string, note: string) => Promise<boolean>;
+  handoffRecommendationTo: (id: string, assignedTo: string, assignedToId?: number | null, note?: string) => Promise<boolean>;
   addRecommendation: (rec: Omit<Recommendation, "id" | "history" | "status">) => Promise<void>;
   carmenfy: (itemId: string, note: string) => void;
   rosify: (itemId: string, note: string) => void;
@@ -363,6 +402,8 @@ function toRecommendation(rec: RecommendationRecord): Recommendation {
     status: rec.status,
     approvals: rec.approvals,
     history: rec.history,
+    assignedTo: rec.assignedTo ?? null,
+    assignedToId: rec.assignedToId ?? null,
     projectId: rec.projectId != null ? String(rec.projectId) : null,
     createdAt: rec.createdAt,
     updatedAt: rec.updatedAt,
@@ -894,7 +935,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const submitIdea = useCallback(
     (idea: Omit<Idea, "id" | "createdAt">) => {
-      if (!canSubmit(state.currentRole)) return;
+      if (!ensureCanSubmit(state.currentRole)) return;
       void createIdea({
         title: idea.title,
         description: idea.description,
@@ -916,7 +957,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const updateIdeaStatus = useCallback(
     (id: string, status: IdeaStatus) => {
-      if (!canSubmit(state.currentRole)) return;
+      if (!ensureCanSubmit(state.currentRole)) return;
       void updateIdeaStatusApi(Number(id), { status })
         .then(() => invalidateIdeas())
         .catch(() => undefined);
@@ -925,11 +966,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   );
 
   const setRecommendationStatus = useCallback(
-    async (id: string, nextStatus: ApprovalStatus, actor: string): Promise<boolean> => {
+    async (id: string, nextStatus: ApprovalStatus, actor: string, note?: string): Promise<boolean> => {
       const rec = recommendations.find((r) => r.id === id);
       if (!rec || !canApprove(actor as Role, rec.requiredApprover)) return false;
       try {
-        await changeRecommendationStatus(Number(id), { status: nextStatus });
+        await changeRecommendationStatus(Number(id), { status: nextStatus, ...(note?.trim() ? { note: note.trim() } : {}) });
         await Promise.all([invalidateRecommendations(), invalidateProjectTasks()]);
         return true;
       } catch {
@@ -939,9 +980,45 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     [recommendations, invalidateRecommendations, invalidateProjectTasks],
   );
 
+  const commentOnRecommendation = useCallback(
+    async (id: string, note: string): Promise<boolean> => {
+      if (!note.trim()) return false;
+      try {
+        await runWrite(async () => {
+          await addRecommendationComment(Number(id), { note: note.trim() });
+          await invalidateRecommendations();
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [invalidateRecommendations],
+  );
+
+  const handoffRecommendationTo = useCallback(
+    async (id: string, assignedTo: string, assignedToId?: number | null, note?: string): Promise<boolean> => {
+      if (!assignedTo.trim()) return false;
+      try {
+        await runWrite(async () => {
+          await handoffRecommendation(Number(id), {
+            assignedTo: assignedTo.trim(),
+            assignedToId: assignedToId ?? null,
+            ...(note?.trim() ? { note: note.trim() } : {}),
+          });
+          await invalidateRecommendations();
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [invalidateRecommendations],
+  );
+
   const addRecommendation = useCallback(
     async (rec: Omit<Recommendation, "id" | "history" | "status">) => {
-      if (!canSubmit(state.currentRole)) return;
+      if (!ensureCanSubmit(state.currentRole)) return;
       try {
         await createRecommendation({
           source: rec.source,
@@ -1019,7 +1096,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const addFeedback = useCallback(
     (item: Omit<FeedbackItem, "id" | "count">) => {
-      if (!canSubmit(state.currentRole)) return;
+      if (!ensureCanSubmit(state.currentRole)) return;
       void createFeedbackItem({
         type: item.type,
         summary: item.summary,
@@ -1050,7 +1127,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       source?: string;
       verificationSteps?: string[];
     }) => {
-      if (!canSubmit(state.currentRole)) return null;
+      if (!ensureCanSubmit(state.currentRole)) return null;
       try {
         const created = await createAgentWorkItem({
           title: input.title,
@@ -1412,16 +1489,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       classification: Classification;
       keywords: string[];
     }) => {
-      if (!canSubmit(state.currentRole)) return;
-      await createCompanyRecord({
-        title: input.title,
-        type: input.type,
-        summary: input.summary,
-        classification: input.classification,
-        keywords: input.keywords,
-        source: "User entry",
+      if (!ensureCanSubmit(state.currentRole)) return;
+      await runWrite(async () => {
+        await createCompanyRecord({
+          title: input.title,
+          type: input.type,
+          summary: input.summary,
+          classification: input.classification,
+          keywords: input.keywords,
+          source: "User entry",
+        });
+        await invalidateCompanyRecords();
       });
-      await invalidateCompanyRecords();
     },
     [state.currentRole, invalidateCompanyRecords],
   );
@@ -1434,9 +1513,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       classification?: Classification;
       keywords?: string[];
     }) => {
-      if (!canSubmit(state.currentRole)) return;
-      await updateCompanyRecord(Number(id), patch);
-      await invalidateCompanyRecords();
+      if (!ensureCanSubmit(state.currentRole)) return;
+      await runWrite(async () => {
+        await updateCompanyRecord(Number(id), patch);
+        await invalidateCompanyRecords();
+      });
     },
     [state.currentRole, invalidateCompanyRecords],
   );
@@ -1449,16 +1530,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       status?: Task["status"];
       due?: string | null;
     }) => {
-      if (!canSubmit(state.currentRole)) return;
-      await createProjectTask({
-        title: input.title,
-        projectId: Number(input.projectId),
-        owner: input.owner ?? null,
-        status: input.status ?? "todo",
-        due: input.due ?? null,
-        source: "manual",
+      if (!ensureCanSubmit(state.currentRole)) return;
+      await runWrite(async () => {
+        await createProjectTask({
+          title: input.title,
+          projectId: Number(input.projectId),
+          owner: input.owner ?? null,
+          status: input.status ?? "todo",
+          due: input.due ?? null,
+          source: "manual",
+        });
+        await invalidateProjectTasks();
       });
-      await invalidateProjectTasks();
     },
     [state.currentRole, invalidateProjectTasks],
   );
@@ -1471,15 +1554,17 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       status: Task["status"];
       due: string | null;
     }>) => {
-      if (!canSubmit(state.currentRole)) return;
-      await updateProjectTask(Number(id), {
-        title: patch.title,
-        projectId: patch.projectId !== undefined ? Number(patch.projectId) : undefined,
-        owner: patch.owner,
-        status: patch.status,
-        due: patch.due,
+      if (!ensureCanSubmit(state.currentRole)) return;
+      await runWrite(async () => {
+        await updateProjectTask(Number(id), {
+          title: patch.title,
+          projectId: patch.projectId !== undefined ? Number(patch.projectId) : undefined,
+          owner: patch.owner,
+          status: patch.status,
+          due: patch.due,
+        });
+        await invalidateProjectTasks();
       });
-      await invalidateProjectTasks();
     },
     [state.currentRole, invalidateProjectTasks],
   );
@@ -1490,9 +1575,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       progress: number;
       carmenPlanNotes: string;
     }>) => {
-      if (!canSubmit(state.currentRole)) return;
-      await updateProjectBuildPlan(Number(projectId), patch);
-      await invalidateBuildPlans();
+      if (!ensureCanSubmit(state.currentRole)) return;
+      await runWrite(async () => {
+        await updateProjectBuildPlan(Number(projectId), patch);
+        await invalidateBuildPlans();
+      });
     },
     [state.currentRole, invalidateBuildPlans],
   );
@@ -1504,23 +1591,27 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       owner?: string | null;
       risk?: Blocker["risk"];
     }) => {
-      if (!canSubmit(state.currentRole)) return;
-      await createProjectBlocker({
-        title: input.title,
-        projectId: Number(input.projectId),
-        owner: input.owner ?? null,
-        risk: input.risk ?? "medium",
+      if (!ensureCanSubmit(state.currentRole)) return;
+      await runWrite(async () => {
+        await createProjectBlocker({
+          title: input.title,
+          projectId: Number(input.projectId),
+          owner: input.owner ?? null,
+          risk: input.risk ?? "medium",
+        });
+        await invalidateBlockers();
       });
-      await invalidateBlockers();
     },
     [state.currentRole, invalidateBlockers],
   );
 
   const deleteBlockerEntry = useCallback(
     async (id: string) => {
-      if (!canSubmit(state.currentRole)) return;
-      await deleteProjectBlocker(Number(id));
-      await invalidateBlockers();
+      if (!ensureCanSubmit(state.currentRole)) return;
+      await runWrite(async () => {
+        await deleteProjectBlocker(Number(id));
+        await invalidateBlockers();
+      });
     },
     [state.currentRole, invalidateBlockers],
   );
@@ -1578,6 +1669,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         submitIdea,
         updateIdeaStatus,
         setRecommendationStatus,
+        commentOnRecommendation,
+        handoffRecommendationTo,
         addRecommendation,
         carmenfy,
         rosify,
