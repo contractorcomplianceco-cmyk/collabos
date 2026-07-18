@@ -18,4 +18,10 @@ export interface MarketSignalRecord {
   risk: MarketSignalRecordRisk;
   recommendedResponse: string;
   reviewOwner: MarketSignalRecordReviewOwner;
+  /** @nullable */
+  url?: string | null;
+  /** @nullable */
+  matchedTerm?: string | null;
+  /** @nullable */
+  publishedAt?: string | null;
 }

@@ -1506,6 +1506,42 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MarketCompetitorRecord"
+  /market/refresh:
+    post:
+      operationId: refreshMarketSignals
+      tags: [market]
+      summary: Pull live news for watched competitors/keywords
+      responses:
+        "200":
+          description: Refresh result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketRefreshResult"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "502":
+          description: Upstream fetch failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /market/status:
+    get:
+      operationId: getMarketStatus
+      tags: [market]
+      summary: Last market refresh status
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketStatus"
   /report-templates:
     get:
       operationId: listReportTemplates
@@ -2782,6 +2818,22 @@ components:
         risk: { type: string, enum: [low, medium, high, critical] }
         recommendedResponse: { type: string }
         reviewOwner: { type: string, enum: [rose, carmen, both, none] }
+        url: { type: ["string", "null"] }
+        matchedTerm: { type: ["string", "null"] }
+        publishedAt: { type: ["string", "null"] }
+    MarketRefreshResult:
+      type: object
+      required: [fetched, inserted, terms, refreshedAt]
+      properties:
+        fetched: { type: integer }
+        inserted: { type: integer }
+        terms: { type: array, items: { type: string } }
+        refreshedAt: { type: string }
+    MarketStatus:
+      type: object
+      required: [lastRefreshedAt]
+      properties:
+        lastRefreshedAt: { type: ["string", "null"] }
     MarketCompetitorRecord:
       type: object
       required: [id, name, threat, trend, newsCount, movement, series]
