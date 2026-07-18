@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { backfillRecommendationProjectLinks } from "./lib/backfill-recommendation-projects";
+import { refreshMarketSignals } from "./lib/refresh-market-signals";
 import { ensureStaffAccountsFromEnv } from "./lib/ensure-staff-accounts";
 import { seedIntegrationsIfEmpty } from "./lib/seed-integrations";
 import { seedPromptsIfEmpty } from "./lib/seed-prompts";
@@ -46,6 +47,18 @@ ensurePendingIntegrationDecisionCards()
   .catch((err) => {
     logger.error({ err }, "Failed to ensure Gemini / Zoho Final-decision cards");
   });
+
+// Keep market signals fresh in the background: pull live news on startup and
+// every few hours, so Market Pulse stays current even with no active viewer.
+const MARKET_REFRESH_INTERVAL_MS = 3 * 60 * 60 * 1000;
+function scheduleMarketRefresh() {
+  const run = () =>
+    refreshMarketSignals().catch((err) => logger.error({ err }, "Scheduled market refresh failed"));
+  // Small delay on boot so it doesn't compete with other startup work.
+  setTimeout(run, 30_000);
+  setInterval(run, MARKET_REFRESH_INTERVAL_MS);
+}
+scheduleMarketRefresh();
 
 app.listen(port, (err) => {
   if (err) {

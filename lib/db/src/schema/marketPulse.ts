@@ -27,6 +27,13 @@ export const marketSignalsTable = pgTable("market_signals", {
   risk: text("risk", { enum: MARKET_RISK_LEVELS }).notNull(),
   recommendedResponse: text("recommended_response").notNull(),
   reviewOwner: text("review_owner", { enum: APPROVAL_ROUTES }).notNull(),
+  // Live-news fields (null for legacy/manual signals):
+  url: text("url"),
+  // Which watched competitor/keyword surfaced this article.
+  matchedTerm: text("matched_term"),
+  // Stable id from the news source, used to dedupe on repeated refreshes.
+  externalId: text("external_id").unique(),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

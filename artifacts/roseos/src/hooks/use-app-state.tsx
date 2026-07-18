@@ -56,6 +56,10 @@ import {
   useListProjectTasks,
   useListMarketSignals,
   useListMarketCompetitors,
+  refreshMarketSignals as refreshMarketSignalsApi,
+  getListMarketSignalsQueryKey,
+  getListMarketCompetitorsQueryKey,
+  type MarketRefreshResult,
   useListReportTemplates,
   useListIntegrationStatus,
   useListAgentWorkItems,
@@ -185,6 +189,7 @@ interface AppState extends PersistedState {
   buildItems: BuildItem[];
   registryLoading: boolean;
   marketSignals: MarketSignal[];
+  refreshMarketNews: () => Promise<MarketRefreshResult | null>;
   competitors: Competitor[];
   marketPulseLoading: boolean;
   reports: Report[];
@@ -675,6 +680,9 @@ function toMarketSignal(row: MarketSignalRecord): MarketSignal {
     risk: row.risk,
     recommendedResponse: row.recommendedResponse,
     reviewOwner: row.reviewOwner,
+    url: row.url ?? null,
+    matchedTerm: row.matchedTerm ?? null,
+    publishedAt: row.publishedAt ?? null,
   };
 }
 
@@ -873,6 +881,20 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   const [state, setState] = useState<PersistedState>(() => freshState());
+
+  const refreshMarketNews = useCallback(async (): Promise<MarketRefreshResult | null> => {
+    if (!canSubmit(state.currentRole)) return null;
+    try {
+      const result = await refreshMarketSignalsApi();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: getListMarketSignalsQueryKey() }),
+        queryClient.invalidateQueries({ queryKey: getListMarketCompetitorsQueryKey() }),
+      ]);
+      return result;
+    } catch {
+      return null;
+    }
+  }, [state.currentRole, queryClient]);
   const [isRoseBrainOpen, setRoseBrainOpen] = useState(false);
   const [roseBrainContext, setRoseBrainContext] = useState("Collab Dashboard");
 
@@ -1549,6 +1571,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         buildItems,
         registryLoading,
         marketSignals,
+        refreshMarketNews,
         competitors,
         marketPulseLoading,
         reports,

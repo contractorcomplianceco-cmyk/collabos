@@ -283,6 +283,9 @@ export interface MarketSignal {
   risk: RiskLevel;
   recommendedResponse: string;
   reviewOwner: ApprovalRoute;
+  url?: string | null;
+  matchedTerm?: string | null;
+  publishedAt?: string | null;
 }
 
 export interface Competitor {

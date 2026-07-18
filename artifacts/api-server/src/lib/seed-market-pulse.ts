@@ -28,6 +28,9 @@ export function serializeMarketSignal(row: MarketSignalRow) {
     risk: row.risk,
     recommendedResponse: row.recommendedResponse,
     reviewOwner: row.reviewOwner,
+    url: row.url ?? null,
+    matchedTerm: row.matchedTerm ?? null,
+    publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,
   };
 }
 

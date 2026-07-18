@@ -1615,6 +1615,24 @@ export interface MarketSignalRecord {
   risk: MarketSignalRecordRisk;
   recommendedResponse: string;
   reviewOwner: MarketSignalRecordReviewOwner;
+  /** @nullable */
+  url?: string | null;
+  /** @nullable */
+  matchedTerm?: string | null;
+  /** @nullable */
+  publishedAt?: string | null;
+}
+
+export interface MarketRefreshResult {
+  fetched: number;
+  inserted: number;
+  terms: string[];
+  refreshedAt: string;
+}
+
+export interface MarketStatus {
+  /** @nullable */
+  lastRefreshedAt: string | null;
 }
 
 export type MarketCompetitorRecordThreat = typeof MarketCompetitorRecordThreat[keyof typeof MarketCompetitorRecordThreat];

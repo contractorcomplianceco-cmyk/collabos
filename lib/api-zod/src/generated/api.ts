@@ -641,6 +641,7 @@ export const ListRecommendationsResponseItem = zod.object({
   "actor": zod.string(),
   "action": zod.string()
 })),
+  "projectId": zod.number().nullish(),
   "createdById": zod.number().nullish(),
   "createdByName": zod.string().nullish(),
   "createdAt": zod.string(),
@@ -1950,7 +1951,8 @@ export const UpdateProjectTaskResponse = zod.object({
   "status": zod.enum(['todo', 'in-progress', 'review', 'done']),
   "due": zod.string().nullable(),
   "source": zod.enum(['manual', 'sync']),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "completedAt": zod.string().nullable()
 })
 
 
@@ -1966,7 +1968,10 @@ export const ListMarketSignalsResponseItem = zod.object({
   "opportunity": zod.string(),
   "risk": zod.enum(['low', 'medium', 'high', 'critical']),
   "recommendedResponse": zod.string(),
-  "reviewOwner": zod.enum(['rose', 'carmen', 'both', 'none'])
+  "reviewOwner": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "url": zod.string().nullish(),
+  "matchedTerm": zod.string().nullish(),
+  "publishedAt": zod.string().nullish()
 })
 export const ListMarketSignalsResponse = zod.array(ListMarketSignalsResponseItem)
 
@@ -1984,6 +1989,25 @@ export const ListMarketCompetitorsResponseItem = zod.object({
   "series": zod.array(zod.number())
 })
 export const ListMarketCompetitorsResponse = zod.array(ListMarketCompetitorsResponseItem)
+
+
+/**
+ * @summary Pull live news for watched competitors/keywords
+ */
+export const RefreshMarketSignalsResponse = zod.object({
+  "fetched": zod.number(),
+  "inserted": zod.number(),
+  "terms": zod.array(zod.string()),
+  "refreshedAt": zod.string()
+})
+
+
+/**
+ * @summary Last market refresh status
+ */
+export const GetMarketStatusResponse = zod.object({
+  "lastRefreshedAt": zod.string().nullable()
+})
 
 
 /**
@@ -2041,7 +2065,7 @@ export const ListAgentWorkItemsResponseItem = zod.object({
   "createdByName": zod.string().nullable(),
   "createdAt": zod.string(),
   "updatedAt": zod.string(),
-  "attachmentCount": zod.number().default(0)
+  "attachmentCount": zod.number()
 })
 export const ListAgentWorkItemsResponse = zod.array(ListAgentWorkItemsResponseItem)
 
@@ -2125,7 +2149,8 @@ export const UpdateAgentWorkItemResponse = zod.object({
 })),
   "createdByName": zod.string().nullable(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "attachmentCount": zod.number()
 })
 
 
@@ -2176,7 +2201,8 @@ export const AddAgentWorkEventResponse = zod.object({
 })),
   "createdByName": zod.string().nullable(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "attachmentCount": zod.number()
 })
 
 
