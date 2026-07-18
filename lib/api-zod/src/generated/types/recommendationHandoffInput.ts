@@ -5,9 +5,11 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { RecommendationStatus } from './recommendationStatus';
 
-export interface RecommendationStatusChange {
-  status: RecommendationStatus;
+export interface RecommendationHandoffInput {
+  /** @minLength 1 */
+  assignedTo: string;
+  /** @nullable */
+  assignedToId?: number | null;
   note?: string;
 }

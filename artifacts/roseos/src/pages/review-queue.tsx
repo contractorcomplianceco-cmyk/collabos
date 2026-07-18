@@ -1,15 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useSearch } from "wouter";
-import { ClipboardCheck, Check, X, RefreshCw, History, Filter, FolderKanban } from "lucide-react";
+import { ClipboardCheck, Check, X, RefreshCw, History, Filter, FolderKanban, MessageSquare, Send, UserPlus, ListPlus } from "lucide-react";
 import { PageHeader, ClassificationBadge, RiskBadge, ApprovalRouteBadge, StatusChip, EmptyState, ApprovalPassport } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
 import { useAuth } from "@/hooks/use-auth";
+import { useListDirectory } from "@workspace/api-client-react";
 import { canApprove, mapServerRole, needsMySignOff, waitingOnLabel } from "@/lib/helpers";
 import { linkifyRecommendation } from "@/lib/linkify";
 import { useToast } from "@/hooks/use-toast";
 import { getStickyFilter, setStickyFilter } from "@/lib/nav-prefs";
 import { humanLabel, HUMAN_REVIEW_CATEGORY, HUMAN_REVIEW_STATUS } from "@/lib/ui-labels";
-import type { Role } from "@/types";
+import type { Role, Recommendation } from "@/types";
 
 const CATEGORIES = ["all", "duplicate", "team-pulse", "automation", "market", "mind-meld-handoff", "final-decision", "mockup-prompt", "external-intake"] as const;
 const STATUS_TONE: Record<string, "amber" | "emerald" | "rose" | "sky"> = { pending: "amber", approved: "emerald", rejected: "rose", "needs-revision": "sky" };
@@ -21,7 +22,17 @@ function initialCategory(userKey: string): (typeof CATEGORIES)[number] {
 
 export default function ReviewQueue() {
   const { user } = useAuth();
-  const { recommendations, recommendationsLoading, setRecommendationStatus, currentRole, projects } = useAppState();
+  const {
+    recommendations,
+    recommendationsLoading,
+    setRecommendationStatus,
+    commentOnRecommendation,
+    handoffRecommendationTo,
+    createProjectTaskEntry,
+    currentRole,
+    projects,
+  } = useAppState();
+  const { data: directory = [] } = useListDirectory();
   const { toast } = useToast();
   const search = useSearch();
   const [, setLocation] = useLocation();
@@ -115,10 +126,10 @@ export default function ReviewQueue() {
       ? "This filter only shows one category. Rose decision items usually sit under Final decisions."
       : "New items land here from Incoming Messages, Mockup Studio, Duplicate Radar, and Mind Meld — and always wait for a person to decide.";
 
-  const act = async (id: string, status: "approved" | "rejected" | "needs-revision") => {
+  const act = async (id: string, status: "approved" | "rejected" | "needs-revision", note?: string) => {
     setActingId(id);
     try {
-      const ok = await setRecommendationStatus(id, status, role);
+      const ok = await setRecommendationStatus(id, status, role, note);
       if (!ok) {
         toast({
           title: "Could not update",
@@ -207,33 +218,105 @@ export default function ReviewQueue() {
             }
           />
         )}
-        {!recommendationsLoading && filtered.map((r) => {
-          const allowed = canApprove(role, r.requiredApprover);
-          const myTurn = needsMySignOff(role, r.requiredApprover, r.approvals, r.status);
-          const busy = actingId === r.id;
-          const projectName = r.projectId ? projectNameById[r.projectId] : null;
-          const projectHubHref = r.projectId ? `/projects?expand=${encodeURIComponent(r.projectId)}` : null;
-          const openProjectHub = () => {
-            if (projectHubHref) setLocation(projectHubHref);
-          };
-          return (
+        {!recommendationsLoading && filtered.map((r) => (
+          <ReviewCard
+            key={r.id}
+            r={r}
+            role={role}
+            busy={actingId === r.id}
+            expanded={expanded === r.id}
+            onToggleExpand={() => setExpanded(expanded === r.id ? null : r.id)}
+            projectName={r.projectId ? projectNameById[r.projectId] ?? null : null}
+            cardRef={(el) => { cardRefs.current[r.id] = el; }}
+            directory={directory}
+            onAct={act}
+            onComment={commentOnRecommendation}
+            onHandoff={handoffRecommendationTo}
+            onConvertToTask={async (rec) => {
+              await createProjectTaskEntry({
+                title: rec.recommendation.slice(0, 120),
+                projectId: rec.projectId ?? "",
+                owner: rec.assignedTo ?? null,
+              });
+            }}
+            toast={toast}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface DirMember { id: number; name: string; role: string }
+
+function ReviewCard({
+  r, role, busy, expanded, onToggleExpand, projectName, cardRef, directory,
+  onAct, onComment, onHandoff, onConvertToTask, toast,
+}: {
+  r: Recommendation;
+  role: Role;
+  busy: boolean;
+  expanded: boolean;
+  onToggleExpand: () => void;
+  projectName: string | null;
+  cardRef: (el: HTMLDivElement | null) => void;
+  directory: DirMember[];
+  onAct: (id: string, status: "approved" | "rejected" | "needs-revision", note?: string) => Promise<void>;
+  onComment: (id: string, note: string) => Promise<boolean>;
+  onHandoff: (id: string, assignedTo: string, assignedToId?: number | null, note?: string) => Promise<boolean>;
+  onConvertToTask: (rec: Recommendation) => Promise<void>;
+  toast: (t: { title: string; description?: string; variant?: "destructive" }) => void;
+}) {
+  const allowed = canApprove(role, r.requiredApprover);
+  const myTurn = needsMySignOff(role, r.requiredApprover, r.approvals, r.status);
+  const projectHubHref = r.projectId ? `/projects?expand=${encodeURIComponent(r.projectId)}` : null;
+
+  // Panels: only one open at a time keeps the card compact.
+  const [panel, setPanel] = useState<null | "comment" | "handoff" | "note">(null);
+  const [pendingStatus, setPendingStatus] = useState<"rejected" | "needs-revision" | null>(null);
+  const [commentText, setCommentText] = useState("");
+  const [handoffTo, setHandoffTo] = useState("");
+  const [handoffNote, setHandoffNote] = useState("");
+  const [noteText, setNoteText] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const comments = r.history.filter((h) => h.kind === "comment");
+
+  const submitComment = async () => {
+    if (!commentText.trim()) return;
+    setSaving(true);
+    const ok = await onComment(r.id, commentText);
+    setSaving(false);
+    if (ok) { setCommentText(""); setPanel(null); toast({ title: "Reply added" }); }
+  };
+
+  const submitHandoff = async () => {
+    if (!handoffTo.trim()) return;
+    setSaving(true);
+    const member = directory.find((m) => m.name === handoffTo);
+    const ok = await onHandoff(r.id, handoffTo, member?.id ?? null, handoffNote);
+    setSaving(false);
+    if (ok) { setHandoffTo(""); setHandoffNote(""); setPanel(null); toast({ title: `Handed off to ${handoffTo}` }); }
+  };
+
+  const submitNote = async () => {
+    if (!pendingStatus) return;
+    setSaving(true);
+    await onAct(r.id, pendingStatus, noteText);
+    setSaving(false);
+    setNoteText(""); setPanel(null); setPendingStatus(null);
+  };
+
+  const startNote = (status: "rejected" | "needs-revision") => {
+    setPendingStatus(status);
+    setNoteText("");
+    setPanel("note");
+  };
+
+  return (
             <div
-              key={r.id}
-              ref={(el) => { cardRefs.current[r.id] = el; }}
-              role={projectHubHref ? "link" : undefined}
-              tabIndex={projectHubHref ? 0 : undefined}
-              onClick={projectHubHref ? openProjectHub : undefined}
-              onKeyDown={
-                projectHubHref
-                  ? (e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        openProjectHub();
-                      }
-                    }
-                  : undefined
-              }
-              className={`rounded-2xl border bg-white p-5 shadow-sm transition ${expanded === r.id ? "border-rose-300 ring-2 ring-rose-100" : "border-slate-200"} ${projectHubHref ? "cursor-pointer hover:border-sky-200 hover:shadow-md" : ""}`}
+              ref={cardRef}
+              className={`rounded-2xl border bg-white p-5 shadow-sm transition ${expanded ? "border-rose-300 ring-2 ring-rose-100" : "border-slate-200"}`}
             >
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="flex-1">
@@ -245,35 +328,166 @@ export default function ReviewQueue() {
                     {projectName && projectHubHref ? (
                       <Link
                         href={projectHubHref}
-                        onClick={(e) => e.stopPropagation()}
                         className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-0.5 text-[11px] font-semibold text-sky-700 ring-1 ring-sky-100 hover:bg-sky-100"
                       >
                         <FolderKanban className="h-3 w-3" />
                         {projectName}
                       </Link>
                     ) : null}
+                    {r.assignedTo ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-0.5 text-[11px] font-semibold text-violet-700 ring-1 ring-violet-100">
+                        <UserPlus className="h-3 w-3" /> {r.assignedTo}
+                      </span>
+                    ) : null}
                   </div>
                   <p className="mt-3 text-sm font-medium text-slate-800">{linkifyRecommendation(r.recommendation)}</p>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setExpanded(expanded === r.id ? null : r.id);
-                    }}
-                    className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-600"
-                  >
-                    <History className="h-3.5 w-3.5" /> {expanded === r.id ? "Hide" : "Show"} history
-                  </button>
-                  {expanded === r.id && (
-                    <ul className="mt-2 space-y-1 border-l-2 border-slate-100 pl-3">
+
+                  {/* Interaction toolbar: reply, hand off, quick actions */}
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPanel(panel === "comment" ? null : "comment")}
+                      className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200"
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" /> Reply{comments.length > 0 ? ` (${comments.length})` : ""}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPanel(panel === "handoff" ? null : "handoff")}
+                      className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200"
+                    >
+                      <UserPlus className="h-3.5 w-3.5" /> Hand off
+                    </button>
+                    {r.projectId ? (
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={async () => { setSaving(true); await onConvertToTask(r); setSaving(false); toast({ title: "Added to project tasks" }); }}
+                        className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200 disabled:opacity-50"
+                      >
+                        <ListPlus className="h-3.5 w-3.5" /> Convert to task
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={onToggleExpand}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-600"
+                    >
+                      <History className="h-3.5 w-3.5" /> {expanded ? "Hide" : "Show"} history
+                    </button>
+                  </div>
+
+                  {/* Reply panel */}
+                  {panel === "comment" && (
+                    <div className="mt-3 rounded-xl bg-slate-50 p-3">
+                      {comments.length > 0 && (
+                        <ul className="mb-2 space-y-2">
+                          {comments.map((h) => (
+                            <li key={h.id} className="rounded-lg bg-white px-3 py-2 text-xs text-slate-600 ring-1 ring-slate-100">
+                              <span className="font-semibold text-slate-700">{h.actor}</span>
+                              <span className="text-slate-300"> · {h.timestamp}</span>
+                              <p className="mt-0.5 text-slate-600">{h.note}</p>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <div className="flex items-end gap-2">
+                        <textarea
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          rows={2}
+                          placeholder="Write a reply…"
+                          className="field-input flex-1 text-sm"
+                        />
+                        <button
+                          type="button"
+                          disabled={saving || !commentText.trim()}
+                          onClick={() => void submitComment()}
+                          className="inline-flex items-center gap-1 rounded-lg bg-rose-500 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-600 disabled:opacity-50"
+                        >
+                          <Send className="h-3.5 w-3.5" /> Send
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Handoff panel */}
+                  {panel === "handoff" && (
+                    <div className="mt-3 space-y-2 rounded-xl bg-slate-50 p-3">
+                      <select
+                        value={handoffTo}
+                        onChange={(e) => setHandoffTo(e.target.value)}
+                        className="field-input w-full text-sm"
+                      >
+                        <option value="">Hand off to…</option>
+                        {directory.map((m) => (
+                          <option key={m.id} value={m.name}>{m.name}{m.role ? ` · ${m.role.replace(/_/g, " ")}` : ""}</option>
+                        ))}
+                      </select>
+                      <input
+                        value={handoffNote}
+                        onChange={(e) => setHandoffNote(e.target.value)}
+                        placeholder="Note (optional) — what do you need from them?"
+                        className="field-input w-full text-sm"
+                      />
+                      <button
+                        type="button"
+                        disabled={saving || !handoffTo.trim()}
+                        onClick={() => void submitHandoff()}
+                        className="inline-flex items-center gap-1 rounded-lg bg-violet-500 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-600 disabled:opacity-50"
+                      >
+                        <UserPlus className="h-3.5 w-3.5" /> Hand off
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Note-on-decision panel */}
+                  {panel === "note" && pendingStatus && (
+                    <div className="mt-3 space-y-2 rounded-xl bg-slate-50 p-3">
+                      <p className="text-xs font-semibold text-slate-600">
+                        {pendingStatus === "rejected" ? "Send back — add a reason" : "Request revision — what should change?"}
+                      </p>
+                      <textarea
+                        value={noteText}
+                        onChange={(e) => setNoteText(e.target.value)}
+                        rows={2}
+                        placeholder="Add a note (optional)…"
+                        className="field-input w-full text-sm"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={() => void submitNote()}
+                          className={`inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 ${pendingStatus === "rejected" ? "bg-rose-500 hover:bg-rose-600" : "bg-sky-500 hover:bg-sky-600"}`}
+                        >
+                          {pendingStatus === "rejected" ? <><X className="h-3.5 w-3.5" /> Send back</> : <><RefreshCw className="h-3.5 w-3.5" /> Request revision</>}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setPanel(null); setPendingStatus(null); }}
+                          className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {expanded && (
+                    <ul className="mt-3 space-y-1 border-l-2 border-slate-100 pl-3">
                       {r.history.map((h) => (
-                        <li key={h.id} className="text-xs text-slate-500"><span className="font-medium text-slate-600">{h.actor}</span> — {h.action} <span className="text-slate-300">· {h.timestamp}</span></li>
+                        <li key={h.id} className="text-xs text-slate-500">
+                          <span className="font-medium text-slate-600">{h.actor}</span> — {h.action}
+                          {h.note ? <span className="text-slate-500">: “{h.note}”</span> : null}
+                          <span className="text-slate-300"> · {h.timestamp}</span>
+                        </li>
                       ))}
                     </ul>
                   )}
                 </div>
 
-                <div className="flex shrink-0 flex-col items-end gap-2" onClick={(e) => e.stopPropagation()}>
+                <div className="flex shrink-0 flex-col items-end gap-2">
                   <ApprovalPassport requiredApprover={r.requiredApprover} approvals={r.approvals} status={r.status} />
                   {r.requiredApprover === "both" && r.status === "pending" && (r.approvals?.rose || r.approvals?.carmen) && (
                     <span className="rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
@@ -287,7 +501,7 @@ export default function ReviewQueue() {
                         <button
                           type="button"
                           disabled={busy}
-                          onClick={() => void act(r.id, "approved")}
+                          onClick={() => void onAct(r.id, "approved")}
                           className="inline-flex items-center gap-1 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
                         >
                           <Check className="h-3.5 w-3.5" /> Sign off
@@ -295,7 +509,7 @@ export default function ReviewQueue() {
                         <button
                           type="button"
                           disabled={busy}
-                          onClick={() => void act(r.id, "needs-revision")}
+                          onClick={() => startNote("needs-revision")}
                           className="inline-flex items-center gap-1 rounded-lg bg-sky-100 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-200 disabled:opacity-50"
                         >
                           <RefreshCw className="h-3.5 w-3.5" /> Revise
@@ -303,7 +517,7 @@ export default function ReviewQueue() {
                         <button
                           type="button"
                           disabled={busy}
-                          onClick={() => void act(r.id, "rejected")}
+                          onClick={() => startNote("rejected")}
                           className="inline-flex items-center gap-1 rounded-lg bg-rose-100 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-200 disabled:opacity-50"
                         >
                           <X className="h-3.5 w-3.5" /> Send back
@@ -325,9 +539,5 @@ export default function ReviewQueue() {
                 </div>
               </div>
             </div>
-          );
-        })}
-      </div>
-    </div>
   );
 }

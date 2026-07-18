@@ -639,8 +639,14 @@ export const ListRecommendationsResponseItem = zod.object({
   "id": zod.string(),
   "timestamp": zod.string(),
   "actor": zod.string(),
-  "action": zod.string()
+  "action": zod.string(),
+  "kind": zod.enum(['status', 'comment', 'handoff']).optional(),
+  "note": zod.string().optional(),
+  "assignedTo": zod.string().optional()
 })),
+  "assignedTo": zod.string().nullish(),
+  "assignedToId": zod.number().nullish(),
+  "projectId": zod.number().nullish(),
   "createdById": zod.number().nullish(),
   "createdByName": zod.string().nullish(),
   "createdAt": zod.string(),
@@ -668,6 +674,111 @@ export const CreateRecommendationBody = zod.object({
 
 
 /**
+ * @summary Lightweight team directory (id, name, role) for assignment pickers
+ */
+export const ListDirectoryResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "role": zod.string()
+})
+export const ListDirectoryResponse = zod.array(ListDirectoryResponseItem)
+
+
+/**
+ * @summary Add a reply/comment to a recommendation's thread
+ */
+export const AddRecommendationCommentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const AddRecommendationCommentBody = zod.object({
+  "note": zod.string().min(1)
+})
+
+export const AddRecommendationCommentResponse = zod.object({
+  "id": zod.number(),
+  "source": zod.string(),
+  "category": zod.enum(['duplicate', 'team-pulse', 'sop-update', 'automation', 'mockup-prompt', 'market', 'mind-meld-handoff', 'company-record', 'sensitive', 'final-decision', 'external-intake']),
+  "recommendation": zod.string(),
+  "classification": zod.enum(['documented-fact', 'user-update', 'ai-recommendation', 'draft-idea', 'pending-approval', 'approved-decision', 'sensitive']),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "requiredApprover": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "status": zod.enum(['pending', 'approved', 'rejected', 'needs-revision']),
+  "approvals": zod.object({
+  "rose": zod.boolean(),
+  "carmen": zod.boolean()
+}),
+  "history": zod.array(zod.object({
+  "id": zod.string(),
+  "timestamp": zod.string(),
+  "actor": zod.string(),
+  "action": zod.string(),
+  "kind": zod.enum(['status', 'comment', 'handoff']).optional(),
+  "note": zod.string().optional(),
+  "assignedTo": zod.string().optional()
+})),
+  "assignedTo": zod.string().nullish(),
+  "assignedToId": zod.number().nullish(),
+  "projectId": zod.number().nullish(),
+  "createdById": zod.number().nullish(),
+  "createdByName": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Reassign (hand off) a recommendation to a person
+ */
+export const HandoffRecommendationParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const HandoffRecommendationBody = zod.object({
+  "assignedTo": zod.string().min(1),
+  "assignedToId": zod.number().nullish(),
+  "note": zod.string().optional()
+})
+
+export const HandoffRecommendationResponse = zod.object({
+  "id": zod.number(),
+  "source": zod.string(),
+  "category": zod.enum(['duplicate', 'team-pulse', 'sop-update', 'automation', 'mockup-prompt', 'market', 'mind-meld-handoff', 'company-record', 'sensitive', 'final-decision', 'external-intake']),
+  "recommendation": zod.string(),
+  "classification": zod.enum(['documented-fact', 'user-update', 'ai-recommendation', 'draft-idea', 'pending-approval', 'approved-decision', 'sensitive']),
+  "risk": zod.enum(['low', 'medium', 'high', 'critical']),
+  "requiredApprover": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "status": zod.enum(['pending', 'approved', 'rejected', 'needs-revision']),
+  "approvals": zod.object({
+  "rose": zod.boolean(),
+  "carmen": zod.boolean()
+}),
+  "history": zod.array(zod.object({
+  "id": zod.string(),
+  "timestamp": zod.string(),
+  "actor": zod.string(),
+  "action": zod.string(),
+  "kind": zod.enum(['status', 'comment', 'handoff']).optional(),
+  "note": zod.string().optional(),
+  "assignedTo": zod.string().optional()
+})),
+  "assignedTo": zod.string().nullish(),
+  "assignedToId": zod.number().nullish(),
+  "projectId": zod.number().nullish(),
+  "createdById": zod.number().nullish(),
+  "createdByName": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
  * @summary Approve, reject, or revise a recommendation
  */
 export const ChangeRecommendationStatusParams = zod.object({
@@ -675,7 +786,8 @@ export const ChangeRecommendationStatusParams = zod.object({
 })
 
 export const ChangeRecommendationStatusBody = zod.object({
-  "status": zod.enum(['pending', 'approved', 'rejected', 'needs-revision'])
+  "status": zod.enum(['pending', 'approved', 'rejected', 'needs-revision']),
+  "note": zod.string().optional()
 })
 
 export const ChangeRecommendationStatusResponse = zod.object({
@@ -695,8 +807,13 @@ export const ChangeRecommendationStatusResponse = zod.object({
   "id": zod.string(),
   "timestamp": zod.string(),
   "actor": zod.string(),
-  "action": zod.string()
+  "action": zod.string(),
+  "kind": zod.enum(['status', 'comment', 'handoff']).optional(),
+  "note": zod.string().optional(),
+  "assignedTo": zod.string().optional()
 })),
+  "assignedTo": zod.string().nullish(),
+  "assignedToId": zod.number().nullish(),
   "projectId": zod.number().nullish(),
   "createdById": zod.number().nullish(),
   "createdByName": zod.string().nullish(),
@@ -1950,7 +2067,8 @@ export const UpdateProjectTaskResponse = zod.object({
   "status": zod.enum(['todo', 'in-progress', 'review', 'done']),
   "due": zod.string().nullable(),
   "source": zod.enum(['manual', 'sync']),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "completedAt": zod.string().nullable()
 })
 
 
@@ -2041,7 +2159,7 @@ export const ListAgentWorkItemsResponseItem = zod.object({
   "createdByName": zod.string().nullable(),
   "createdAt": zod.string(),
   "updatedAt": zod.string(),
-  "attachmentCount": zod.number().default(0)
+  "attachmentCount": zod.number()
 })
 export const ListAgentWorkItemsResponse = zod.array(ListAgentWorkItemsResponseItem)
 
@@ -2125,7 +2243,8 @@ export const UpdateAgentWorkItemResponse = zod.object({
 })),
   "createdByName": zod.string().nullable(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "attachmentCount": zod.number()
 })
 
 
@@ -2176,7 +2295,8 @@ export const AddAgentWorkEventResponse = zod.object({
 })),
   "createdByName": zod.string().nullable(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "attachmentCount": zod.number()
 })
 
 

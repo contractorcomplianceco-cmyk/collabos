@@ -12,6 +12,8 @@ import {
   useListRecommendations,
   createRecommendation,
   changeRecommendationStatus,
+  addRecommendationComment,
+  handoffRecommendation,
   getListRecommendationsQueryKey,
   useListIdeas,
   createIdea,
@@ -248,7 +250,9 @@ interface AppState extends PersistedState {
   setRoseBrainContext: (ctx: string) => void;
   submitIdea: (idea: Omit<Idea, "id" | "createdAt">) => void;
   updateIdeaStatus: (id: string, status: IdeaStatus) => void;
-  setRecommendationStatus: (id: string, status: ApprovalStatus, actor: string) => Promise<boolean>;
+  setRecommendationStatus: (id: string, status: ApprovalStatus, actor: string, note?: string) => Promise<boolean>;
+  commentOnRecommendation: (id: string, note: string) => Promise<boolean>;
+  handoffRecommendationTo: (id: string, assignedTo: string, assignedToId?: number | null, note?: string) => Promise<boolean>;
   addRecommendation: (rec: Omit<Recommendation, "id" | "history" | "status">) => Promise<void>;
   carmenfy: (itemId: string, note: string) => void;
   rosify: (itemId: string, note: string) => void;
@@ -398,6 +402,8 @@ function toRecommendation(rec: RecommendationRecord): Recommendation {
     status: rec.status,
     approvals: rec.approvals,
     history: rec.history,
+    assignedTo: rec.assignedTo ?? null,
+    assignedToId: rec.assignedToId ?? null,
     projectId: rec.projectId != null ? String(rec.projectId) : null,
     createdAt: rec.createdAt,
     updatedAt: rec.updatedAt,
@@ -960,11 +966,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   );
 
   const setRecommendationStatus = useCallback(
-    async (id: string, nextStatus: ApprovalStatus, actor: string): Promise<boolean> => {
+    async (id: string, nextStatus: ApprovalStatus, actor: string, note?: string): Promise<boolean> => {
       const rec = recommendations.find((r) => r.id === id);
       if (!rec || !canApprove(actor as Role, rec.requiredApprover)) return false;
       try {
-        await changeRecommendationStatus(Number(id), { status: nextStatus });
+        await changeRecommendationStatus(Number(id), { status: nextStatus, ...(note?.trim() ? { note: note.trim() } : {}) });
         await Promise.all([invalidateRecommendations(), invalidateProjectTasks()]);
         return true;
       } catch {
@@ -972,6 +978,42 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       }
     },
     [recommendations, invalidateRecommendations, invalidateProjectTasks],
+  );
+
+  const commentOnRecommendation = useCallback(
+    async (id: string, note: string): Promise<boolean> => {
+      if (!note.trim()) return false;
+      try {
+        await runWrite(async () => {
+          await addRecommendationComment(Number(id), { note: note.trim() });
+          await invalidateRecommendations();
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [invalidateRecommendations],
+  );
+
+  const handoffRecommendationTo = useCallback(
+    async (id: string, assignedTo: string, assignedToId?: number | null, note?: string): Promise<boolean> => {
+      if (!assignedTo.trim()) return false;
+      try {
+        await runWrite(async () => {
+          await handoffRecommendation(Number(id), {
+            assignedTo: assignedTo.trim(),
+            assignedToId: assignedToId ?? null,
+            ...(note?.trim() ? { note: note.trim() } : {}),
+          });
+          await invalidateRecommendations();
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [invalidateRecommendations],
   );
 
   const addRecommendation = useCallback(
@@ -1627,6 +1669,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         submitIdea,
         updateIdeaStatus,
         setRecommendationStatus,
+        commentOnRecommendation,
+        handoffRecommendationTo,
         addRecommendation,
         carmenfy,
         rosify,

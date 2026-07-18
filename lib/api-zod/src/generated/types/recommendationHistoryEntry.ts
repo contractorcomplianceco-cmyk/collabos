@@ -5,10 +5,14 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { RecommendationHistoryEntryKind } from './recommendationHistoryEntryKind';
 
 export interface RecommendationHistoryEntry {
   id: string;
   timestamp: string;
   actor: string;
   action: string;
+  kind?: RecommendationHistoryEntryKind;
+  note?: string;
+  assignedTo?: string;
 }

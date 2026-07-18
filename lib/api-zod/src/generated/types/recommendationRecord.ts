@@ -25,6 +25,10 @@ export interface RecommendationRecord {
   approvals: RecommendationApprovals;
   history: RecommendationHistoryEntry[];
   /** @nullable */
+  assignedTo?: string | null;
+  /** @nullable */
+  assignedToId?: number | null;
+  /** @nullable */
   projectId?: number | null;
   /** @nullable */
   createdById?: number | null;
