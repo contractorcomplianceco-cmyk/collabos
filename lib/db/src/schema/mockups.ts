@@ -83,3 +83,19 @@ export const insertMockupSchema = createInsertSchema(mockupsTable).omit({
 });
 export type InsertMockup = z.infer<typeof insertMockupSchema>;
 export type Mockup = typeof mockupsTable.$inferSelect;
+
+// Reference images attached to a mockup brief (design inspiration, screenshots).
+export const mockupReferenceImagesTable = pgTable("mockup_reference_images", {
+  id: serial("id").primaryKey(),
+  mockupId: integer("mockup_id")
+    .notNull()
+    .references(() => mockupsTable.id, { onDelete: "cascade" }),
+  filename: text("filename").notNull(),
+  mimeType: text("mime_type"),
+  sizeBytes: integer("size_bytes").notNull(),
+  storagePath: text("storage_path").notNull(),
+  caption: text("caption"),
+  uploadedBy: text("uploaded_by").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export type MockupReferenceImage = typeof mockupReferenceImagesTable.$inferSelect;

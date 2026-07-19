@@ -26,6 +26,8 @@ export const AUDIT_ACTIONS = [
   "mockup_status_changed",
   "mockup_approved",
   "mockup_rejected",
+  "mockup_reference_uploaded",
+  "mockup_reference_deleted",
   "recommendation_created",
   "recommendation_status_changed",
   "idea_created",

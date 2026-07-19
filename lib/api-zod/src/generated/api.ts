@@ -620,6 +620,59 @@ export const CreateMockupVersionBody = zod.object({
 
 
 /**
+ * @summary List reference images for a mockup
+ */
+export const ListMockupReferenceImagesParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ListMockupReferenceImagesResponseItem = zod.object({
+  "id": zod.number(),
+  "mockupId": zod.number(),
+  "filename": zod.string(),
+  "mimeType": zod.string().nullish(),
+  "sizeBytes": zod.number(),
+  "dataUrl": zod.string(),
+  "caption": zod.string().nullish(),
+  "uploadedBy": zod.string(),
+  "createdAt": zod.string()
+})
+export const ListMockupReferenceImagesResponse = zod.array(ListMockupReferenceImagesResponseItem)
+
+
+/**
+ * @summary Upload a reference image to a mockup
+ */
+export const UploadMockupReferenceImageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+
+export const UploadMockupReferenceImageBody = zod.object({
+  "filename": zod.string().min(1),
+  "contentBase64": zod.string().min(1),
+  "mimeType": zod.string().optional(),
+  "caption": zod.string().optional()
+})
+
+
+/**
+ * @summary Delete a reference image
+ */
+export const DeleteMockupReferenceImageParams = zod.object({
+  "id": zod.coerce.number(),
+  "imageId": zod.coerce.number()
+})
+
+export const DeleteMockupReferenceImageResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
  * @summary List review queue recommendations
  */
 export const ListRecommendationsResponseItem = zod.object({
@@ -641,6 +694,7 @@ export const ListRecommendationsResponseItem = zod.object({
   "actor": zod.string(),
   "action": zod.string()
 })),
+  "projectId": zod.number().nullish(),
   "createdById": zod.number().nullish(),
   "createdByName": zod.string().nullish(),
   "createdAt": zod.string(),
@@ -759,6 +813,59 @@ export const UpdateIdeaStatusBody = zod.object({
 })
 
 export const UpdateIdeaStatusResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "submittedBy": zod.string(),
+  "status": zod.enum(['draft-idea', 'related-to-existing', 'needs-research', 'needs-carmen-review', 'needs-rose-review', 'approved-for-build', 'parked']),
+  "momentum": zod.number(),
+  "cluster": zod.string().nullish(),
+  "benefits": zod.array(zod.string()),
+  "risks": zod.array(zod.string()),
+  "dependencies": zod.array(zod.string()),
+  "approvalRoute": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Update idea fields (cluster, momentum, text)
+ */
+export const UpdateIdeaParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateIdeaBody = zod.object({
+  "title": zod.string().optional(),
+  "description": zod.string().optional(),
+  "cluster": zod.string().nullish(),
+  "momentum": zod.number().optional()
+})
+
+export const UpdateIdeaResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "submittedBy": zod.string(),
+  "status": zod.enum(['draft-idea', 'related-to-existing', 'needs-research', 'needs-carmen-review', 'needs-rose-review', 'approved-for-build', 'parked']),
+  "momentum": zod.number(),
+  "cluster": zod.string().nullish(),
+  "benefits": zod.array(zod.string()),
+  "risks": zod.array(zod.string()),
+  "dependencies": zod.array(zod.string()),
+  "approvalRoute": zod.enum(['rose', 'carmen', 'both', 'none']),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Promote an idea into a Review Queue recommendation
+ */
+export const PromoteIdeaParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const PromoteIdeaResponse = zod.object({
   "id": zod.number(),
   "title": zod.string(),
   "description": zod.string(),
@@ -1950,7 +2057,8 @@ export const UpdateProjectTaskResponse = zod.object({
   "status": zod.enum(['todo', 'in-progress', 'review', 'done']),
   "due": zod.string().nullable(),
   "source": zod.enum(['manual', 'sync']),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "completedAt": zod.string().nullable()
 })
 
 
@@ -2041,7 +2149,7 @@ export const ListAgentWorkItemsResponseItem = zod.object({
   "createdByName": zod.string().nullable(),
   "createdAt": zod.string(),
   "updatedAt": zod.string(),
-  "attachmentCount": zod.number().default(0)
+  "attachmentCount": zod.number()
 })
 export const ListAgentWorkItemsResponse = zod.array(ListAgentWorkItemsResponseItem)
 
@@ -2125,7 +2233,8 @@ export const UpdateAgentWorkItemResponse = zod.object({
 })),
   "createdByName": zod.string().nullable(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "attachmentCount": zod.number()
 })
 
 
@@ -2176,7 +2285,8 @@ export const AddAgentWorkEventResponse = zod.object({
 })),
   "createdByName": zod.string().nullable(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "attachmentCount": zod.number()
 })
 
 

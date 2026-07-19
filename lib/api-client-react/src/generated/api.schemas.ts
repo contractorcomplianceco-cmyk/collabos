@@ -297,6 +297,29 @@ export interface MockupVersionInput {
   notes?: string;
 }
 
+export interface MockupReferenceImageRecord {
+  id: number;
+  mockupId: number;
+  filename: string;
+  /** @nullable */
+  mimeType?: string | null;
+  sizeBytes: number;
+  dataUrl: string;
+  /** @nullable */
+  caption?: string | null;
+  uploadedBy: string;
+  createdAt: string;
+}
+
+export interface MockupReferenceImageInput {
+  /** @minLength 1 */
+  filename: string;
+  /** @minLength 1 */
+  contentBase64: string;
+  mimeType?: string;
+  caption?: string;
+}
+
 export type RecommendationCategory = typeof RecommendationCategory[keyof typeof RecommendationCategory];
 
 
@@ -465,6 +488,14 @@ export interface IdeaInput {
 
 export interface IdeaStatusChange {
   status: IdeaStatus;
+}
+
+export interface UpdateIdeaInput {
+  title?: string;
+  description?: string;
+  /** @nullable */
+  cluster?: string | null;
+  momentum?: number;
 }
 
 export interface MindMeldHistoryEntry {

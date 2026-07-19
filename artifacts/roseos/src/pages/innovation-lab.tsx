@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Link } from "wouter";
-import { Lightbulb, Plus, Layers, TrendingUp, ArrowRight, Sparkles, Copy, PenTool, Wand2, X } from "lucide-react";
+import { Lightbulb, Plus, Layers, TrendingUp, ArrowRight, Sparkles, Copy, PenTool, Wand2, X, Rocket, FolderInput } from "lucide-react";
 import { PageHeader, SectionCard, StatusChip, ApprovalRouteBadge } from "@/components/shared";
 import { useAppState } from "@/hooks/use-app-state";
 import { canSubmit, detectDuplicates, expandIdeaConcept, type IdeaExpansionKind } from "@/lib/helpers";
@@ -31,11 +31,13 @@ const NEXT_STATUS: Record<IdeaStatus, IdeaStatus> = {
 };
 
 export default function InnovationLab() {
-  const { ideas, ideasLoading, submitIdea, updateIdeaStatus, currentRole, projects } = useAppState();
+  const { ideas, ideasLoading, submitIdea, updateIdeaStatus, updateIdea, promoteIdea, currentRole, projects } = useAppState();
   const { toast } = useToast();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [expansion, setExpansion] = useState<{ ideaId: string; kind: IdeaExpansionKind } | null>(null);
+  const [editingCluster, setEditingCluster] = useState<{ ideaId: string; value: string } | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const clusters = useMemo(() => {
     const map: Record<string, typeof ideas> = {};
@@ -55,20 +57,29 @@ export default function InnovationLab() {
     );
   }, [title, description]);
 
+  // A real computed insight: the largest active cluster and its momentum.
+  const insight = useMemo(() => {
+    const active = ideas.filter((i) => i.status !== "approved-for-build" && i.status !== "parked");
+    if (active.length === 0) return null;
+    const byCluster: Record<string, typeof ideas> = {};
+    active.forEach((i) => { (byCluster[i.cluster ?? "Unclustered"] ||= []).push(i); });
+    const [topCluster, items] = Object.entries(byCluster).sort((a, b) => b[1].length - a[1].length)[0];
+    const readyForReview = active.filter((i) => i.status === "needs-rose-review" || i.status === "needs-carmen-review").length;
+    if (items.length >= 2 && topCluster !== "Unclustered") {
+      return `"${topCluster}" is your strongest theme with ${items.length} active ideas — consider sequencing them as one program.`;
+    }
+    if (readyForReview > 0) return `${readyForReview} idea(s) are waiting on a reviewer — promote the strongest to the Review Queue.`;
+    return `${active.length} active idea(s) in the pipeline. Group related ones into a cluster to build momentum.`;
+  }, [ideas]);
+
   return (
     <div className="space-y-6 p-6">
       <PageHeader
         title="Innovation Lab"
-        subtitle="Idea capture for later — this module is not ready yet. You can still jot drafts; full clustering and build paths come later."
+        subtitle="Capture ideas, group them into clusters, grow them into concepts, and promote the best into the Review Queue."
         icon={Lightbulb}
         accent="amber"
       />
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-        <p className="font-semibold">Not ready yet</p>
-        <p className="mt-1 text-xs text-amber-800">
-          This is an honest stub — not a finished product lab. For reusable prompts use Prompt Library; for decisions use Review Queue.
-        </p>
-      </div>
       {ideasLoading ? (
         <p className="text-sm text-slate-500">Loading shared ideas…</p>
       ) : (
@@ -105,10 +116,12 @@ export default function InnovationLab() {
             <p className="text-sm text-slate-500">Viewers cannot submit ideas.</p>
           )}
 
-          <div className="mt-5 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 p-3">
-            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-600"><Sparkles className="h-3.5 w-3.5" /> Rose OS suggestion</p>
-            <p className="mt-1 text-xs text-slate-600">Three platform ideas cluster into a stronger "Collab OS vNext" — consider sequencing them as one program.</p>
-          </div>
+          {insight ? (
+            <div className="mt-5 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 p-3">
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-600"><Sparkles className="h-3.5 w-3.5" /> Rose OS insight</p>
+              <p className="mt-1 text-xs text-slate-600">{insight}</p>
+            </div>
+          ) : null}
         </SectionCard>
 
         <div className="space-y-6 lg:col-span-2">
@@ -130,21 +143,74 @@ export default function InnovationLab() {
                           </div>
                           <StatusChip label={i.status} tone={STATUS_TONE[i.status]} />
                         </div>
+                        {canSubmit(currentRole) && (
+                          <div className="mt-2">
+                            {editingCluster?.ideaId === i.id ? (
+                              <div className="flex items-center gap-1.5">
+                                <input
+                                  autoFocus
+                                  value={editingCluster.value}
+                                  onChange={(e) => setEditingCluster({ ideaId: i.id, value: e.target.value })}
+                                  placeholder="Cluster name"
+                                  className="w-40 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amber-200"
+                                  onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                                />
+                                <button
+                                  onClick={async () => {
+                                    const value = editingCluster.value.trim();
+                                    setEditingCluster(null);
+                                    const ok = await updateIdea(i.id, { cluster: value || null });
+                                    if (ok) toast({ title: value ? `Moved to “${value}”` : "Cluster cleared" });
+                                  }}
+                                  className="rounded-lg bg-amber-500 px-2 py-1 text-[11px] font-semibold text-white hover:bg-amber-600"
+                                >
+                                  Save
+                                </button>
+                                <button onClick={() => setEditingCluster(null)} className="rounded-lg px-1.5 py-1 text-[11px] text-slate-400 hover:text-slate-600">Cancel</button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setEditingCluster({ ideaId: i.id, value: i.cluster ?? "" })}
+                                className="inline-flex items-center gap-1 rounded-lg bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-600 hover:bg-violet-100"
+                              >
+                                <FolderInput className="h-3 w-3" /> {i.cluster ? "Change cluster" : "Set cluster"}
+                              </button>
+                            )}
+                          </div>
+                        )}
                         <div className="mt-2 flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="flex items-center gap-1 text-xs text-amber-600"><TrendingUp className="h-3 w-3" />{i.momentum}</span>
                             <ApprovalRouteBadge value={i.approvalRoute} />
                           </div>
                           {i.status !== "approved-for-build" && canSubmit(currentRole) && (
-                            <button
-                              onClick={() => {
-                                updateIdeaStatus(i.id, NEXT_STATUS[i.status]);
-                                toast({ title: "Idea advanced", description: `Moved to ${NEXT_STATUS[i.status].replace(/-/g, " ")}.` });
-                              }}
-                              className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-200"
-                            >
-                              Advance <ArrowRight className="h-3 w-3" />
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => {
+                                  updateIdeaStatus(i.id, NEXT_STATUS[i.status]);
+                                  toast({ title: "Idea advanced", description: `Moved to ${NEXT_STATUS[i.status].replace(/-/g, " ")}.` });
+                                }}
+                                className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-200"
+                              >
+                                Advance <ArrowRight className="h-3 w-3" />
+                              </button>
+                              <button
+                                disabled={busyId === i.id}
+                                onClick={async () => {
+                                  setBusyId(i.id);
+                                  const ok = await promoteIdea(i.id);
+                                  setBusyId(null);
+                                  toast(
+                                    ok
+                                      ? { title: "Promoted to Review Queue", description: "It's now awaiting sign-off in Review Queue." }
+                                      : { title: "Couldn't promote", description: "Please try again.", variant: "destructive" },
+                                  );
+                                }}
+                                className="inline-flex items-center gap-1 rounded-lg bg-emerald-500 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
+                              >
+                                <Rocket className="h-3 w-3" /> Promote
+                              </button>
+                            </div>
                           )}
                         </div>
                         <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2">

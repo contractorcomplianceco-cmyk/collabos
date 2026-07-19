@@ -448,6 +448,84 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MockupVersionRecord"
+  /mockups/{id}/reference-images:
+    get:
+      operationId: listMockupReferenceImages
+      tags: [mockups]
+      summary: List reference images for a mockup
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Reference images
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MockupReferenceImageRecord"
+    post:
+      operationId: uploadMockupReferenceImage
+      tags: [mockups]
+      summary: Upload a reference image to a mockup
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MockupReferenceImageInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MockupReferenceImageRecord"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /mockups/{id}/reference-images/{imageId}:
+    delete:
+      operationId: deleteMockupReferenceImage
+      tags: [mockups]
+      summary: Delete a reference image
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: imageId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
   /recommendations:
     get:
       operationId: listRecommendations
@@ -588,6 +666,66 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/IdeaRecord"
+  /ideas/{id}:
+    patch:
+      operationId: updateIdea
+      tags: [ideas]
+      summary: Update idea fields (cluster, momentum, text)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateIdeaInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdeaRecord"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /ideas/{id}/promote:
+    post:
+      operationId: promoteIdea
+      tags: [ideas]
+      summary: Promote an idea into a Review Queue recommendation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Promoted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdeaRecord"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
   /mind-meld/items:
     get:
       operationId: listMindMeldItems
@@ -1952,6 +2090,27 @@ components:
       properties:
         versionName: { type: string, minLength: 1 }
         notes: { type: string }
+    MockupReferenceImageRecord:
+      type: object
+      required: [id, mockupId, filename, sizeBytes, dataUrl, uploadedBy, createdAt]
+      properties:
+        id: { type: integer }
+        mockupId: { type: integer }
+        filename: { type: string }
+        mimeType: { type: ["string", "null"] }
+        sizeBytes: { type: integer }
+        dataUrl: { type: string }
+        caption: { type: ["string", "null"] }
+        uploadedBy: { type: string }
+        createdAt: { type: string }
+    MockupReferenceImageInput:
+      type: object
+      required: [filename, contentBase64]
+      properties:
+        filename: { type: string, minLength: 1 }
+        contentBase64: { type: string, minLength: 1 }
+        mimeType: { type: string }
+        caption: { type: string }
     RecommendationCategory:
       type: string
       enum:
@@ -2097,6 +2256,13 @@ components:
       required: [status]
       properties:
         status: { $ref: "#/components/schemas/IdeaStatus" }
+    UpdateIdeaInput:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        cluster: { type: ["string", "null"] }
+        momentum: { type: integer }
     MindMeldHistoryEntry:
       type: object
       required: [id, timestamp, actor, action]
