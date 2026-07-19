@@ -641,6 +641,7 @@ export const ListRecommendationsResponseItem = zod.object({
   "actor": zod.string(),
   "action": zod.string()
 })),
+  "projectId": zod.number().nullish(),
   "createdById": zod.number().nullish(),
   "createdByName": zod.string().nullish(),
   "createdAt": zod.string(),
@@ -1345,7 +1346,16 @@ export const ListProjectsResponseItem = zod.object({
   "tags": zod.array(zod.string()),
   "projectType": zod.union([zod.literal('demo'),zod.literal('live'),zod.literal('planning'),zod.literal('merged-cc-host'),zod.literal(null)]).nullish(),
   "lastSyncedAt": zod.coerce.date().nullish(),
-  "sortOrder": zod.number()
+  "sortOrder": zod.number(),
+  "stage": zod.string().optional(),
+  "finalIntention": zod.string().optional(),
+  "confidence": zod.string().optional(),
+  "cleanupPriority": zod.string().optional(),
+  "sourceOfTruth": zod.string().optional(),
+  "agreementStatus": zod.string().optional(),
+  "doNotClaim": zod.string().nullish(),
+  "cleanupWave": zod.number().optional(),
+  "repoExists": zod.string().nullish()
 })
 export const ListProjectsResponse = zod.array(ListProjectsResponseItem)
 
@@ -1376,7 +1386,16 @@ export const ReorderProjectsResponseItem = zod.object({
   "tags": zod.array(zod.string()),
   "projectType": zod.union([zod.literal('demo'),zod.literal('live'),zod.literal('planning'),zod.literal('merged-cc-host'),zod.literal(null)]).nullish(),
   "lastSyncedAt": zod.coerce.date().nullish(),
-  "sortOrder": zod.number()
+  "sortOrder": zod.number(),
+  "stage": zod.string().optional(),
+  "finalIntention": zod.string().optional(),
+  "confidence": zod.string().optional(),
+  "cleanupPriority": zod.string().optional(),
+  "sourceOfTruth": zod.string().optional(),
+  "agreementStatus": zod.string().optional(),
+  "doNotClaim": zod.string().nullish(),
+  "cleanupWave": zod.number().optional(),
+  "repoExists": zod.string().nullish()
 })
 export const ReorderProjectsResponse = zod.array(ReorderProjectsResponseItem)
 
@@ -1727,7 +1746,15 @@ export const UpdateProjectParams = zod.object({
 
 export const UpdateProjectBody = zod.object({
   "projectType": zod.enum(['demo', 'live', 'planning', 'merged-cc-host']).optional(),
-  "sortOrder": zod.number().optional()
+  "sortOrder": zod.number().optional(),
+  "stage": zod.string().optional(),
+  "finalIntention": zod.string().optional(),
+  "confidence": zod.string().optional(),
+  "cleanupPriority": zod.string().optional(),
+  "sourceOfTruth": zod.string().optional(),
+  "agreementStatus": zod.string().optional(),
+  "doNotClaim": zod.string().nullish(),
+  "cleanupWave": zod.number().optional()
 })
 
 export const UpdateProjectResponse = zod.object({
@@ -1746,7 +1773,16 @@ export const UpdateProjectResponse = zod.object({
   "tags": zod.array(zod.string()),
   "projectType": zod.union([zod.literal('demo'),zod.literal('live'),zod.literal('planning'),zod.literal('merged-cc-host'),zod.literal(null)]).nullish(),
   "lastSyncedAt": zod.coerce.date().nullish(),
-  "sortOrder": zod.number()
+  "sortOrder": zod.number(),
+  "stage": zod.string().optional(),
+  "finalIntention": zod.string().optional(),
+  "confidence": zod.string().optional(),
+  "cleanupPriority": zod.string().optional(),
+  "sourceOfTruth": zod.string().optional(),
+  "agreementStatus": zod.string().optional(),
+  "doNotClaim": zod.string().nullish(),
+  "cleanupWave": zod.number().optional(),
+  "repoExists": zod.string().nullish()
 })
 
 
@@ -1950,7 +1986,8 @@ export const UpdateProjectTaskResponse = zod.object({
   "status": zod.enum(['todo', 'in-progress', 'review', 'done']),
   "due": zod.string().nullable(),
   "source": zod.enum(['manual', 'sync']),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "completedAt": zod.string().nullable()
 })
 
 
@@ -2041,7 +2078,7 @@ export const ListAgentWorkItemsResponseItem = zod.object({
   "createdByName": zod.string().nullable(),
   "createdAt": zod.string(),
   "updatedAt": zod.string(),
-  "attachmentCount": zod.number().default(0)
+  "attachmentCount": zod.number()
 })
 export const ListAgentWorkItemsResponse = zod.array(ListAgentWorkItemsResponseItem)
 
@@ -2125,7 +2162,8 @@ export const UpdateAgentWorkItemResponse = zod.object({
 })),
   "createdByName": zod.string().nullable(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "attachmentCount": zod.number()
 })
 
 
@@ -2176,7 +2214,8 @@ export const AddAgentWorkEventResponse = zod.object({
 })),
   "createdByName": zod.string().nullable(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "attachmentCount": zod.number()
 })
 
 

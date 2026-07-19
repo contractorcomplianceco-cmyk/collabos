@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Target, Users, Search, Lightbulb, PenTool, FileBarChart,
   Activity, Brain, ClipboardCheck, Settings as SettingsIcon, Bell, Lock, Menu, X,
   Sparkles, Send, AlertTriangle, Inbox, LogOut, UserCog, ScrollText, Wand2, Bot,
-  FolderKanban, ListChecks, Route as RouteIcon, BookMarked,
+  FolderKanban, ListChecks, Route as RouteIcon, BookMarked, ClipboardList,
 } from "lucide-react";
 import { canAccessMindMeld, canViewModule, mapServerRole, canSubmit, classifyIntakeMessage, detectDuplicates } from "@/lib/helpers";
 import { useActivityNotifications } from "@/hooks/use-activity-notifications";
@@ -36,6 +36,7 @@ import SettingsPage from "@/pages/settings";
 import UserManagement from "@/pages/user-management";
 import AuditLogs from "@/pages/audit-logs";
 import ProjectsPage from "@/pages/projects";
+import ProjectCleanupPage from "@/pages/project-cleanup";
 import ProjectTasksPage from "@/pages/project-tasks";
 import CarmenPathPage from "@/pages/carmen-path";
 import PromptLibraryPage from "@/pages/prompt-library";
@@ -55,6 +56,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: "/", label: "Collab Dashboard", icon: LayoutDashboard, ctx: "Collab Dashboard", blurb: "Start your day" },
   { href: "/projects", label: "Projects", icon: FolderKanban, ctx: "Projects", blurb: "All apps & hubs" },
+  { href: "/project-cleanup", label: "Project Cleanup", icon: ClipboardList, ctx: "Project Cleanup", blurb: "Governance & labeling" },
   { href: "/carmen-path", label: "Carmen’s Path", icon: RouteIcon, ctx: "Carmen’s Path Today", blurb: "Today’s work order" },
   { href: "/project-tasks", label: "Project Tasks", icon: ListChecks, ctx: "Project Tasks", blurb: "Open follow-ups" },
   { href: "/duplicate-radar", label: "Duplicate Radar", icon: Target, ctx: "Duplicate Radar" },
@@ -76,7 +78,7 @@ const NAV: NavItem[] = [
 const NAV_GROUPS: { id: string; label: string; hrefs: string[]; hint?: string }[] = [
   { id: "home", label: "Home", hrefs: ["/"] },
   { id: "decide", label: "Decide", hint: "Sign-off & think together", hrefs: ["/review-queue", "/mind-meld", "/external-intake", "/solution-finder"] },
-  { id: "build", label: "Build", hint: "Projects, prompts & Cursor work", hrefs: ["/projects", "/carmen-path", "/project-tasks", "/prompt-library", "/agent-queue"] },
+  { id: "build", label: "Build", hint: "Projects, prompts & Cursor work", hrefs: ["/projects", "/project-cleanup", "/carmen-path", "/project-tasks", "/prompt-library", "/agent-queue"] },
   { id: "later", label: "Later", hint: "Not ready yet — routes stay open", hrefs: ["/innovation-lab", "/mockup-studio"] },
   { id: "track", label: "Track", hrefs: ["/duplicate-radar", "/team-pulse", "/executive-reports", "/market-pulse"] },
   { id: "account", label: "Account", hrefs: ["/settings"] },
@@ -797,6 +799,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/projects">{() => <Guarded href="/projects"><ProjectsPage /></Guarded>}</Route>
+        <Route path="/project-cleanup">{() => <Guarded href="/project-cleanup"><ProjectCleanupPage /></Guarded>}</Route>
         <Route path="/carmen-path">{() => <Guarded href="/carmen-path"><CarmenPathPage /></Guarded>}</Route>
         <Route path="/project-tasks">{() => <Guarded href="/project-tasks"><ProjectTasksPage /></Guarded>}</Route>
         <Route path="/duplicate-radar">{() => <Guarded href="/duplicate-radar"><DuplicateRadar /></Guarded>}</Route>

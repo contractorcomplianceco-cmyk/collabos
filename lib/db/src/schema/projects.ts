@@ -19,6 +19,49 @@ export const PROJECT_CLASSIFICATIONS = [
 export const PROJECT_TYPES = ["demo", "live", "planning", "merged-cc-host"] as const;
 export type ProjectType = (typeof PROJECT_TYPES)[number];
 
+// --- Project Cleanup governance labels ---------------------------------------
+// Every label uses "" (unset) as the default so newly imported rows start blank
+// for review, per the cleanup workflow.
+export const PROJECT_STAGES = ["", "Concept", "Prototype", "Build", "Internal", "Pilot", "Live", "Retiring", "Archive"] as const;
+export type ProjectStage = (typeof PROJECT_STAGES)[number];
+
+export const PROJECT_FINAL_INTENTIONS = [
+  "",
+  "Staff cockpit",
+  "Internal system",
+  "Client portal",
+  "Product for sale",
+  "Partner room",
+  "Investor room",
+  "Temporary bridge",
+  "Archive",
+] as const;
+export type ProjectFinalIntention = (typeof PROJECT_FINAL_INTENTIONS)[number];
+
+export const PROJECT_CONFIDENCE = ["", "Exploratory", "Likely", "Confirmed", "Approved"] as const;
+export type ProjectConfidence = (typeof PROJECT_CONFIDENCE)[number];
+
+export const PROJECT_PRIORITIES = ["", "Critical now", "Important next", "Scheduled later", "Parked"] as const;
+export type ProjectPriority = (typeof PROJECT_PRIORITIES)[number];
+
+export const PROJECT_SOURCE_OF_TRUTH = ["", "SoT", "Connected node", "Mirror", "Twin", "Unknown"] as const;
+export type ProjectSourceOfTruth = (typeof PROJECT_SOURCE_OF_TRUTH)[number];
+
+export const PROJECT_AGREEMENT_STATUSES = [
+  "",
+  "None",
+  "Internal notice only",
+  "Draft needed",
+  "Drafting",
+  "Ready to wire",
+  "Wired",
+  "Counsel review",
+] as const;
+export type ProjectAgreementStatus = (typeof PROJECT_AGREEMENT_STATUSES)[number];
+
+// Which cleanup wave a project belongs to (0 = unassigned).
+export const PROJECT_CLEANUP_WAVES = [0, 1, 2, 3] as const;
+
 export const projectsTable = pgTable("projects", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -36,6 +79,16 @@ export const projectsTable = pgTable("projects", {
   projectType: text("project_type", { enum: PROJECT_TYPES }),
   lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
   sortOrder: integer("sort_order").notNull().default(0),
+  // --- Project Cleanup governance labels (blank until reviewed) ---
+  stage: text("stage", { enum: PROJECT_STAGES }).notNull().default(""),
+  finalIntention: text("final_intention", { enum: PROJECT_FINAL_INTENTIONS }).notNull().default(""),
+  confidence: text("confidence", { enum: PROJECT_CONFIDENCE }).notNull().default(""),
+  cleanupPriority: text("cleanup_priority", { enum: PROJECT_PRIORITIES }).notNull().default(""),
+  sourceOfTruth: text("source_of_truth", { enum: PROJECT_SOURCE_OF_TRUTH }).notNull().default(""),
+  agreementStatus: text("agreement_status", { enum: PROJECT_AGREEMENT_STATUSES }).notNull().default(""),
+  doNotClaim: text("do_not_claim"),
+  cleanupWave: integer("cleanup_wave").notNull().default(0),
+  repoExists: text("repo_exists"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

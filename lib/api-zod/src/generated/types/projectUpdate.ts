@@ -10,4 +10,13 @@ import type { ProjectType } from './projectType';
 export interface ProjectUpdate {
   projectType?: ProjectType;
   sortOrder?: number;
+  stage?: string;
+  finalIntention?: string;
+  confidence?: string;
+  cleanupPriority?: string;
+  sourceOfTruth?: string;
+  agreementStatus?: string;
+  /** @nullable */
+  doNotClaim?: string | null;
+  cleanupWave?: number;
 }

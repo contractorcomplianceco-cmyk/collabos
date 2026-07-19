@@ -66,6 +66,16 @@ export interface Project {
   tags: string[];
   lastSyncedAt?: string | null;
   sortOrder?: number;
+  // Project Cleanup governance labels
+  stage?: string;
+  finalIntention?: string;
+  confidence?: string;
+  cleanupPriority?: string;
+  sourceOfTruth?: string;
+  agreementStatus?: string;
+  doNotClaim?: string | null;
+  cleanupWave?: number;
+  repoExists?: string | null;
 }
 
 export interface Task {

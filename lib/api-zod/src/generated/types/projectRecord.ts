@@ -30,4 +30,15 @@ export interface ProjectRecord {
   /** @nullable */
   lastSyncedAt?: Date | null;
   sortOrder: number;
+  stage?: string;
+  finalIntention?: string;
+  confidence?: string;
+  cleanupPriority?: string;
+  sourceOfTruth?: string;
+  agreementStatus?: string;
+  /** @nullable */
+  doNotClaim?: string | null;
+  cleanupWave?: number;
+  /** @nullable */
+  repoExists?: string | null;
 }

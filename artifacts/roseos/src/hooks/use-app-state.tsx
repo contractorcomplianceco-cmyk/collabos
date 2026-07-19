@@ -544,6 +544,15 @@ function toProject(row: ProjectRecord): Project {
     tags: row.tags,
     lastSyncedAt: row.lastSyncedAt ?? null,
     sortOrder: row.sortOrder ?? Number(row.id),
+    stage: row.stage ?? "",
+    finalIntention: row.finalIntention ?? "",
+    confidence: row.confidence ?? "",
+    cleanupPriority: row.cleanupPriority ?? "",
+    sourceOfTruth: row.sourceOfTruth ?? "",
+    agreementStatus: row.agreementStatus ?? "",
+    doNotClaim: row.doNotClaim ?? null,
+    cleanupWave: row.cleanupWave ?? 0,
+    repoExists: row.repoExists ?? null,
   };
 }
 
