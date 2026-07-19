@@ -16,6 +16,8 @@ import {
   useListIdeas,
   createIdea,
   updateIdeaStatus as updateIdeaStatusApi,
+  updateIdea as updateIdeaApi,
+  promoteIdea as promoteIdeaApi,
   getListIdeasQueryKey,
   useListMindMeldItems,
   useListMindMeldHandoffs,
@@ -213,6 +215,8 @@ interface AppState extends PersistedState {
   setRoseBrainContext: (ctx: string) => void;
   submitIdea: (idea: Omit<Idea, "id" | "createdAt">) => void;
   updateIdeaStatus: (id: string, status: IdeaStatus) => void;
+  updateIdea: (id: string, patch: { title?: string; description?: string; cluster?: string | null; momentum?: number }) => Promise<boolean>;
+  promoteIdea: (id: string) => Promise<boolean>;
   setRecommendationStatus: (id: string, status: ApprovalStatus, actor: string) => Promise<boolean>;
   addRecommendation: (rec: Omit<Recommendation, "id" | "history" | "status">) => Promise<void>;
   carmenfy: (itemId: string, note: string) => void;
@@ -924,6 +928,34 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     [state.currentRole, invalidateIdeas],
   );
 
+  const updateIdea = useCallback(
+    async (id: string, patch: { title?: string; description?: string; cluster?: string | null; momentum?: number }): Promise<boolean> => {
+      if (!canSubmit(state.currentRole)) return false;
+      try {
+        await updateIdeaApi(Number(id), patch);
+        await invalidateIdeas();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [state.currentRole, invalidateIdeas],
+  );
+
+  const promoteIdea = useCallback(
+    async (id: string): Promise<boolean> => {
+      if (!canSubmit(state.currentRole)) return false;
+      try {
+        await promoteIdeaApi(Number(id));
+        await Promise.all([invalidateIdeas(), invalidateRecommendations()]);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [state.currentRole, invalidateIdeas, invalidateRecommendations],
+  );
+
   const setRecommendationStatus = useCallback(
     async (id: string, nextStatus: ApprovalStatus, actor: string): Promise<boolean> => {
       const rec = recommendations.find((r) => r.id === id);
@@ -1577,6 +1609,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         setRoseBrainContext,
         submitIdea,
         updateIdeaStatus,
+        updateIdea,
+        promoteIdea,
         setRecommendationStatus,
         addRecommendation,
         carmenfy,

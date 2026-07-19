@@ -69,6 +69,8 @@ import type {
   MindMeldTimelineRecord,
   MockupInput,
   MockupRecord,
+  MockupReferenceImageInput,
+  MockupReferenceImageRecord,
   MockupStatusChange,
   MockupUpdate,
   MockupVersionInput,
@@ -92,6 +94,7 @@ import type {
   SentimentSignalRecord,
   SopRecord,
   TempPasswordResult,
+  UpdateIdeaInput,
   UserInput,
   UserProfile,
   UserUpdate
@@ -1573,6 +1576,227 @@ export const useCreateMockupVersion = <TError = ErrorType<unknown>,
       return useMutation(getCreateMockupVersionMutationOptions(options));
     }
 
+export const getListMockupReferenceImagesUrl = (id: number,) => {
+
+
+
+
+  return `/api/mockups/${id}/reference-images`
+}
+
+/**
+ * @summary List reference images for a mockup
+ */
+export const listMockupReferenceImages = async (id: number, options?: RequestInit): Promise<MockupReferenceImageRecord[]> => {
+
+  return customFetch<MockupReferenceImageRecord[]>(getListMockupReferenceImagesUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMockupReferenceImagesQueryKey = (id: number,) => {
+    return [
+    `/api/mockups/${id}/reference-images`
+    ] as const;
+    }
+
+
+export const getListMockupReferenceImagesQueryOptions = <TData = Awaited<ReturnType<typeof listMockupReferenceImages>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMockupReferenceImages>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMockupReferenceImagesQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMockupReferenceImages>>> = ({ signal }) => listMockupReferenceImages(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMockupReferenceImages>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListMockupReferenceImagesQueryResult = NonNullable<Awaited<ReturnType<typeof listMockupReferenceImages>>>
+export type ListMockupReferenceImagesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List reference images for a mockup
+ */
+
+export function useListMockupReferenceImages<TData = Awaited<ReturnType<typeof listMockupReferenceImages>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMockupReferenceImages>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListMockupReferenceImagesQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUploadMockupReferenceImageUrl = (id: number,) => {
+
+
+
+
+  return `/api/mockups/${id}/reference-images`
+}
+
+/**
+ * @summary Upload a reference image to a mockup
+ */
+export const uploadMockupReferenceImage = async (id: number,
+    mockupReferenceImageInput: MockupReferenceImageInput, options?: RequestInit): Promise<MockupReferenceImageRecord> => {
+
+  return customFetch<MockupReferenceImageRecord>(getUploadMockupReferenceImageUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      mockupReferenceImageInput,)
+  }
+);}
+
+
+
+
+export const getUploadMockupReferenceImageMutationOptions = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadMockupReferenceImage>>, TError,{id: number;data: BodyType<MockupReferenceImageInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadMockupReferenceImage>>, TError,{id: number;data: BodyType<MockupReferenceImageInput>}, TContext> => {
+
+const mutationKey = ['uploadMockupReferenceImage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadMockupReferenceImage>>, {id: number;data: BodyType<MockupReferenceImageInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  uploadMockupReferenceImage(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadMockupReferenceImageMutationResult = NonNullable<Awaited<ReturnType<typeof uploadMockupReferenceImage>>>
+    export type UploadMockupReferenceImageMutationBody = BodyType<MockupReferenceImageInput>
+    export type UploadMockupReferenceImageMutationError = ErrorType<ApiMessage>
+
+    /**
+ * @summary Upload a reference image to a mockup
+ */
+export const useUploadMockupReferenceImage = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadMockupReferenceImage>>, TError,{id: number;data: BodyType<MockupReferenceImageInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadMockupReferenceImage>>,
+        TError,
+        {id: number;data: BodyType<MockupReferenceImageInput>},
+        TContext
+      > => {
+      return useMutation(getUploadMockupReferenceImageMutationOptions(options));
+    }
+
+export const getDeleteMockupReferenceImageUrl = (id: number,
+    imageId: number,) => {
+
+
+
+
+  return `/api/mockups/${id}/reference-images/${imageId}`
+}
+
+/**
+ * @summary Delete a reference image
+ */
+export const deleteMockupReferenceImage = async (id: number,
+    imageId: number, options?: RequestInit): Promise<ApiMessage> => {
+
+  return customFetch<ApiMessage>(getDeleteMockupReferenceImageUrl(id,imageId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteMockupReferenceImageMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMockupReferenceImage>>, TError,{id: number;imageId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteMockupReferenceImage>>, TError,{id: number;imageId: number}, TContext> => {
+
+const mutationKey = ['deleteMockupReferenceImage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMockupReferenceImage>>, {id: number;imageId: number}> = (props) => {
+          const {id,imageId} = props ?? {};
+
+          return  deleteMockupReferenceImage(id,imageId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteMockupReferenceImageMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMockupReferenceImage>>>
+
+    export type DeleteMockupReferenceImageMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a reference image
+ */
+export const useDeleteMockupReferenceImage = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMockupReferenceImage>>, TError,{id: number;imageId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteMockupReferenceImage>>,
+        TError,
+        {id: number;imageId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteMockupReferenceImageMutationOptions(options));
+    }
+
 export const getListRecommendationsUrl = () => {
 
 
@@ -2011,6 +2235,148 @@ export const useUpdateIdeaStatus = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUpdateIdeaStatusMutationOptions(options));
+    }
+
+export const getUpdateIdeaUrl = (id: number,) => {
+
+
+
+
+  return `/api/ideas/${id}`
+}
+
+/**
+ * @summary Update idea fields (cluster, momentum, text)
+ */
+export const updateIdea = async (id: number,
+    updateIdeaInput: UpdateIdeaInput, options?: RequestInit): Promise<IdeaRecord> => {
+
+  return customFetch<IdeaRecord>(getUpdateIdeaUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      updateIdeaInput,)
+  }
+);}
+
+
+
+
+export const getUpdateIdeaMutationOptions = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateIdea>>, TError,{id: number;data: BodyType<UpdateIdeaInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateIdea>>, TError,{id: number;data: BodyType<UpdateIdeaInput>}, TContext> => {
+
+const mutationKey = ['updateIdea'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateIdea>>, {id: number;data: BodyType<UpdateIdeaInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateIdea(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateIdeaMutationResult = NonNullable<Awaited<ReturnType<typeof updateIdea>>>
+    export type UpdateIdeaMutationBody = BodyType<UpdateIdeaInput>
+    export type UpdateIdeaMutationError = ErrorType<ApiMessage>
+
+    /**
+ * @summary Update idea fields (cluster, momentum, text)
+ */
+export const useUpdateIdea = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateIdea>>, TError,{id: number;data: BodyType<UpdateIdeaInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateIdea>>,
+        TError,
+        {id: number;data: BodyType<UpdateIdeaInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateIdeaMutationOptions(options));
+    }
+
+export const getPromoteIdeaUrl = (id: number,) => {
+
+
+
+
+  return `/api/ideas/${id}/promote`
+}
+
+/**
+ * @summary Promote an idea into a Review Queue recommendation
+ */
+export const promoteIdea = async (id: number, options?: RequestInit): Promise<IdeaRecord> => {
+
+  return customFetch<IdeaRecord>(getPromoteIdeaUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getPromoteIdeaMutationOptions = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof promoteIdea>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof promoteIdea>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['promoteIdea'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof promoteIdea>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  promoteIdea(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PromoteIdeaMutationResult = NonNullable<Awaited<ReturnType<typeof promoteIdea>>>
+
+    export type PromoteIdeaMutationError = ErrorType<ApiMessage>
+
+    /**
+ * @summary Promote an idea into a Review Queue recommendation
+ */
+export const usePromoteIdea = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof promoteIdea>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof promoteIdea>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getPromoteIdeaMutationOptions(options));
     }
 
 export const getListMindMeldItemsUrl = () => {

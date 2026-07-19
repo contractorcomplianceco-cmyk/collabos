@@ -7,8 +7,12 @@ import {
   useChangeMockupStatus,
   useListMockupVersions,
   useCreateMockupVersion,
+  useListMockupReferenceImages,
+  useUploadMockupReferenceImage,
+  useDeleteMockupReferenceImage,
   getListMockupsQueryKey,
   getListMockupVersionsQueryKey,
+  getListMockupReferenceImagesQueryKey,
   ApiError,
   type MockupRecord,
   type MockupBriefData,
@@ -98,7 +102,7 @@ export default function MockupStudio() {
     <div className="space-y-6 p-6">
       <PageHeader
         title="Mockup Studio"
-        subtitle="Structured mockup briefs — not ready as a full studio yet. Routes stay open so links don’t 404."
+        subtitle="Build structured mockup briefs — screens, visual direction, reference images — then route them for review and build."
         icon={PenTool}
         accent="violet"
         actions={selected ? (
@@ -107,12 +111,7 @@ export default function MockupStudio() {
           </button>
         ) : undefined}
       />
-      <div className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
-        <p className="font-semibold">Not ready yet</p>
-        <p className="mt-1 text-xs text-violet-800">
-          You can still open existing drafts. We’re not inventing a full design product here — shipping briefs go through Projects and Cursor Direct Requests.
-        </p>
-      </div>      {isLoading && <p className="py-10 text-center text-sm text-slate-400">Loading mockups...</p>}
+      {isLoading && <p className="py-10 text-center text-sm text-slate-400">Loading mockups...</p>}
       {error != null && <p className="py-10 text-center text-sm text-rose-500">{errMessage(error)}</p>}
       {!isLoading && !error && (selected
         ? <MockupEditor key={selected.id} mockup={selected} />
@@ -371,7 +370,7 @@ function MockupEditor({ mockup }: { mockup: MockupRecord }) {
         ))}
       </div>
 
-      {tab === "brief" && <BriefTab brief={brief} mut={mut} canEdit={canEdit} sourceSummary={mockup.sourceSummary ?? null} />}
+      {tab === "brief" && <BriefTab brief={brief} mut={mut} canEdit={canEdit} sourceSummary={mockup.sourceSummary ?? null} mockupId={mockup.id} />}
       {tab === "screens" && <ScreensTab screens={screens} setScreens={mutScreens} canEdit={canEdit} />}
       {tab === "visual" && <VisualTab visual={visual} mutV={mutV} canEdit={canEdit} />}
       {tab === "review" && <ReviewTab mockup={mockup} draft={draft} />}
@@ -382,11 +381,12 @@ function MockupEditor({ mockup }: { mockup: MockupRecord }) {
 
 /* ---------- brief tab ---------- */
 
-function BriefTab({ brief, mut, canEdit, sourceSummary }: {
+function BriefTab({ brief, mut, canEdit, sourceSummary, mockupId }: {
   brief: MockupBriefData;
   mut: <K extends keyof MockupBriefData>(k: K, v: MockupBriefData[K]) => void;
   canEdit: boolean;
   sourceSummary: string | null;
+  mockupId: number;
 }) {
   const fields: { key: keyof MockupBriefData; label: string; placeholder: string; textarea?: boolean }[] = [
     { key: "productName", label: "Product / screen name", placeholder: "Client 360 Dashboard" },
@@ -446,12 +446,116 @@ function BriefTab({ brief, mut, canEdit, sourceSummary }: {
           <p className="mt-3 text-[11px] text-slate-400">Approval is enforced on the server — a mockup can never reach "approved for build" without the required reviewer(s).</p>
         </SectionCard>
         <SectionCard title="Reference images" icon={Image} accent="amber">
-          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-center">
-            <p className="text-xs font-semibold text-slate-500">Upload references — coming soon</p>
-            <p className="mt-1 text-[11px] text-slate-400">For now, describe references in the brand direction field.</p>
-          </div>
+          <ReferenceImages mockupId={mockupId} canEdit={canEdit} />
         </SectionCard>
       </div>
+    </div>
+  );
+}
+
+/* ---------- reference images ---------- */
+
+function ReferenceImages({ mockupId, canEdit }: { mockupId: number; canEdit: boolean }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { data: images, isLoading } = useListMockupReferenceImages(mockupId);
+  const uploadMut = useUploadMockupReferenceImage();
+  const deleteMut = useDeleteMockupReferenceImage();
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: getListMockupReferenceImagesQueryKey(mockupId) });
+
+  const onFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        if (file.size > 8 * 1024 * 1024) {
+          toast({ title: "Too large", description: `${file.name} exceeds 8MB.`, variant: "destructive" });
+          continue;
+        }
+        const contentBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+          reader.onerror = () => reject(new Error("read failed"));
+          reader.readAsDataURL(file);
+        });
+        await uploadMut.mutateAsync({
+          id: mockupId,
+          data: { filename: file.name, contentBase64, mimeType: file.type || undefined },
+        });
+      }
+      await invalidate();
+      toast({ title: "Reference added" });
+    } catch (err) {
+      toast({ title: "Upload failed", description: errMessage(err), variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  const remove = async (imageId: number) => {
+    try {
+      await deleteMut.mutateAsync({ id: mockupId, imageId });
+      await invalidate();
+      toast({ title: "Reference removed" });
+    } catch (err) {
+      toast({ title: "Couldn't remove", description: errMessage(err), variant: "destructive" });
+    }
+  };
+
+  const list = images ?? [];
+
+  return (
+    <div className="space-y-3">
+      {isLoading ? (
+        <p className="text-xs text-slate-400">Loading references…</p>
+      ) : list.length === 0 ? (
+        <p className="text-[11px] text-slate-400">No references yet. Add screenshots or inspiration to guide the build.</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {list.map((img) => (
+            <div key={img.id} className="group relative overflow-hidden rounded-lg border border-slate-200">
+              <a href={img.dataUrl} target="_blank" rel="noopener noreferrer">
+                <img src={img.dataUrl} alt={img.filename} className="h-24 w-full object-cover" />
+              </a>
+              <div className="truncate px-1.5 py-1 text-[10px] text-slate-500" title={img.filename}>{img.filename}</div>
+              {canEdit && (
+                <button
+                  onClick={() => void remove(img.id)}
+                  aria-label={`Remove ${img.filename}`}
+                  className="absolute right-1 top-1 rounded-full bg-white/90 p-1 text-slate-500 opacity-0 shadow transition group-hover:opacity-100 hover:text-rose-600"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {canEdit && (
+        <div>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
+            multiple
+            className="hidden"
+            onChange={(e) => void onFiles(e.target.files)}
+          />
+          <button
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-60"
+          >
+            <Image className="h-4 w-4" /> {uploading ? "Uploading…" : "Upload reference images"}
+          </button>
+          <p className="mt-1 text-[10px] text-slate-400">PNG, JPG, GIF, WEBP, or SVG · up to 8MB each.</p>
+        </div>
+      )}
     </div>
   );
 }

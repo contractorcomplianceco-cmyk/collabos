@@ -1,12 +1,58 @@
 import { Router, type IRouter } from "express";
-import { CreateMockupBody, UpdateMockupBody, ChangeMockupStatusBody, CreateMockupVersionBody } from "@workspace/api-zod";
-import { db, mockupsTable, mockupVersionsTable, type Mockup, type MockupStatus, type MockupVersion } from "@workspace/db";
-import { desc, eq } from "drizzle-orm";
+import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from "node:fs";
+import { join, basename, extname } from "node:path";
+import { tmpdir } from "node:os";
+import { CreateMockupBody, UpdateMockupBody, ChangeMockupStatusBody, CreateMockupVersionBody, UploadMockupReferenceImageBody } from "@workspace/api-zod";
+import { db, mockupsTable, mockupVersionsTable, mockupReferenceImagesTable, type Mockup, type MockupStatus, type MockupVersion, type MockupReferenceImage } from "@workspace/db";
+import { desc, eq, asc } from "drizzle-orm";
 import { hasPermission } from "../lib/permissions";
 import { logAudit } from "../lib/audit";
 import { requireAuth, requirePermission } from "../middlewares/auth";
 
 const router: IRouter = Router();
+
+// Configurable upload root. Defaults to /var/collabos in production but falls
+// back to a writable temp dir where /var isn't writable (sandboxes, local dev).
+function resolveUploadRoot(): string {
+  const base = process.env.UPLOAD_DIR || "/var/collabos/uploads";
+  const dir = join(base, "mockup-references");
+  try {
+    mkdirSync(dir, { recursive: true });
+    return dir;
+  } catch {
+    const fallback = join(tmpdir(), "collabos-uploads", "mockup-references");
+    mkdirSync(fallback, { recursive: true });
+    return fallback;
+  }
+}
+const REFERENCE_UPLOAD_ROOT = resolveUploadRoot();
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB
+const ALLOWED_IMAGE_EXT = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"]);
+
+function serializeReferenceImage(row: MockupReferenceImage) {
+  // Inline the image as a data URL so the client can render a thumbnail without
+  // a second request. Reference images are small and few per mockup.
+  let dataUrl = "";
+  try {
+    if (existsSync(row.storagePath)) {
+      const b64 = readFileSync(row.storagePath).toString("base64");
+      dataUrl = `data:${row.mimeType ?? "image/png"};base64,${b64}`;
+    }
+  } catch {
+    dataUrl = "";
+  }
+  return {
+    id: row.id,
+    mockupId: row.mockupId,
+    filename: row.filename,
+    mimeType: row.mimeType,
+    sizeBytes: row.sizeBytes,
+    dataUrl,
+    caption: row.caption,
+    uploadedBy: row.uploadedBy,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
 
 function serializeMockup(m: Mockup) {
   return {
@@ -279,6 +325,125 @@ router.post("/mockups/:id/versions", requireAuth, requirePermission("mockup_stud
     details: `Version "${created.versionName}" of "${m.title}"`,
   });
   res.status(201).json(serializeVersion(created));
+});
+
+// --- Reference images --------------------------------------------------------
+
+router.get("/mockups/:id/reference-images", requireAuth, requirePermission("mockup_studio_view"), async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) {
+    res.status(400).json({ message: "Invalid mockup id" });
+    return;
+  }
+  const rows = await db
+    .select()
+    .from(mockupReferenceImagesTable)
+    .where(eq(mockupReferenceImagesTable.mockupId, id))
+    .orderBy(asc(mockupReferenceImagesTable.createdAt));
+  res.json(rows.map(serializeReferenceImage));
+});
+
+router.post("/mockups/:id/reference-images", requireAuth, requirePermission("mockup_studio_edit"), async (req, res) => {
+  const id = Number(req.params.id);
+  const parsed = UploadMockupReferenceImageBody.safeParse(req.body);
+  if (!Number.isInteger(id) || !parsed.success) {
+    res.status(400).json({ message: "filename and contentBase64 are required" });
+    return;
+  }
+
+  const mockup = await findMockup(id);
+  if (!mockup) {
+    res.status(404).json({ message: "Mockup not found" });
+    return;
+  }
+
+  const actor = req.user!;
+  const safeName = basename(parsed.data.filename.trim()).replace(/[^\w.\-()+ ]/g, "_");
+  const ext = extname(safeName).toLowerCase();
+  if (!safeName || !ALLOWED_IMAGE_EXT.has(ext)) {
+    res.status(400).json({ message: "Reference must be an image (PNG, JPG, GIF, WEBP, or SVG)." });
+    return;
+  }
+
+  let buffer: Buffer;
+  try {
+    buffer = Buffer.from(parsed.data.contentBase64, "base64");
+  } catch {
+    res.status(400).json({ message: "Invalid file encoding" });
+    return;
+  }
+  if (buffer.length === 0 || buffer.length > MAX_IMAGE_BYTES) {
+    res.status(400).json({ message: "Image must be between 1 byte and 8MB" });
+    return;
+  }
+
+  const dir = join(REFERENCE_UPLOAD_ROOT, String(id));
+  mkdirSync(dir, { recursive: true });
+  const storagePath = join(dir, `${Date.now()}-${safeName}`);
+  writeFileSync(storagePath, buffer);
+
+  const [row] = await db
+    .insert(mockupReferenceImagesTable)
+    .values({
+      mockupId: id,
+      filename: safeName,
+      mimeType: parsed.data.mimeType ?? null,
+      sizeBytes: buffer.length,
+      storagePath,
+      caption: parsed.data.caption ?? null,
+      uploadedBy: actor.name,
+    })
+    .returning();
+
+  await logAudit({
+    actorId: actor.id,
+    actorName: actor.name,
+    action: "mockup_reference_uploaded",
+    targetType: "mockup",
+    targetId: String(id),
+    sourceArea: "mockup_studio",
+    details: `Reference "${safeName}" on "${mockup.title}"`,
+  });
+
+  res.status(201).json(serializeReferenceImage(row));
+});
+
+router.delete("/mockups/:id/reference-images/:imageId", requireAuth, requirePermission("mockup_studio_edit"), async (req, res) => {
+  const id = Number(req.params.id);
+  const imageId = Number(req.params.imageId);
+  if (!Number.isInteger(id) || !Number.isInteger(imageId)) {
+    res.status(400).json({ message: "Invalid id" });
+    return;
+  }
+  const [row] = await db
+    .select()
+    .from(mockupReferenceImagesTable)
+    .where(eq(mockupReferenceImagesTable.id, imageId))
+    .limit(1);
+  if (!row || row.mockupId !== id) {
+    res.status(404).json({ message: "Reference image not found" });
+    return;
+  }
+
+  try {
+    if (existsSync(row.storagePath)) rmSync(row.storagePath);
+  } catch {
+    // Best-effort file cleanup; the DB row is the source of truth.
+  }
+  await db.delete(mockupReferenceImagesTable).where(eq(mockupReferenceImagesTable.id, imageId));
+
+  const actor = req.user!;
+  await logAudit({
+    actorId: actor.id,
+    actorName: actor.name,
+    action: "mockup_reference_deleted",
+    targetType: "mockup",
+    targetId: String(id),
+    sourceArea: "mockup_studio",
+    details: `Removed reference "${row.filename}"`,
+  });
+
+  res.json({ message: "Reference image deleted" });
 });
 
 export default router;

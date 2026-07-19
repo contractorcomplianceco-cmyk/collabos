@@ -470,7 +470,7 @@ export function generateReport(
   const openTasks = (ctx.projectTasks ?? []).filter((t) => t.status === "open" || t.status === "in-progress");
 
   return {
-    summary: `${type}: ${ctx.projects.length} projects, ${openTasks.length} open tasks, ${openRecs.length} items in review queue, ${openDecisions.length} open decisions.`,
+    summary: `${type}: ${ctx.projects.length} projects tracked, ${openTasks.length} open tasks, ${openRecs.length} items in review queue, ${openDecisions.length} open decisions.`,
     findings: [
       `${atRisk.length} project(s) flagged at-risk, blocked, or high risk`,
       `${unowned.length} project(s) currently unowned`,
