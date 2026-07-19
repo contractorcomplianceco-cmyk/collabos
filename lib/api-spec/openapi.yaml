@@ -2548,6 +2548,15 @@ components:
         projectType: { type: ["string", "null"], enum: [demo, live, planning, merged-cc-host, null] }
         lastSyncedAt: { type: ["string", "null"], format: date-time }
         sortOrder: { type: integer }
+        stage: { type: string }
+        finalIntention: { type: string }
+        confidence: { type: string }
+        cleanupPriority: { type: string }
+        sourceOfTruth: { type: string }
+        agreementStatus: { type: string }
+        doNotClaim: { type: ["string", "null"] }
+        cleanupWave: { type: integer }
+        repoExists: { type: ["string", "null"] }
     BlockerRecord:
       type: object
       required: [id, projectId, title, owner, risk, age]
@@ -2589,6 +2598,14 @@ components:
       properties:
         projectType: { $ref: "#/components/schemas/ProjectType" }
         sortOrder: { type: integer }
+        stage: { type: string }
+        finalIntention: { type: string }
+        confidence: { type: string }
+        cleanupPriority: { type: string }
+        sourceOfTruth: { type: string }
+        agreementStatus: { type: string }
+        doNotClaim: { type: ["string", "null"] }
+        cleanupWave: { type: integer }
     ProjectReorder:
       type: object
       required: [orderedIds]

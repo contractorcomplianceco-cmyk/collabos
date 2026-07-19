@@ -8,6 +8,12 @@ import {
   projectBuildPlansTable,
   projectHandoffsTable,
   PROJECT_TYPES,
+  PROJECT_STAGES,
+  PROJECT_FINAL_INTENTIONS,
+  PROJECT_CONFIDENCE,
+  PROJECT_PRIORITIES,
+  PROJECT_SOURCE_OF_TRUTH,
+  PROJECT_AGREEMENT_STATUSES,
   type BuildPlanPhaseItem,
   type ProjectType,
 } from "@workspace/db";
@@ -258,6 +264,37 @@ router.patch("/projects/:id", requireAuth, requireDashboard, async (req, res) =>
       return;
     }
     patch.sortOrder = sortOrder;
+  }
+
+  // --- Project Cleanup governance labels ---
+  const enumField = <T extends readonly string[]>(
+    key: keyof typeof project & string,
+    allowed: T,
+  ): boolean => {
+    if (req.body?.[key] === undefined) return true;
+    if (!allowed.includes(req.body[key])) {
+      res.status(400).json({ message: `Invalid ${key}` });
+      return false;
+    }
+    (patch as Record<string, unknown>)[key] = req.body[key];
+    return true;
+  };
+  if (!enumField("stage", PROJECT_STAGES)) return;
+  if (!enumField("finalIntention", PROJECT_FINAL_INTENTIONS)) return;
+  if (!enumField("confidence", PROJECT_CONFIDENCE)) return;
+  if (!enumField("cleanupPriority", PROJECT_PRIORITIES)) return;
+  if (!enumField("sourceOfTruth", PROJECT_SOURCE_OF_TRUTH)) return;
+  if (!enumField("agreementStatus", PROJECT_AGREEMENT_STATUSES)) return;
+  if (req.body?.doNotClaim !== undefined) {
+    patch.doNotClaim = req.body.doNotClaim === null ? null : String(req.body.doNotClaim);
+  }
+  if (req.body?.cleanupWave !== undefined) {
+    const wave = Number(req.body.cleanupWave);
+    if (![0, 1, 2, 3].includes(wave)) {
+      res.status(400).json({ message: "Invalid cleanupWave" });
+      return;
+    }
+    patch.cleanupWave = wave;
   }
 
   if (Object.keys(patch).length === 0) {

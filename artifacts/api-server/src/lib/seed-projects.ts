@@ -36,6 +36,16 @@ export function serializeProject(row: ProjectRow) {
     projectType: row.projectType ?? null,
     lastSyncedAt: row.lastSyncedAt?.toISOString() ?? null,
     sortOrder: row.sortOrder ?? row.id,
+    // Project Cleanup governance labels
+    stage: row.stage ?? "",
+    finalIntention: row.finalIntention ?? "",
+    confidence: row.confidence ?? "",
+    cleanupPriority: row.cleanupPriority ?? "",
+    sourceOfTruth: row.sourceOfTruth ?? "",
+    agreementStatus: row.agreementStatus ?? "",
+    doNotClaim: row.doNotClaim ?? null,
+    cleanupWave: row.cleanupWave ?? 0,
+    repoExists: row.repoExists ?? null,
   };
 }
 

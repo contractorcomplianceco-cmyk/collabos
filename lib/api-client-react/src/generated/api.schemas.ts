@@ -1152,6 +1152,17 @@ export interface ProjectRecord {
   /** @nullable */
   lastSyncedAt?: string | null;
   sortOrder: number;
+  stage?: string;
+  finalIntention?: string;
+  confidence?: string;
+  cleanupPriority?: string;
+  sourceOfTruth?: string;
+  agreementStatus?: string;
+  /** @nullable */
+  doNotClaim?: string | null;
+  cleanupWave?: number;
+  /** @nullable */
+  repoExists?: string | null;
 }
 
 export type BlockerRecordRisk = typeof BlockerRecordRisk[keyof typeof BlockerRecordRisk];
@@ -1245,6 +1256,15 @@ export const ProjectType = {
 export interface ProjectUpdate {
   projectType?: ProjectType;
   sortOrder?: number;
+  stage?: string;
+  finalIntention?: string;
+  confidence?: string;
+  cleanupPriority?: string;
+  sourceOfTruth?: string;
+  agreementStatus?: string;
+  /** @nullable */
+  doNotClaim?: string | null;
+  cleanupWave?: number;
 }
 
 export interface ProjectReorder {
